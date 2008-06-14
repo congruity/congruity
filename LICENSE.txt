@@ -1,0 +1,30 @@
+Licensing for all Python code:
+
+# congruity is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# congruity is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with congruity.  If not, see <http://www.gnu.org/licenses/>.
+ 
+I am quite willing to give you a copy of congruity licensed under practically
+any license (BSD, Public Domain, ...) However, please note that since
+libconcord is licensed as GPLv3+, you would not be able to use any relicensed
+versions of congruity with libconcord. However, my hope is that the
+application code (e.g. GUI creation etc.) may be useful for arbitrary
+other purposes.
+
+Licensing for icon-*.png:
+GPL (sourced from f-spot and Gnome icon sets)
+
+Licensing for remote.png:
+Probably downloaded from:
+http://ecx.images-amazon.com/images/I/41SKVX803NL.jpg
+I should probably find a better source...
+
