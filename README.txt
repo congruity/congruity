@@ -32,7 +32,8 @@ Remember to differentiate between the Harmony remote and any other Logitech
 peripherals you may have!
 
 Congruity relies on the libconcord library, which must be obtained and
-installed separately.
+installed separately. Note that you will need to install the Python bindings
+for libconcord too; see libconcord/bindings/python/.
 
 Configure your web browser to open files of type *.EZHex and *.EZUp with the
 congruity application. This is typically performed using the dialog box

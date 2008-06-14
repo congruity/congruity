@@ -29,7 +29,7 @@ import wx.lib.dialogs
 
 import libconcord
 
-version = "7"
+version = "7+"
 
 def program_callback_imp(count, current, total, cb_func):
     if not cb_func:
@@ -792,7 +792,6 @@ class Resources(object):
                 fpath = os.path.join(dir, filename)
                 if not os.path.isfile(fpath):
                     continue
-                print fpath
                 return wx.Image(fpath, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
             raise Exception("Can't load " + filename)
 
