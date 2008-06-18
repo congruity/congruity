@@ -1,4 +1,10 @@
-* 2008-04-14 Stephen Warren <s-t-concordance@wwwdotorg.org> - congruity-7
+* 2008-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
+* On behalf of Andreas Schulz <Andreas.R.Schulz@gmx.de>
+- Fix issue where next button wouldn't respond to clicks if the pointer was
+  already within the button when it was re-enabled.
+
+* 2008-04-14 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-7 is released
 - Switched license to GPLv3+ to be compatible with libconcord by default.
   Contact me if you want the code under a different license, but please
   note that you won't be able to use relicensed code with libconcord.
@@ -8,26 +14,30 @@
 - Added a few useful URLs to README.txt.
 - Fixed reliance on syntax specific to Python 2.5.
 
-* 2008-04-13 Stephen Warren <s-t-concordance@wwwdotorg.org> - congruity-6
+* 2008-04-13 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-6 is released
 - Search for images in /usr/share/congruity, the source directory, then
   CWD. This should allow easy system-wide installation of congruity.
 - libconcord.py is no longer distributed with congruity; it is now part
   of libconcord itself (see libconcord/bindings/python/).
 - Apparently forgot to release LICENSE.txt before.
 
-* 2008-04-07 Stephen Warren <s-t-concordance@wwwdotorg.org> - congruity-5
+* 2008-04-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-5 is released
 - This release solely operates using libconcord; "screen-scraping" the output
   from the concordance application is no longer supported.
 - Implement firmware upgrade.
 - Minor tweaks for operation on MS-Windows.
 - congruity now sets the time on the remote after any reboot.
 
-* 2008-03-29 Stephen Warren <s-t-concordance@wwwdotorg.org> - congruity-4
+* 2008-03-29 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-4 is released
 - Renamed package from harmonygui to congruity, in line with the
   coming rename of the harmonycontrol project to concordance/libconcord.
 - Changes to match latest CVS libconcord API changes
 
-* 2008-02-24 Stephen Warren <s-t-concordance@wwwdotorg.org> - harmonygui-3
+* 2008-02-24 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- harmonygui-3 is released
 - Added README.txt.
 - Added LICENSING.txt, to account for images too.
 - Remove GUI for initial web connection in update mode; the libharmony
@@ -36,7 +46,8 @@
 - Code re-org, to allow for multiple back-ends.
 - Added a back-end that calls libharmony.so directly using ctypes.
 
-* 2008-02-10 Stephen Warren <s-t-concordance@wwwdotorg.org> - harmonygui-2
+* 2008-02-10 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- harmonygui-2 is released
 - Updated ezhexparser to recognize firmware update files.
 - Updated GUI to handle firmware updates, by informing user its
   not yet supported.
@@ -49,6 +60,7 @@
 - Added licensing information.
 - Added this Changelog
 
-* 2008-02-05 Stephen Warren <s-t-concordance@wwwdotorg.org> - harmonygui-1 
+* 2008-02-05 Stephen Warren <s-t-concordance@wwwdotorg.org> 
+- harmonygui-1 is released
 - Initial release.
 

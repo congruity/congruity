@@ -738,6 +738,12 @@ class Wizard(wx.Dialog):
 
     def ReenableNext(self):
         self.btn_next.Enable(True)
+
+        mouse_pos = self.ScreenToClient(wx.GetMousePosition())
+        if self.btn_next.GetRect().Contains(mouse_pos):
+            self.WarpPointer(0, 0)
+            self.WarpPointer(mouse_pos.x, mouse_pos.y)
+
         self.btn_next.SetFocus()
 
     def _OnNext(self, event):
