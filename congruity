@@ -63,7 +63,11 @@ def program(resources, type, xml, xml_size, handler):
             set_time = action_func(xml, xml_size, program_callback, handler)
             program_body_disconnect(resources, program_callback, handler)
             if set_time:
-                program_body_reconnect_set_time(resources, program_callback, handler)
+                program_body_reconnect_set_time(
+                    resources,
+                    program_callback,
+                    handler
+                )
             handler.on_final_status(True, '')
         except:
             handler.on_final_status(False, exception_message())
@@ -365,6 +369,30 @@ class WelcomePanel(MessagePanelBase):
             )
             return self.resources.page_failure
 
+ALIGN_LBA = wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL
+ALIGN_LCA = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
+
+class DecoratedGauge(object):
+    def __init__(self, parent, caption, vpos):
+        self.bitmap = wx.StaticBitmap(
+            parent,
+            -1,
+            parent.resources.icon_unstarted,
+            None,
+            parent.resources.iwh
+        )
+        self.text = wx.StaticText(parent, -1, caption)
+        self.gauge = wx.Gauge(
+            parent,
+            -1,
+            100,
+            None,
+            (250, parent.resources.iwh[1])
+        )
+        parent.sizer.Add(self.bitmap, (vpos, 0), (1, 1), ALIGN_LBA, 5)
+        parent.sizer.Add(self.text,   (vpos, 1), (1, 1), ALIGN_LCA, 5)
+        parent.sizer.Add(self.gauge,  (vpos, 2), (1, 1), ALIGN_LBA, 5)
+
 class ProgramRemotePanelBase(wx.Panel):
     def __init__(self, parent, resources, file_type):
         self.parent = parent
@@ -373,54 +401,25 @@ class ProgramRemotePanelBase(wx.Panel):
 
         wx.Panel.__init__(self, parent)
 
-        sizer = wx.GridBagSizer(5, 5)
-
-        iw = max(
-            resources.icon_in_progress.GetWidth(),
-            resources.icon_complete.GetWidth(),
-            resources.icon_failed.GetWidth()
-        )
-        ih = max(
-            resources.icon_in_progress.GetHeight(),
-            resources.icon_complete.GetHeight(),
-            resources.icon_failed.GetHeight()
-        )
-        iwh = (iw, ih)
+        self.sizer = wx.GridBagSizer(5, 5)
 
         vpos = 0
 
-        self.bmp_identify = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-        self.text_identify = wx.StaticText(self, -1, "Identify Remote")
-        self.gauge_identify = wx.Gauge(self, -1, 100, None, (250, ih))
-        sizer.Add(self.bmp_identify,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-        sizer.Add(self.text_identify,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-        sizer.Add(self.gauge_identify, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+        iwh = resources.iwh
+        ih = iwh[1]
+
+        self.dg_identify = DecoratedGauge(self, "Identify Remote", vpos)
         vpos += 1
 
         if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
-            self.bmp_web_notify_init = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_web_notify_init = wx.StaticText(self, -1, "Check Website")
-            self.gauge_web_notify_init = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_web_notify_init,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_web_notify_init,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_web_notify_init, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_check_website = DecoratedGauge(self, "Check Website", vpos)
             vpos += 1
 
         if self.file_type != libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            self.bmp_prepare = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_prepare = wx.StaticText(self, -1, "Prepare Remote")
-            self.gauge_prepare = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_prepare,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_prepare,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_prepare, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos)
             vpos += 1
 
-            self.bmp_erase_flash = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_erase_flash = wx.StaticText(self, -1, "Erase Flash")
-            self.gauge_erase_flash = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_erase_flash,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_erase_flash,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_erase_flash, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos)
             vpos += 1
 
             if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
@@ -428,123 +427,103 @@ class ProgramRemotePanelBase(wx.Panel):
             else:
                 write_type = "Firmware"
 
-            self.bmp_write_config = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_write_config = wx.StaticText(self, -1, "Write " + write_type)
-            self.gauge_write_config = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_write_config,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_write_config,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_write_config, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_write = DecoratedGauge(self, "Write " + write_type, vpos)
             vpos += 1
 
         if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
-            self.bmp_verify_config = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_verify_config = wx.StaticText(self, -1, "Verify Upgrade")
-            self.gauge_verify_config = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_verify_config,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_verify_config,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_verify_config, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_verify = DecoratedGauge(self, "Verify Upgrade", vpos)
             vpos += 1
 
         if self.file_type == libconcord.LC_FILE_TYPE_FIRMWARE:
-            self.bmp_finalize = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_finalize = wx.StaticText(self, -1, "Finalize Programming")
-            self.gauge_finalize = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_finalize,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_finalize,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_finalize, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_finalize = DecoratedGauge(self, "Finalize Programming", vpos)
             vpos += 1
 
-        self.bmp_web_notify_final = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-        self.text_web_notify_final = wx.StaticText(self, -1, "Notify Website")
-        self.gauge_web_notify_final = wx.Gauge(self, -1, 100, None, (250, ih))
-        sizer.Add(self.bmp_web_notify_final,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-        sizer.Add(self.text_web_notify_final,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-        sizer.Add(self.gauge_web_notify_final, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos)
         vpos += 1
 
         if self.file_type != libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            self.bmp_reconnect = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_reconnect = wx.StaticText(self, -1, "Reconnect to Remote")
-            self.gauge_reconnect = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_reconnect,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_reconnect,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_reconnect, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos)
             vpos += 1
 
-            self.bmp_set_time = wx.StaticBitmap(self, -1, resources.icon_unstarted, None, iwh)
-            self.text_set_time = wx.StaticText(self, -1, "Set Time")
-            self.gauge_set_time = wx.Gauge(self, -1, 100, None, (250, ih))
-            sizer.Add(self.bmp_set_time,   (vpos, 0), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
-            sizer.Add(self.text_set_time,  (vpos, 1), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-            sizer.Add(self.gauge_set_time, (vpos, 2), (1, 1), wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL, 5)
+            self.dg_set_time = DecoratedGauge(self, "Set Time", vpos)
             vpos += 1
 
-        sizer.AddGrowableCol(2)
+        self.sizer.AddGrowableCol(2)
 
-        self.SetSizerAndFit(sizer)
+        self.SetSizerAndFit(self.sizer)
 
-        self.failure_bitmap = None
+        self.failure_dg = None
         self.was_success = False
 
     def _worker_function(self):
         handler = HandlerProxy(self)
-        program(self.resources, self.file_type, self.resources.xml, self.resources.xml_size, handler)
+        program(
+            self.resources,
+            self.file_type,
+            self.resources.xml,
+            self.resources.xml_size,
+            handler
+        )
 
-    def _on_progress(self, is_done, percent, bitmap, gauge):
+    def _on_progress(self, is_done, percent, dg):
         if is_done:
-            bitmap.SetBitmap(self.resources.icon_complete)
+            dg.bitmap.SetBitmap(self.resources.icon_complete)
         else:
-            bitmap.SetBitmap(self.resources.icon_in_progress)
-        self.failure_bitmap = bitmap
-        gauge.SetValue(percent)
+            dg.bitmap.SetBitmap(self.resources.icon_in_progress)
+        self.failure_dg = dg
+        dg.gauge.SetValue(percent)
 
     def on_requesting_id(self, is_done, percent):
-        self._on_progress(is_done, percent, self.bmp_identify, self.gauge_identify)
+        self._on_progress(is_done, percent, self.dg_identify)
 
     def on_web_notify_init(self, is_done, percent):
-        self._on_progress(is_done, percent, self.bmp_web_notify_init, self.gauge_web_notify_init)
+        self._on_progress(is_done, percent, self.dg_check_website)
 
     def on_prepare(self, is_done, percent):
         if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
             return
-        self._on_progress(is_done, percent, self.bmp_prepare, self.gauge_prepare)
+        self._on_progress(is_done, percent, self.dg_prepare)
 
     def on_erasing_flash(self, is_done, percent):
         if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
             return
-        self._on_progress(is_done, percent, self.bmp_erase_flash, self.gauge_erase_flash)
+        self._on_progress(is_done, percent, self.dg_erase)
 
     def on_writing_config(self, is_done, percent):
         if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
             return
-        self._on_progress(is_done, percent, self.bmp_write_config, self.gauge_write_config)
+        self._on_progress(is_done, percent, self.dg_write)
 
     def on_verifying_config(self, is_done, percent):
         if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
             return
-        self._on_progress(is_done, percent, self.bmp_verify_config, self.gauge_verify_config)
+        self._on_progress(is_done, percent, self.dg_verify)
 
     def on_finalize(self, is_done, percent):
         if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
             return
-        self._on_progress(is_done, percent, self.bmp_finalize, self.gauge_finalize)
+        self._on_progress(is_done, percent, self.dg_finalize)
 
     def on_web_notify_final(self, is_done, percent):
-        self._on_progress(is_done, percent, self.bmp_web_notify_final, self.gauge_web_notify_final)
+        self._on_progress(is_done, percent, self.dg_notify_website)
 
     def on_reconnect(self, is_done, percent):
-        self._on_progress(is_done, percent, self.bmp_reconnect, self.gauge_reconnect)
+        self._on_progress(is_done, percent, self.dg_reconnect)
 
     def on_set_time(self, is_done, percent):
-        self._on_progress(is_done, percent, self.bmp_set_time, self.gauge_set_time)
+        self._on_progress(is_done, percent, self.dg_set_time)
 
     def on_final_status(self, was_success, log):
         if not was_success:
-            bitmap = self.failure_bitmap
-            if not bitmap:
-                bitmap = self.bmp_identify
+            if self.failure_dg:
+                bitmap = self.failure_dg.bitmap
+            else:
+                bitmap = self.dg_identify.bitmap
             bitmap.SetBitmap(self.resources.icon_failed)
-            self.resources.page_failure.SetMessages('Programming failed.', log)
+            self.resources.page_failure.SetMessages(
+                "Programming failed.",
+                log
+            )
         self.was_success = was_success
         self.parent.ReenableNext()
 
@@ -578,19 +557,39 @@ class ProgramRemotePanelBase(wx.Panel):
 
 class CheckConnectivityPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
-        ProgramRemotePanelBase.__init__(self, parent, resources, libconcord.LC_FILE_TYPE_CONNECTIVITY)
+        ProgramRemotePanelBase.__init__(
+            self,
+            parent,
+            resources,
+            libconcord.LC_FILE_TYPE_CONNECTIVITY
+        )
 
 class WriteConfigurationPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
-        ProgramRemotePanelBase.__init__(self, parent, resources, libconcord.LC_FILE_TYPE_CONFIGURATION)
+        ProgramRemotePanelBase.__init__(
+            self,
+            parent,
+            resources,
+            libconcord.LC_FILE_TYPE_CONFIGURATION
+        )
 
 class UpdateFirmwarePanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
-        ProgramRemotePanelBase.__init__(self, parent, resources, libconcord.LC_FILE_TYPE_FIRMWARE)
+        ProgramRemotePanelBase.__init__(
+            self,
+            parent,
+            resources,
+            libconcord.LC_FILE_TYPE_FIRMWARE
+        )
 
 class SuccessPanel(MessagePanelBase):
     def __init__(self, parent, resources):
-        MessagePanelBase.__init__(self, parent, resources, "Programming has completed successfully.")
+        MessagePanelBase.__init__(
+            self,
+            parent,
+            resources,
+            "Programming has completed successfully."
+        )
 
     def OnActivated(self):
         pass
@@ -621,7 +620,11 @@ class FailurePanel(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text_message = wx.StaticText(self, -1, "Programming failed; see below for details")
+        self.text_message = wx.StaticText(
+            self,
+            -1,
+            "Programming failed; see below for details"
+        )
         self.text_message.Wrap(450)
         self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.btn_details = wx.Button(self, -1, "&Details...")
@@ -642,7 +645,13 @@ class FailurePanel(wx.Panel):
     def OnShowLogText(self, event):
         size = self.parent.GetClientSizeTuple()
         size = (size[0] * 90 / 100, size[1] * 90 / 100)
-        wx.lib.dialogs.ScrolledMessageDialog(self, self.log_text, "Error Log", (-1, -1), size).ShowModal()
+        wx.lib.dialogs.ScrolledMessageDialog(
+            self,
+            self.log_text,
+            "Error Log",
+            (-1, -1),
+            size
+        ).ShowModal()
         self.parent.ReenableNext()
 
     def OnActivated(self):
@@ -774,7 +783,11 @@ class Wizard(wx.Dialog):
             self.btn_next.SetLabel("&Next >")
 
         self.btn_next.Enable(not self.cur_page.IsNextInitiallyDisabled())
-        self.btn_cancel.Enable((not is_terminal) and self.cur_page.IsCancelable())
+        self.btn_cancel.Enable(
+            (not is_terminal)
+            and
+            self.cur_page.IsCancelable()
+        )
         self.btn_next.SetFocus()
 
         self.cur_page.OnActivated()
@@ -802,6 +815,18 @@ class Resources(object):
         self.icon_in_progress = load("icon-in-progress.png")
         self.icon_complete    = load("icon-complete.png")
         self.icon_failed      = load("icon-failed.png")
+
+        iw = max(
+            self.icon_in_progress.GetWidth(),
+            self.icon_complete.GetWidth(),
+            self.icon_failed.GetWidth()
+        )
+        ih = max(
+            self.icon_in_progress.GetHeight(),
+            self.icon_complete.GetHeight(),
+            self.icon_failed.GetHeight()
+        )
+        self.iwh = (iw, ih)
 
     def CreatePages(self, wizard):
         self.page_welcome = WelcomePanel(wizard, self)
