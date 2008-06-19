@@ -48,41 +48,38 @@ def exception_message():
     msg += traceback.format_exc()
     return msg
 
-def program(type, xml, xml_size, handler):
+def program(resources, type, xml, xml_size, handler):
     action_func = {
         libconcord.LC_FILE_TYPE_CONNECTIVITY:  program_body_connectivity,
         libconcord.LC_FILE_TYPE_CONFIGURATION: program_body_configuration,
         libconcord.LC_FILE_TYPE_FIRMWARE:      program_body_firmware
     }[type]
 
-    need_deinit = [False]
-
     try:
         try:
             program_callback = libconcord.callback_type(program_callback_imp)
 
-            program_body_connect(program_callback, handler, need_deinit)
+            program_body_connect(resources, program_callback, handler)
             set_time = action_func(xml, xml_size, program_callback, handler)
-            need_deinit[0] = False
-            program_body_disconnect(program_callback, handler)
+            program_body_disconnect(resources, program_callback, handler)
             if set_time:
-                program_body_reconnect_set_time(program_callback, handler, need_deinit)
+                program_body_reconnect_set_time(resources, program_callback, handler)
             handler.on_final_status(True, '')
         except:
             handler.on_final_status(False, exception_message())
     finally:
         try:
-            if need_de_init[0]:
-                program_disconnect(handler)
+            if resources.connected:
+                program_disconnect(resources, handler)
         except:
             pass
 
-def program_body_connect(program_callback, handler, need_deinit):
+def program_body_connect(resources, program_callback, handler):
     if handler:
         handler.on_requesting_id(False, 0)
 
     libconcord.init_concord()
-    need_deinit[0] = True
+    resources.connected = True
 
     if handler:
         handler_f = py_object(handler.on_requesting_id)
@@ -217,32 +214,30 @@ def program_body_firmware(xml, xml_size, program_callback, handler):
 
     return True
 
-def program_body_disconnect(program_callback, handler):
+def program_body_disconnect(resources, program_callback, handler):
+    resources.connected = False
     libconcord.deinit_concord()
 
-def program_body_reconnect_set_time(program_callback, handler, need_deinit):
+def program_body_reconnect_set_time(resources, program_callback, handler):
     max_attempts = 60
-    connected = False
     for attempt in range(max_attempts):
         handler.on_reconnect(False, (attempt * 100) / max_attempts)
         try:
-            program_body_connect(program_callback, None, need_deinit)
-            connected = True
+            program_body_connect(resources, program_callback, None)
             break
         except:
             pass
         time.sleep(1)
-    if not connected:
+    if not resources.connected:
         # Force exception if we still can't connect
-        program_body_connect(program_callback, None, need_deinit)
+        program_body_connect(resources, program_callback, None)
     handler.on_reconnect(True, 100)
 
     handler.on_set_time(False, 0)
     libconcord.set_time()
     handler.on_set_time(True, 100)
 
-    need_deinit[0] = False
-    program_body_disconnect(program_callback, handler)
+    program_body_disconnect(resources, program_callback, handler)
 
 class HandlerProxy(object):
     def __init__(self, real_handler):
@@ -493,7 +488,7 @@ class ProgramRemotePanelBase(wx.Panel):
 
     def _worker_function(self):
         handler = HandlerProxy(self)
-        program(self.file_type, self.resources.xml, self.resources.xml_size, handler)
+        program(self.resources, self.file_type, self.resources.xml, self.resources.xml_size, handler)
 
     def _on_progress(self, is_done, percent, bitmap, gauge):
         if is_done:
@@ -787,6 +782,7 @@ class Wizard(wx.Dialog):
 class Resources(object):
     def __init__(self, appdir):
         self.appdir = appdir
+        self.connected = False
 
     def SetEzHexFilename(self, ezhex_filename):
         self.ezhex_filename = ezhex_filename
