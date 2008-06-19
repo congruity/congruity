@@ -374,11 +374,11 @@ ALIGN_LCA = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
 
 class DecoratedGauge(object):
     def __init__(self, parent, caption, vpos):
-        self.bitmap_resource = parent.resources.icon_unstarted
+        self.current_bitmap = parent.resources.icon_unstarted
         self.bitmap = wx.StaticBitmap(
             parent,
             -1,
-            self.bitmap_resource,
+            self.current_bitmap,
             None,
             parent.resources.iwh
         )
@@ -393,6 +393,12 @@ class DecoratedGauge(object):
         parent.sizer.Add(self.bitmap, (vpos, 0), (1, 1), ALIGN_LBA, 5)
         parent.sizer.Add(self.text,   (vpos, 1), (1, 1), ALIGN_LCA, 5)
         parent.sizer.Add(self.gauge,  (vpos, 2), (1, 1), ALIGN_LBA, 5)
+
+    def SetBitmap(self, new_bitmap):
+        if self.current_bitmap == new_bitmap:
+            return
+        self.current_bitmap = new_bitmap
+        self.bitmap.SetBitmap(self.current_bitmap)
 
 class ProgramRemotePanelBase(wx.Panel):
     def __init__(self, parent, resources, file_type):
@@ -471,8 +477,7 @@ class ProgramRemotePanelBase(wx.Panel):
             new_bitmap = self.resources.icon_complete
         else:
             new_bitmap = self.resources.icon_in_progress
-        if dg.bitmap_resource != new_bitmap:
-            dg.bitmap.SetBitmap(new_bitmap)
+        dg.SetBitmap(new_bitmap)
         self.failure_dg = dg
         dg.gauge.SetValue(percent)
 
