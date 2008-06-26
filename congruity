@@ -31,12 +31,20 @@ import libconcord
 
 version = "7+"
 
-def program_callback_imp(count, current, total, cb_func):
-    if not cb_func:
+def counter():
+    i=0
+    while True:
+        yield i
+        i += 1
+
+def program_callback_imp(count, current, total, context):
+    if not context:
         return
 
     try:
-        cb_func(False, (current * 100) / total)
+        (f, fcontext) = context
+        percent = (current * 100) / total
+        f(False, percent, fcontext)
     except:
         print
         traceback.print_exc()
@@ -44,330 +52,44 @@ def program_callback_imp(count, current, total, cb_func):
 def exception_message():
     msg = ''
     if type(sys.exc_value) == libconcord.LibConcordException:
-        msg += sys.exc_value.result_str + '\n\n'
+        try:
+            msg += '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+        except:
+            pass
     msg += traceback.format_exc()
     return msg
 
-def program(resources, type, xml, xml_size, handler):
-    action_func = {
-        libconcord.LC_FILE_TYPE_CONNECTIVITY:  program_body_connectivity,
-        libconcord.LC_FILE_TYPE_CONFIGURATION: program_body_configuration,
-        libconcord.LC_FILE_TYPE_FIRMWARE:      program_body_firmware
-    }[type]
+def worker_body_connect(resources, on_progress, cb_context):
+    program_callback = libconcord.callback_type(program_callback_imp)
 
-    try:
-        try:
-            program_callback = libconcord.callback_type(program_callback_imp)
-
-            program_body_connect(resources, program_callback, handler)
-            set_time = action_func(xml, xml_size, program_callback, handler)
-            program_body_disconnect(resources, program_callback, handler)
-            if set_time:
-                program_body_reconnect_set_time(
-                    resources,
-                    program_callback,
-                    handler
-                )
-            handler.on_final_status(True, '')
-        except:
-            handler.on_final_status(False, exception_message())
-    finally:
-        try:
-            if resources.connected:
-                program_disconnect(resources, handler)
-        except:
-            pass
-
-def program_body_connect(resources, program_callback, handler):
-    if handler:
-        handler.on_requesting_id(False, 0)
-
-    libconcord.init_concord()
-    resources.connected = True
-
-    if handler:
-        handler_f = py_object(handler.on_requesting_id)
-    else:
-        handler_f = None
-    libconcord.get_identity(
-        program_callback,
-        handler_f
-    )
-    sys.stdout.flush()
-
-    if handler:
-        handler.on_requesting_id(True, 100)
-
-def program_body_connectivity(xml, xml_size, program_callback, handler):
-    handler.on_web_notify_final(False, 0)
-    libconcord.post_connect_test_success(xml, xml_size)
-    handler.on_web_notify_final(True, 100)
-    return False
-
-def program_body_configuration(xml, xml_size, program_callback, handler):
-    handler.on_web_notify_init(False, 0)
-    libconcord.post_preconfig(xml, xml_size)
-    handler.on_web_notify_init(True, 100)
-
-    handler.on_prepare(False, 0)
-
-    bin_data = POINTER(c_ubyte)()
-    bin_size = c_uint()
-    libconcord.find_config_binary(
-        xml,
-        xml_size,
-        byref(bin_data),
-        byref(bin_size)
-    )
-
-    handler.on_prepare(False, 50)
-    libconcord.invalidate_flash()
-    handler.on_prepare(True, 100)
-
-    handler.on_erasing_flash(False, 0)
-    libconcord.erase_config(
-        bin_size,
-        program_callback,
-        py_object(handler.on_erasing_flash)
-    )
-    handler.on_erasing_flash(True, 100)
-
-    handler.on_writing_config(False, 0)
-    libconcord.write_config_to_remote(
-        bin_data,
-        bin_size,
-        program_callback,
-        py_object(handler.on_writing_config)
-    )
-    handler.on_writing_config(True, 100)
-
-    handler.on_verifying_config(False, 0)
-    libconcord.verify_remote_config(
-        bin_data,
-        bin_size,
-        program_callback,
-        py_object(handler.on_verifying_config)
-    )
-    handler.on_verifying_config(True, 100)
-
-    handler.on_web_notify_final(False, 0)
-    libconcord.post_postconfig(xml, xml_size)
-    handler.on_web_notify_final(True, 100)
-
-    libconcord.reset_remote()
-
-    return True
-
-def program_body_firmware(xml, xml_size, program_callback, handler):
-    handler.on_prepare(False, 0)
-
-    # is_fw_update_supported returns error code; 0 OK, otherwise failure
-    if not libconcord.is_fw_update_supported(0):
-        is_direct = False
-    elif not libconcord.is_fw_update_supported(1):
-        is_direct = True
-    else:
-        raise Exception('Firmware update not supported on this remote.')
-
-    handler.on_prepare(True, 25)
-
-    bin_data = POINTER(c_ubyte)()
-    bin_size = c_uint()
-    libconcord.extract_firmware_binary(
-        xml,
-        xml_size,
-        byref(bin_data),
-        byref(bin_size)
-    )
-
-    handler.on_prepare(True, 50)
-    if not is_direct:
-        libconcord.prep_firmware()
-    handler.on_prepare(True, 75)
-    libconcord.invalidate_flash()
-    handler.on_prepare(True, 100)
-
-    handler.on_erasing_flash(False, 0)
-    libconcord.erase_firmware(
-        is_direct,
-        program_callback,
-        py_object(handler.on_erasing_flash)
-    )
-    handler.on_erasing_flash(True, 100)
-
-    handler.on_writing_config(False, 0)
-    libconcord.write_firmware_to_remote(
-        bin_data,
-        bin_size,
-        c_int(is_direct and 1 or 0),
-        program_callback,
-        py_object(handler.on_writing_config)
-    )
-    handler.on_writing_config(True, 100)
-
-    handler.on_finalize(False, 0)
-    if not is_direct:
-        libconcord.finish_firmware()
-    handler.on_finalize(True, 100)
-
-    handler.on_web_notify_final(False, 0)
-    libconcord.post_postfirmware(xml, xml_size)
-    handler.on_web_notify_final(True, 100)
-
-    libconcord.reset_remote()
-
-    return True
-
-def program_body_disconnect(resources, program_callback, handler):
-    resources.connected = False
-    libconcord.deinit_concord()
-
-def program_body_reconnect_set_time(resources, program_callback, handler):
     max_attempts = 60
     for attempt in range(max_attempts):
-        handler.on_reconnect(False, (attempt * 100) / max_attempts)
-        try:
-            program_body_connect(resources, program_callback, None)
-            break
-        except:
-            pass
-        time.sleep(1)
-    if not resources.connected:
-        # Force exception if we still can't connect
-        program_body_connect(resources, program_callback, None)
-    handler.on_reconnect(True, 100)
-
-    handler.on_set_time(False, 0)
-    libconcord.set_time()
-    handler.on_set_time(True, 100)
-
-    program_body_disconnect(resources, program_callback, handler)
-
-class HandlerProxy(object):
-    def __init__(self, real_handler):
-        self.real_handler = real_handler
-
-    def on_requesting_id(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_requesting_id, is_done, percent)
-
-    def on_web_notify_init(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_web_notify_init, is_done, percent)
-
-    def on_prepare(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_prepare, is_done, percent)
-
-    def on_erasing_flash(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_erasing_flash, is_done, percent)
-
-    def on_writing_config(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_writing_config, is_done, percent)
-
-    def on_verifying_config(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_verifying_config, is_done, percent)
-
-    def on_finalize(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_finalize, is_done, percent)
-
-    def on_web_notify_final(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_web_notify_final, is_done, percent)
-
-    def on_reconnect(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_reconnect, is_done, percent)
-
-    def on_set_time(self, is_done, percent):
-        wx.CallAfter(self.real_handler.on_set_time, is_done, percent)
-
-    def on_final_status(self, was_success, log):
-        wx.CallAfter(self.real_handler.on_final_status, was_success, log)
-
-class MessagePanelBase(wx.Panel):
-    def __init__(self, parent, resources, message):
-        self.resources = resources
-
-        wx.Panel.__init__(self, parent)
-
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text_message = wx.StaticText(self, -1, message)
-        self.text_message.Wrap(450)
-        self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
-        self.SetSizer(self.sizer)
-
-    def OnActivated(self):
-        pass
-
-class WelcomePanel(MessagePanelBase):
-    def __init__(self, parent, resources):
-        MessagePanelBase.__init__(
-            self,
-            parent,
-            resources,
-            "Welcome to congruity; a programming application " + 
-            "for Logitech Harmony remote controls.\n\n" +
-            "Click Next to start programming."
+        on_progress(
+            False,
+            (attempt * 100) / max_attempts,
+            cb_context
         )
-
-    def GetTitle(self):
-        return "Welcome"
-
-    def IsTerminal(self):
-        return False
-
-    def GetExitCode(self):
-        return None
-
-    def IsNextInitiallyDisabled(self):
-        return False
-
-    def IsCancelable(self):
-        return True
-
-    def GetNext(self):
         try:
-            xml = POINTER(c_ubyte)()
-            xml_size = c_uint()
-            libconcord.read_file(
-                self.resources.ezhex_filename,
-                byref(xml),
-                byref(xml_size)
-            )
-            self.resources.SetXmlData(xml, xml_size)
-        except:
-            self.resources.page_failure.SetMessages(
-                "The programming file cannot be read. " +
-                "Programming cannot continue.",
-                exception_message()
-            )
-            return self.resources.page_failure
-
-        try:
-            type = c_int()
-            libconcord.identify_file(xml, xml_size, byref(type))
-
-            next_page = {
-                libconcord.LC_FILE_TYPE_CONNECTIVITY:
-                    self.resources.page_check_connectivity,
-                libconcord.LC_FILE_TYPE_CONFIGURATION:
-                    self.resources.page_write_configuration,
-                libconcord.LC_FILE_TYPE_FIRMWARE:
-                    self.resources.page_update_firmware
-            }.get(type.value, None)
-
-            if next_page:
-                return next_page
-
-            self.resources.page_failure.SetMessages(
-                "This kind of programming file is not currently " +
-                "supported. Programming cannot continue.",
+            libconcord.init_concord()
+            resources.SetConnected(True)
+            libconcord.get_identity(
+                program_callback,
                 None
             )
-            return self.resources.page_failure
+            break
         except:
-            self.resources.page_failure.SetMessages(
-                "The programming file could not be parsed " +
-                "to determine its type. Programming cannot continue.",
-                exception_message()
-            )
-            return self.resources.page_failure
+            if attempt == max_attempts - 1:
+                raise
+        time.sleep(1)
+    on_progress(
+        True,
+        100,
+        cb_context
+    )
 
 ALIGN_LBA = wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
@@ -400,168 +122,319 @@ class DecoratedGauge(object):
         self.current_bitmap = new_bitmap
         self.bitmap.SetBitmap(self.current_bitmap)
 
-class ProgramRemotePanelBase(wx.Panel):
-    def __init__(self, parent, resources, file_type):
+# FIXME: Why are we hard-coding this.
+# Does the force the widget to be this wide when Fit()?
+MSG_WRAP = 450
+
+class MessagePanelBase(wx.Panel):
+    def __init__(self, parent, resources, message):
         self.parent = parent
         self.resources = resources
-        self.file_type = file_type
+
+        wx.Panel.__init__(self, parent)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.text_message = wx.StaticText(self, -1, message)
+        self.text_message.Wrap(MSG_WRAP)
+        self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        self.SetSizerAndFit(self.sizer)
+
+class WelcomePanel(MessagePanelBase):
+    _msg_base = (
+        "Welcome to congruity; a programming application " + 
+        "for Logitech Harmony remote controls.\n\n" +
+        "Operation type: %s\n\n"
+    )
+
+    _msg_please_connect_remote = (
+        "Please ensure the remote control is connected " +
+        "before proceeding.\n\n"
+    )
+
+    _msg_do_next = (
+        "Click next to begin operation."
+    )
+
+    _msg_unreadable_file = (
+        "The configuration file cannot be read. " +
+        "Operation cannot continue."
+    )
+
+    _msg_unsupported_filetype = (
+        "This kind of configuration file is not currently supported. " +
+        "Operation cannot continue."
+    )
+
+    _msg_parsing = "Parsing..."
+
+    _msg_unknown = "Unknown"
+
+    def __init__(self, parent, resources):
+        MessagePanelBase.__init__(
+            self,
+            parent,
+            resources,
+            self._msg_base % self._msg_parsing
+        )
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        try:
+            self.next = self.resources.page_connect
+
+            xml = POINTER(c_ubyte)()
+            xml_size = c_uint()
+            libconcord.read_file(
+                self.resources.ezhex_filename,
+                byref(xml),
+                byref(xml_size)
+            )
+            self.resources.SetXmlData(xml, xml_size)
+
+            type = c_int()
+            libconcord.identify_file(xml, xml_size, byref(type))
+
+            (next_page, type_text) = {
+                libconcord.LC_FILE_TYPE_CONNECTIVITY:
+                    (
+                        self.resources.page_check_connectivity,
+                        "Connectivity Check"
+                    ),
+                libconcord.LC_FILE_TYPE_CONFIGURATION:
+                    (
+                        self.resources.page_write_configuration,
+                        "Update Configuration"
+                    ),
+                libconcord.LC_FILE_TYPE_FIRMWARE:
+                    (
+                        self.resources.page_update_firmware,
+                        "Update Firmware"
+                    )
+            }.get(type.value, (None, None))
+
+            if next_page:
+                wx.CallAfter(self._OnStatusOk, next_page, type_text)
+                return
+
+            wx.CallAfter(
+                self._OnStatusFailure,
+                self._msg_unsupported_filetype,
+                None
+            )
+            return
+        except:
+            wx.CallAfter(
+                self._OnStatusFailure,
+                self._msg_unreadable_file,
+                exception_message()
+            )
+
+    def _OnStatusOk(self, next_page, type_text):
+        self.resources.page_connect.SetNext(next_page)
+        self._SetLabelReenableButtons(type_text, True)
+
+    def _OnStatusFailure(self, failure_msg, details):
+        self.resources.page_failure.SetMessages(
+            failure_msg,
+            details
+        )
+        self.next = self.resources.page_failure
+        self._SetLabelReenableButtons(self._msg_unknown, False)
+
+    def _SetLabelReenableButtons(self, file_type, ok):
+        msg = (self._msg_base % file_type)
+        if ok:
+            msg += self._msg_please_connect_remote
+        msg += self._msg_do_next
+        self.text_message.SetLabel(msg)           
+        self.text_message.Wrap(MSG_WRAP)
+        self.parent.ReenableCancel()
+        self.parent.ReenableNext()
+
+    def OnActivated(self):
+        thread.start_new_thread(self._WorkerFunction, ())
+
+    def OnCancel(self):
+        os._exit(1)
+
+    def GetTitle(self):
+        return "Welcome"
+
+    def IsTerminal(self):
+        return False
+
+    def IsNextInitiallyDisabled(self):
+        return True
+
+    def IsCancelInitiallyDisabled(self):
+        return True
+
+    def GetNext(self):
+        return self.next
+
+class GbsPanelBase(wx.Panel):
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
 
         wx.Panel.__init__(self, parent)
 
         self.sizer = wx.GridBagSizer(5, 5)
 
-        vpos = 0
-
-        iwh = resources.iwh
-        ih = iwh[1]
-
-        self.dg_identify = DecoratedGauge(self, "Identify Remote", vpos)
-        vpos += 1
-
-        if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
-            self.dg_check_website = DecoratedGauge(self, "Check Website", vpos)
-            vpos += 1
-
-        if self.file_type != libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos)
-            vpos += 1
-
-            self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos)
-            vpos += 1
-
-            if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
-                write_type = "Configuration"
-            else:
-                write_type = "Firmware"
-
-            self.dg_write = DecoratedGauge(self, "Write " + write_type, vpos)
-            vpos += 1
-
-        if self.file_type == libconcord.LC_FILE_TYPE_CONFIGURATION:
-            self.dg_verify = DecoratedGauge(self, "Verify Upgrade", vpos)
-            vpos += 1
-
-        if self.file_type == libconcord.LC_FILE_TYPE_FIRMWARE:
-            self.dg_finalize = DecoratedGauge(self, "Finalize Programming", vpos)
-            vpos += 1
-
-        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos)
-        vpos += 1
-
-        if self.file_type != libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos)
-            vpos += 1
-
-            self.dg_set_time = DecoratedGauge(self, "Set Time", vpos)
-            vpos += 1
+        self._AddWidgets()
 
         self.sizer.AddGrowableCol(2)
 
         self.SetSizerAndFit(self.sizer)
 
-        self.failure_dg = None
-        self.was_success = False
+        self.last_updated_dg = None
 
-    def _worker_function(self):
-        handler = HandlerProxy(self)
-        program(
-            self.resources,
-            self.file_type,
-            self.resources.xml,
-            self.resources.xml_size,
-            handler
+    def _AddWidgets(self):
+        pass
+
+    def _DgStart(self, dg):
+        wx.CallAfter(self._OnProgressGauge, False, 0, dg)
+
+    def _DgUpdate(self, is_done, percent, dg):
+        wx.CallAfter(self._OnProgressGauge, is_done, percent, dg)
+
+    def _DgEnd(self, dg):
+        wx.CallAfter(self._OnProgressGauge, True, 100, dg)
+
+    def _OnStatusOk(self):
+        self.parent.ReenableCancel()
+        self.parent.ReenableNext()
+
+    def _OnStatusFailure(self, failure_msg, details):
+        self.resources.page_failure.SetMessages(
+            failure_msg,
+            details
         )
+        if self.last_updated_dg:
+            bitmap = self.last_updated_dg
+            bitmap.SetBitmap(self.resources.icon_failed)
+        self.parent.ReenableCancel()
+        self.parent.ReenableNext()
 
-    def _on_progress(self, is_done, percent, dg):
+    def _OnProgressGauge(self, is_done, percent, dg):
         if is_done:
             new_bitmap = self.resources.icon_complete
         else:
             new_bitmap = self.resources.icon_in_progress
         dg.SetBitmap(new_bitmap)
-        self.failure_dg = dg
         dg.gauge.SetValue(percent)
+        self.last_updated_dg = dg
 
-    def on_requesting_id(self, is_done, percent):
-        self._on_progress(is_done, percent, self.dg_identify)
+class ConnectPanel(GbsPanelBase):
+    def __init__(self, parent, resources):
+        self.next = None
+        self.cancel_requested = False
+        GbsPanelBase.__init__(self, parent, resources)
 
-    def on_web_notify_init(self, is_done, percent):
-        self._on_progress(is_done, percent, self.dg_check_website)
+    def _AddWidgets(self):
+        # FIXME: Should probably add instructions saying
+        # "connect your remote now!" here
+        self.dg_connect = DecoratedGauge(self, "Detect Remote", 0)
 
-    def on_prepare(self, is_done, percent):
-        if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            return
-        self._on_progress(is_done, percent, self.dg_prepare)
-
-    def on_erasing_flash(self, is_done, percent):
-        if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            return
-        self._on_progress(is_done, percent, self.dg_erase)
-
-    def on_writing_config(self, is_done, percent):
-        if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            return
-        self._on_progress(is_done, percent, self.dg_write)
-
-    def on_verifying_config(self, is_done, percent):
-        if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            return
-        self._on_progress(is_done, percent, self.dg_verify)
-
-    def on_finalize(self, is_done, percent):
-        if self.file_type == libconcord.LC_FILE_TYPE_CONNECTIVITY:
-            return
-        self._on_progress(is_done, percent, self.dg_finalize)
-
-    def on_web_notify_final(self, is_done, percent):
-        self._on_progress(is_done, percent, self.dg_notify_website)
-
-    def on_reconnect(self, is_done, percent):
-        self._on_progress(is_done, percent, self.dg_reconnect)
-
-    def on_set_time(self, is_done, percent):
-        self._on_progress(is_done, percent, self.dg_set_time)
-
-    def on_final_status(self, was_success, log):
-        if not was_success:
-            if self.failure_dg:
-                bitmap = self.failure_dg.bitmap
-            else:
-                bitmap = self.dg_identify.bitmap
-            bitmap.SetBitmap(self.resources.icon_failed)
-            self.resources.page_failure.SetMessages(
-                "Programming failed.",
-                log
+    def _WorkerFunction(self):
+        try:
+            worker_body_connect(
+                self.resources,
+                self._DgUpdate,
+                self.dg_connect
             )
-        self.was_success = was_success
-        self.parent.ReenableNext()
+            wx.CallAfter(self._OnStatusOk)
+            return
+        except:
+            wx.CallAfter(
+                self._OnStatusFailure,
+                "No remote found",
+                exception_message()
+            )
+
+    def _OnStatusFailure(self, failure_msg, details):
+        self.SetNext(self.resources.page_failure)
+        GbsPanelBase._OnStatusFailure(self, failure_msg, details)
+
+    def SetNext(self, next):
+        self.next = next
 
     def OnActivated(self):
-        thread.start_new_thread(self._worker_function, ())
+        thread.start_new_thread(self._WorkerFunction, ())
+
+    def OnCancel(self):
+        os._exit(1)
 
     def GetTitle(self):
-        return {
-            libconcord.LC_FILE_TYPE_CONNECTIVITY:  "Checking Connectivity",
-            libconcord.LC_FILE_TYPE_CONFIGURATION: "Updating Configuration",
-            libconcord.LC_FILE_TYPE_FIRMWARE:      "Updating Firmware"
-        }[self.file_type]
+        return "Connecting"
 
     def IsTerminal(self):
         return False
 
-    def GetExitCode(self):
-        return None
+    def IsNextInitiallyDisabled(self):
+        return True
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def GetNext(self):
+        return self.next
+
+class ProgramRemotePanelBase(GbsPanelBase):
+    def __init__(self, parent, resources, file_type):
+        self.file_type = file_type
+        self.next = None
+        GbsPanelBase.__init__(self, parent, resources)
+
+    def _WorkerFunction(self):
+        try:
+            try:
+                self._WorkerFunctionBody()
+                wx.CallAfter(self._OnStatusOk)
+                return
+            except:
+                wx.CallAfter(
+                    self._OnStatusFailure,
+                    "Operation Failed",
+                    exception_message()
+                )
+        finally:
+            try:
+                if self.resources.connected:
+                    self.resources.SetConnected(False)
+                    libconcord.deinit_concord()
+            except:
+                pass
+
+    def _OnStatusOk(self):
+        self.next = self.resources.page_success
+        GbsPanelBase._OnStatusOk(self)
+
+    def _OnStatusFailure(self, failure_msg, details):
+        self.next = self.resources.page_failure
+        GbsPanelBase._OnStatusFailure(self, failure_msg, details)
+
+    def OnActivated(self):
+        thread.start_new_thread(self._WorkerFunction, ())
+
+    def OnCancel(self):
+        # FIXME: Do something here, like display a "no!" dialog.
+        # We don't just quit, so programming isn't aborted part-way-through
+        # which could leave the remote in a bad state,
+        pass
+
+    def IsTerminal(self):
+        return False
 
     def IsNextInitiallyDisabled(self):
         return True
 
-    def IsCancelable(self):
-        return False
+    def IsCancelInitiallyDisabled(self):
+        return True
 
     def GetNext(self):
-        if self.was_success:
-            return self.resources.page_success
-        else:
-            return self.resources.page_failure
+        return self.next
 
 class CheckConnectivityPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
@@ -572,6 +445,29 @@ class CheckConnectivityPanel(ProgramRemotePanelBase):
             libconcord.LC_FILE_TYPE_CONNECTIVITY
         )
 
+    def _AddWidgets(self):
+        vpos = counter()
+        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+
+    def _WorkerFunctionBody(self):
+        self._DgUpdate(
+            False,
+            0,
+            self.dg_notify_website
+        )
+        libconcord.post_connect_test_success(
+            self.resources.xml,
+            self.resources.xml_size
+        )
+        self._DgUpdate(
+            True,
+            100,
+            self.dg_notify_website
+        )
+
+    def GetTitle(self):
+        return "Checking Connectivity"
+
 class WriteConfigurationPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
         ProgramRemotePanelBase.__init__(
@@ -581,6 +477,78 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
             libconcord.LC_FILE_TYPE_CONFIGURATION
         )
 
+    def _AddWidgets(self):
+        vpos = counter()
+        self.dg_check_website = DecoratedGauge(self, "Check Website", vpos.next())
+        self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos.next())
+        self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos.next())
+        self.dg_write = DecoratedGauge(self, "Write Configuration", vpos.next())
+        self.dg_verify = DecoratedGauge(self, "Verify Upgrade", vpos.next())
+        self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos.next())
+        self.dg_set_time = DecoratedGauge(self, "Set Time", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+
+    def _WorkerFunctionBody(self):
+        program_callback = libconcord.callback_type(program_callback_imp)
+
+        self._DgStart(self.dg_check_website)
+        libconcord.post_preconfig(self.resources.xml, self.resources.xml_size)
+        self._DgEnd(self.dg_check_website)
+
+        self._DgStart(self.dg_prepare)
+        bin_data = POINTER(c_ubyte)()
+        bin_size = c_uint()
+        libconcord.find_config_binary(
+            self.resources.xml,
+            self.resources.xml_size,
+            byref(bin_data),
+            byref(bin_size)
+        )
+        self._DgUpdate(False, 50, self.dg_prepare)
+        libconcord.invalidate_flash()
+        self._DgEnd(self.dg_prepare)
+
+        self._DgStart(self.dg_erase)
+        libconcord.erase_config(
+            bin_size,
+            program_callback,
+            py_object((self._DgUpdate, self.dg_erase))
+        )
+        self._DgEnd(self.dg_erase)
+
+        self._DgStart(self.dg_write)
+        libconcord.write_config_to_remote(
+            bin_data,
+            bin_size,
+            program_callback,
+            py_object((self._DgUpdate, self.dg_write))
+        )
+        self._DgEnd(self.dg_write)
+
+        self._DgStart(self.dg_verify)
+        libconcord.verify_remote_config(
+            bin_data,
+            bin_size,
+            program_callback,
+            py_object((self._DgUpdate, self.dg_verify))
+        )
+        self._DgEnd(self.dg_verify)
+
+        self._DgStart(self.dg_reconnect)
+        libconcord.reset_remote()
+        worker_body_connect(self.resources, self._DgUpdate, self.dg_reconnect)
+
+        self._DgStart(self.dg_set_time)
+        libconcord.set_time()
+        self._DgEnd(self.dg_set_time)
+
+        self._DgStart(self.dg_notify_website)
+        libconcord.post_postconfig(self.resources.xml, self.resources.xml_size)
+        self._DgEnd(self.dg_notify_website)
+
+    def GetTitle(self):
+        return "Updating Configuration"
+
 class UpdateFirmwarePanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
         ProgramRemotePanelBase.__init__(
@@ -589,6 +557,91 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
             resources,
             libconcord.LC_FILE_TYPE_FIRMWARE
         )
+
+    def _AddWidgets(self):
+        vpos = counter()
+        self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos.next())
+        self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos.next())
+        self.dg_write = DecoratedGauge(self, "Write Firmware", vpos.next())
+        self.dg_finalize = DecoratedGauge(self, "Finalize Programming", vpos.next())
+        self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos.next())
+        self.dg_set_time = DecoratedGauge(self, "Set Time", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+
+    def _WorkerFunctionBody(self):
+        program_callback = libconcord.callback_type(program_callback_imp)
+
+        self._DgStart(self.dg_prepare)
+
+        # is_fw_update_supported returns error code; 0 OK, otherwise failure
+        # FIXME: Should probably determine this in OnActivated, and
+        # hide dg_finalize if it isn't relevant
+        if libconcord.is_fw_update_supported(0) == 0:
+            is_direct = False
+        elif libconcord.is_fw_update_supported(1) == 0:
+            is_direct = True
+        else:
+            raise Exception('Firmware update not supported on this remote.')
+
+        self._DgUpdate(False, 25, self.dg_prepare)
+
+        bin_data = POINTER(c_ubyte)()
+        bin_size = c_uint()
+        libconcord.extract_firmware_binary(
+            self.resources.xml,
+            self.resources.xml_size,
+            byref(bin_data),
+            byref(bin_size)
+        )
+
+        self._DgUpdate(False, 50, self.dg_prepare)
+
+        if not is_direct:
+            libconcord.prep_firmware()
+
+        self._DgUpdate(False, 75, self.dg_prepare)
+
+        libconcord.invalidate_flash()
+
+        self._DgEnd(self.dg_prepare)
+
+        self._DgStart(self.dg_erase)
+        libconcord.erase_firmware(
+            is_direct,
+            program_callback,
+            py_object((self._DgUpdate, self.dg_erase))
+        )
+        self._DgEnd(self.dg_erase)
+
+        self._DgStart(self.dg_write)
+        libconcord.write_firmware_to_remote(
+            bin_data,
+            bin_size,
+            c_int(is_direct and 1 or 0),
+            program_callback,
+            py_object((self._DgUpdate, self.dg_write))
+        )
+        self._DgEnd(self.dg_write)
+
+        self._DgStart(self.dg_finalize)
+        if not is_direct:
+            libconcord.finish_firmware()
+        self._DgEnd(self.dg_finalize)
+
+        self._DgStart(self.dg_reconnect)
+        libconcord.reset_remote()
+        worker_body_connect(self.resources, self._DgUpdate, self.dg_reconnect)
+
+        self._DgStart(self.dg_set_time)
+        libconcord.set_time()
+        self._DgEnd(self.dg_set_time)
+
+        self._DgStart(self.dg_notify_website)
+        libconcord.post_postfirmware(self.resources.xml, self.resources.xml_size)
+        self._DgEnd(self.dg_notify_website)
+
+    def GetTitle(self):
+        return "Updating Firmware"
 
 class SuccessPanel(MessagePanelBase):
     def __init__(self, parent, resources):
@@ -602,6 +655,9 @@ class SuccessPanel(MessagePanelBase):
     def OnActivated(self):
         pass
 
+    def OnCancel(self):
+        os._exit(0)
+
     def GetTitle(self):
         return "Success"
 
@@ -614,11 +670,8 @@ class SuccessPanel(MessagePanelBase):
     def IsNextInitiallyDisabled(self):
         return False
 
-    def IsCancelable(self):
-        return False
-
-    def GetNext(self):
-        return None
+    def IsCancelInitiallyDisabled(self):
+        return True
 
 class FailurePanel(wx.Panel):
     def __init__(self, parent, resources):
@@ -648,6 +701,7 @@ class FailurePanel(wx.Panel):
         else:
             self.btn_details.Hide()
         self.text_message.SetLabel(msg)
+        self.text_message.Wrap(MSG_WRAP)
         self.log_text = traceback
 
     def OnShowLogText(self, event):
@@ -665,6 +719,9 @@ class FailurePanel(wx.Panel):
     def OnActivated(self):
         self.btn_details.SetFocus()
 
+    def OnCancel(self):
+        os._exit(1)
+
     def GetTitle(self):
         return "Failure"
 
@@ -677,11 +734,8 @@ class FailurePanel(wx.Panel):
     def IsNextInitiallyDisabled(self):
         return False
 
-    def IsCancelable(self):
-        return False
-
-    def GetNext(self):
-        return None
+    def IsCancelInitiallyDisabled(self):
+        return True
 
 class Wizard(wx.Dialog):
     def __init__(self, resources):
@@ -715,6 +769,7 @@ class Wizard(wx.Dialog):
         sizer_buttons.Add(self.btn_next, 0, wx.EXPAND | wx.ALL, 5)
         self.btn_cancel = wx.Button(self, -1, "&Cancel")
         self.Bind(wx.EVT_BUTTON, self._OnCancel, self.btn_cancel)
+        self.Bind(wx.EVT_CLOSE, self._OnCancel)
         sizer_buttons.Add(self.btn_cancel, 0, wx.EXPAND | wx.ALL, 5)
         sizer_main.Add(sizer_buttons, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -748,15 +803,21 @@ class Wizard(wx.Dialog):
             raise Exception("Current page already set")
         self._SetPage(page)
 
-    def ReenableNext(self):
-        self.btn_next.Enable(True)
+    def _ReenableButton(self, button):
+        button.Enable(True)
 
         mouse_pos = self.ScreenToClient(wx.GetMousePosition())
-        if self.btn_next.GetRect().Contains(mouse_pos):
+        if button.GetRect().Contains(mouse_pos):
             self.WarpPointer(0, 0)
             self.WarpPointer(mouse_pos.x, mouse_pos.y)
 
-        self.btn_next.SetFocus()
+        button.SetFocus()
+
+    def ReenableNext(self):
+        self._ReenableButton(self.btn_next)
+
+    def ReenableCancel(self):
+        self._ReenableButton(self.btn_cancel)
 
     def _OnNext(self, event):
         if self.cur_page.IsTerminal():
@@ -765,7 +826,7 @@ class Wizard(wx.Dialog):
         self._SetPage(next_page)
 
     def _OnCancel(self, event):
-        os._exit(0)
+        self.cur_page.OnCancel()
 
     def _SetPage(self, page):
         if not page in self.pages:
@@ -794,7 +855,7 @@ class Wizard(wx.Dialog):
         self.btn_cancel.Enable(
             (not is_terminal)
             and
-            self.cur_page.IsCancelable()
+            (not self.cur_page.IsCancelInitiallyDisabled())
         )
         self.btn_next.SetFocus()
 
@@ -803,10 +864,11 @@ class Wizard(wx.Dialog):
 class Resources(object):
     def __init__(self, appdir):
         self.appdir = appdir
-        self.connected = False
 
-    def SetEzHexFilename(self, ezhex_filename):
-        self.ezhex_filename = ezhex_filename
+        self.ezhex_filename = None
+        self.xml = None
+        self.xml_size = None
+        self.connected = False
 
     def LoadImages(self):
         def load(filename, appdir = self.appdir):
@@ -838,20 +900,31 @@ class Resources(object):
 
     def CreatePages(self, wizard):
         self.page_welcome = WelcomePanel(wizard, self)
+        self.page_connect = ConnectPanel(wizard, self)
         self.page_check_connectivity = CheckConnectivityPanel(wizard, self)
         self.page_write_configuration = WriteConfigurationPanel(wizard, self)
         self.page_update_firmware = UpdateFirmwarePanel(wizard, self)
         self.page_success = SuccessPanel(wizard, self)
         self.page_failure = FailurePanel(wizard, self)
 
+    def SetEzHexFilename(self, ezhex_filename):
+        self.ezhex_filename = ezhex_filename
+
     def SetXmlData(self, xml, xml_size):
         self.xml = xml
         self.xml_size = xml_size
+
+    def SetConnected(self, connected):
+        self.connected = connected
 
 def main(argv):
     app = argv.pop(0)
     appdir = os.path.dirname(app)
 
+    # FIXME: Convert errors here into a jump to the failure page,
+    # so that there's alway GUI feedback on status. If congruity is
+    # run from a GUI app (e.g. browser like Firefox), there may be no
+    # terminal to report these errors on stderr...
     while len(argv) and argv[0].startswith('-'):
         arg = argv.pop(0)
         if arg == '--version':
@@ -877,6 +950,7 @@ def main(argv):
     resources.CreatePages(wizard)
     wizard.SetPages([
         resources.page_welcome,
+        resources.page_connect,
         resources.page_check_connectivity,
         resources.page_write_configuration,
         resources.page_update_firmware,

@@ -1,3 +1,11 @@
+* 2008-06-25 Stephen Warren <s-t-concordance@wwwdotorg.org>
+* Inspired by Andreas Schulz <Andreas.R.Schulz@gmx.de>
+- Significant internal structural changes to the implementation, which
+  simplify things a lot, and make program flow far more obvious, localized,
+  and correctly polymorphic.
+- Add a separate "connect" page, so that the other pages don't have to
+  re-implement this common function.
+
 * 2008-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
 * On behalf of Andreas Schulz <Andreas.R.Schulz@gmx.de>
 - Fix issue where next button wouldn't respond to clicks if the pointer was
