@@ -91,8 +91,19 @@ def worker_body_connect(resources, on_progress, cb_context):
         cb_context
     )
 
-ALIGN_LBA = wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL
+ALIGN_LTA = wx.ALIGN_LEFT | wx.ALIGN_TOP             | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
+ALIGN_LBA = wx.ALIGN_LEFT | wx.ALIGN_BOTTOM          | wx.ALL
+
+class WrappedStaticText(wx.StaticText):
+    def __init__(self, parent):
+        self.parent = parent
+        wx.StaticText.__init__(self, parent, -1, "")
+
+    def UpdateText(self, new_label):
+        cur_width = self.parent.GetSize().GetWidth()
+        self.SetLabel(new_label)           
+        self.Wrap(cur_width)
 
 class DecoratedGauge(object):
     def __init__(self, parent, caption, vpos):
@@ -122,21 +133,16 @@ class DecoratedGauge(object):
         self.current_bitmap = new_bitmap
         self.bitmap.SetBitmap(self.current_bitmap)
 
-# FIXME: Why are we hard-coding this.
-# Does the force the widget to be this wide when Fit()?
-MSG_WRAP = 450
-
 class MessagePanelBase(wx.Panel):
-    def __init__(self, parent, resources, message):
+    def __init__(self, parent, resources):
         self.parent = parent
         self.resources = resources
 
         wx.Panel.__init__(self, parent)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text_message = wx.StaticText(self, -1, message)
-        self.text_message.Wrap(MSG_WRAP)
-        self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        self.text_message = WrappedStaticText(self)
+        self.sizer.Add(self.text_message, 0, ALIGN_LTA, 5)
         self.SetSizerAndFit(self.sizer)
 
 class WelcomePanel(MessagePanelBase):
@@ -173,14 +179,18 @@ class WelcomePanel(MessagePanelBase):
         MessagePanelBase.__init__(
             self,
             parent,
-            resources,
-            self._msg_base % self._msg_parsing
+            resources
         )
 
         self.next = None
 
     def _WorkerFunction(self):
         try:
+            wx.CallAfter(
+                self.text_message.UpdateText,
+                self._msg_base % self._msg_parsing
+            )
+
             self.next = self.resources.page_connect
 
             xml = POINTER(c_ubyte)()
@@ -247,8 +257,7 @@ class WelcomePanel(MessagePanelBase):
         if ok:
             msg += self._msg_please_connect_remote
         msg += self._msg_do_next
-        self.text_message.SetLabel(msg)           
-        self.text_message.Wrap(MSG_WRAP)
+        self.text_message.UpdateText(msg)           
         self.parent.ReenableCancel()
         self.parent.ReenableNext()
 
@@ -336,6 +345,8 @@ class ConnectPanel(GbsPanelBase):
         # FIXME: Should probably add instructions saying
         # "connect your remote now!" here
         self.dg_connect = DecoratedGauge(self, "Detect Remote", 0)
+        # FIXME: Once connected, should display some information
+        # about the remote...
 
     def _WorkerFunction(self):
         try:
@@ -648,12 +659,11 @@ class SuccessPanel(MessagePanelBase):
         MessagePanelBase.__init__(
             self,
             parent,
-            resources,
-            "Programming has completed successfully."
+            resources
         )
 
     def OnActivated(self):
-        pass
+        self.text_message.UpdateText("Operation has completed successfully.")
 
     def OnCancel(self):
         os._exit(0)
@@ -681,27 +691,20 @@ class FailurePanel(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text_message = wx.StaticText(
-            self,
-            -1,
-            "Programming failed; see below for details"
-        )
-        self.text_message.Wrap(450)
+        self.text_message = WrappedStaticText(self)
         self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.btn_details = wx.Button(self, -1, "&Details...")
         self.Bind(wx.EVT_BUTTON, self.OnShowLogText, self.btn_details)
         self.sizer.Add(self.btn_details, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.SetSizerAndFit(self.sizer)
+
+        self.message = ""
         self.log_text = ''
 
     def SetMessages(self, message, traceback):
-        msg = message
+        self.message = msg = message
         if traceback:
-            msg += "\n\nSee below for details."
-        else:
-            self.btn_details.Hide()
-        self.text_message.SetLabel(msg)
-        self.text_message.Wrap(MSG_WRAP)
+            self.message += "\n\nSee below for details."
         self.log_text = traceback
 
     def OnShowLogText(self, event):
@@ -717,7 +720,11 @@ class FailurePanel(wx.Panel):
         self.parent.ReenableNext()
 
     def OnActivated(self):
-        self.btn_details.SetFocus()
+        if self.log_text:
+            self.btn_details.SetFocus()
+        else:
+            self.btn_details.Hide()
+        self.text_message.UpdateText(self.message)
 
     def OnCancel(self):
         os._exit(1)
@@ -738,7 +745,10 @@ class FailurePanel(wx.Panel):
         return True
 
 class Wizard(wx.Dialog):
-    def __init__(self, resources):
+    def __init__(self, resources, min_page_width = 450, min_page_height = None):
+        self.min_page_width = min_page_width
+        self.min_page_height = min_page_height
+
         wx.Dialog.__init__(self, None, -1, 'Congruity version ' + version)
 
         sizer_main = wx.BoxSizer(wx.VERTICAL)
@@ -786,17 +796,23 @@ class Wizard(wx.Dialog):
         for page in self.pages:
             page.Hide()
 
-        self.size_wiz = self.GetSizeTuple()
+        size_wiz = self.GetSizeTuple()
         for page in self.pages:
             page.Show()
             self.sizer_top_right.Add(page, 1, wx.EXPAND)
             self.Fit()
             size_page = self.GetSizeTuple()
-            self.size_wiz = tuple_max(self.size_wiz, size_page)
+            size_wiz = tuple_max(size_wiz, size_page)
             page.Hide()
             self.sizer_top_right.Remove(page)
 
-        self.SetSize(self.size_wiz)
+        if self.min_page_width and (size_wiz[0] < self.min_page_width):
+            size_wiz = (self.min_page_width, size_wiz[1])
+
+        if self.min_page_height and (size_wiz[1] < self.min_page_height):
+            size_wiz = (size_wiz[0], self.min_page_height )
+
+        self.SetSize(size_wiz)
 
     def SetInitialPage(self, page):
         if self.cur_page:
