@@ -76,10 +76,18 @@ def worker_body_connect(resources, on_progress, cb_context):
         try:
             libconcord.init_concord()
             resources.SetConnected(True)
-            libconcord.get_identity(
-                program_callback,
-                None
-            )
+            try:
+                libconcord.get_identity(
+                    program_callback,
+                    None
+                )
+            except:
+                ignore = False
+                if type(sys.exc_value) == libconcord.LibConcordException:
+                    # FIXME: Expose these constants in libconcord.py
+                    ignore = sys.exc_value.result == 16 #LC_ERROR_INVALID_CONFIG
+                if not ignore:
+                    raise
             break
         except:
             if attempt == max_attempts - 1:
@@ -104,6 +112,59 @@ class WrappedStaticText(wx.StaticText):
         cur_width = self.parent.GetSize().GetWidth()
         self.SetLabel(new_label)           
         self.Wrap(cur_width)
+        self.parent.Layout()
+
+class DecoratedContainer(wx.Panel):
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        wx.Panel.__init__(self, parent)
+
+        self.sizer = wx.GridBagSizer(5, 5)
+        self.sizer.AddGrowableCol(2)
+        self.SetSizer(self.sizer)
+
+        self.last_updated_dg = None
+
+    def _DgStart(self, dg):
+        wx.CallAfter(self._OnProgressGauge, False, 0, dg)
+
+    def _DgUpdate(self, is_done, percent, dg):
+        wx.CallAfter(self._OnProgressGauge, is_done, percent, dg)
+
+    def _DgEnd(self, dg):
+        wx.CallAfter(self._OnProgressGauge, True, 100, dg)
+
+    def _DgFailure(self):
+        if self.last_updated_dg:
+            bitmap = self.last_updated_dg
+            bitmap.SetBitmap(self.resources.icon_failed)
+
+    def _OnProgressGauge(self, is_done, percent, dg):
+        if is_done:
+            new_bitmap = self.resources.icon_complete
+        else:
+            new_bitmap = self.resources.icon_in_progress
+        dg.SetBitmap(new_bitmap)
+        dg.gauge.SetValue(percent)
+        self.last_updated_dg = dg
+
+class DecoratedContainerThreadMixin(object):
+    def __init__(self, dc):
+        self.dc = dc
+
+    def _DgStart(self, dg):
+        wx.CallAfter(self.dc._DgStart, dg)
+
+    def _DgUpdate(self, is_done, percent, dg):
+        wx.CallAfter(self.dc._DgUpdate, is_done, percent, dg)
+
+    def _DgEnd(self, dg):
+        wx.CallAfter(self.dc._DgEnd, dg)
+
+    def _DgFailure(self):
+        wx.CallAfter(self.dc._DgFailure)
 
 class DecoratedGauge(object):
     def __init__(self, parent, caption, vpos):
@@ -146,41 +207,39 @@ class MessagePanelBase(wx.Panel):
         self.SetSizerAndFit(self.sizer)
 
 class WelcomePanel(MessagePanelBase):
-    _msg_base = (
+    _msg_welcome = (
         "Welcome to congruity; a programming application " + 
-        "for Logitech Harmony remote controls.\n\n" +
-        "Operation type: %s\n\n"
+        "for Logitech Harmony remote controls.\n\n"
     )
 
-    _msg_please_connect_remote = (
+    _msg_progress_parsing = (
+        "Please wait while the configuration file is parsed."
+    )
+
+    _msg_status_ok = (
         "Please ensure the remote control is connected " +
-        "before proceeding.\n\n"
-    )
-
-    _msg_do_next = (
+        "before proceeding.\n\n" + 
         "Click next to begin operation."
     )
 
-    _msg_unreadable_file = (
-        "The configuration file cannot be read. " +
+    _msg_status_failure = (
+        "A problem occurred. Click next for details."
+    )
+
+    _msg_failure_explanation = (
+        "The configuration file cannot be read, or parsing failed.\n\n" +
         "Operation cannot continue."
     )
 
-    _msg_unsupported_filetype = (
-        "This kind of configuration file is not currently supported. " +
-        "Operation cannot continue."
+    _msg_failure_details_unknown_op = (
+        "Unrecognized file type '%d' returned by libconcord"
     )
-
-    _msg_parsing = "Parsing..."
-
-    _msg_unknown = "Unknown"
 
     def __init__(self, parent, resources):
-        MessagePanelBase.__init__(
-            self,
-            parent,
-            resources
-        )
+        self.parent = parent
+        self.resources = resources
+
+        MessagePanelBase.__init__(self, parent, resources)
 
         self.next = None
 
@@ -188,7 +247,7 @@ class WelcomePanel(MessagePanelBase):
         try:
             wx.CallAfter(
                 self.text_message.UpdateText,
-                self._msg_base % self._msg_parsing
+                self._msg_welcome + self._msg_progress_parsing
             )
 
             self.next = self.resources.page_connect
@@ -223,26 +282,25 @@ class WelcomePanel(MessagePanelBase):
                     )
             }.get(type.value, (None, None))
 
-            if next_page:
-                wx.CallAfter(self._OnStatusOk, next_page, type_text)
+            if not next_page:
+                wx.CallAfter(
+                    self._OnStatusFailure,
+                    self._msg_failure_explanation,
+                    self._msg_failure_details_unknown_op % type.value
+                )
                 return
 
-            wx.CallAfter(
-                self._OnStatusFailure,
-                self._msg_unsupported_filetype,
-                None
-            )
-            return
+            wx.CallAfter(self._OnStatusOk, next_page, type_text)
         except:
             wx.CallAfter(
                 self._OnStatusFailure,
-                self._msg_unreadable_file,
+                self._msg_failure_explanation,
                 exception_message()
             )
 
     def _OnStatusOk(self, next_page, type_text):
         self.resources.page_connect.SetNext(next_page)
-        self._SetLabelReenableButtons(type_text, True)
+        self._OnStatusCommon(self._msg_status_ok)
 
     def _OnStatusFailure(self, failure_msg, details):
         self.resources.page_failure.SetMessages(
@@ -250,14 +308,10 @@ class WelcomePanel(MessagePanelBase):
             details
         )
         self.next = self.resources.page_failure
-        self._SetLabelReenableButtons(self._msg_unknown, False)
+        self._OnStatusCommon(self._msg_status_failure)
 
-    def _SetLabelReenableButtons(self, file_type, ok):
-        msg = (self._msg_base % file_type)
-        if ok:
-            msg += self._msg_please_connect_remote
-        msg += self._msg_do_next
-        self.text_message.UpdateText(msg)           
+    def _OnStatusCommon(self, message):
+        self.text_message.UpdateText(self._msg_welcome + message)
         self.parent.ReenableCancel()
         self.parent.ReenableNext()
 
@@ -277,96 +331,182 @@ class WelcomePanel(MessagePanelBase):
         return True
 
     def IsCancelInitiallyDisabled(self):
-        return True
+        return False
 
     def GetNext(self):
         return self.next
 
-class GbsPanelBase(wx.Panel):
+class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
+    _msg_ensure_connected = (
+        "Please ensure your remote is correctly connected to your computer."
+    )
+
+    _msg_status_ok = (
+        "Successfully connected to a remote:\n%s"
+    )
+
+    _msg_status_failure = (
+        "A problem occurred. Click next for details."
+    )
+
+    _msg_failure_explanation = (
+        "No remote could be found."
+    )
+
     def __init__(self, parent, resources):
         self.parent = parent
         self.resources = resources
 
         wx.Panel.__init__(self, parent)
 
-        self.sizer = wx.GridBagSizer(5, 5)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self._AddWidgets()
+        self.text_help = WrappedStaticText(self)
+        self.sizer.Add(self.text_help, 0, wx.ALIGN_LEFT | wx.ALL, 5)
 
-        self.sizer.AddGrowableCol(2)
+        self.dc = DecoratedContainer(self, resources)
+        DecoratedContainerThreadMixin.__init__(self, self.dc)
+        self.dg_connect = DecoratedGauge(self.dc, "Detect Remote", 0)
+        self.sizer.Add(self.dc, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+
+        self.text_info = WrappedStaticText(self)
+        self.sizer.Add(self.text_info, 0, wx.ALIGN_LEFT | wx.ALL, 5)
 
         self.SetSizerAndFit(self.sizer)
 
-        self.last_updated_dg = None
-
-    def _AddWidgets(self):
-        pass
-
-    def _DgStart(self, dg):
-        wx.CallAfter(self._OnProgressGauge, False, 0, dg)
-
-    def _DgUpdate(self, is_done, percent, dg):
-        wx.CallAfter(self._OnProgressGauge, is_done, percent, dg)
-
-    def _DgEnd(self, dg):
-        wx.CallAfter(self._OnProgressGauge, True, 100, dg)
-
-    def _OnStatusOk(self):
-        self.parent.ReenableCancel()
-        self.parent.ReenableNext()
-
-    def _OnStatusFailure(self, failure_msg, details):
-        self.resources.page_failure.SetMessages(
-            failure_msg,
-            details
-        )
-        if self.last_updated_dg:
-            bitmap = self.last_updated_dg
-            bitmap.SetBitmap(self.resources.icon_failed)
-        self.parent.ReenableCancel()
-        self.parent.ReenableNext()
-
-    def _OnProgressGauge(self, is_done, percent, dg):
-        if is_done:
-            new_bitmap = self.resources.icon_complete
-        else:
-            new_bitmap = self.resources.icon_in_progress
-        dg.SetBitmap(new_bitmap)
-        dg.gauge.SetValue(percent)
-        self.last_updated_dg = dg
-
-class ConnectPanel(GbsPanelBase):
-    def __init__(self, parent, resources):
-        self.next = None
         self.cancel_requested = False
-        GbsPanelBase.__init__(self, parent, resources)
-
-    def _AddWidgets(self):
-        # FIXME: Should probably add instructions saying
-        # "connect your remote now!" here
-        self.dg_connect = DecoratedGauge(self, "Detect Remote", 0)
-        # FIXME: Once connected, should display some information
-        # about the remote...
+        self.next = None
 
     def _WorkerFunction(self):
         try:
+            wx.CallAfter(
+                self.text_help.UpdateText,
+                self._msg_ensure_connected
+            )
+
+            self._DgStart(self.dg_connect)
             worker_body_connect(
                 self.resources,
                 self._DgUpdate,
                 self.dg_connect
             )
-            wx.CallAfter(self._OnStatusOk)
-            return
+            self._DgEnd(self.dg_connect)
+
+            mfg = libconcord.get_mfg()
+            model = libconcord.get_model()
+
+            mfg_model = mfg + " " + model
+            wx.CallAfter(self._OnStatusOk, mfg_model)
         except:
             wx.CallAfter(
                 self._OnStatusFailure,
-                "No remote found",
+                self._msg_failure_explanation,
                 exception_message()
             )
 
+    def _OnStatusOk(self, mfg_model):
+        self.btn_details = wx.Button(self, -1, "&Details...")
+        self.sizer.Add(self.btn_details, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self._OnDetails, self.btn_details)
+        self._OnStatusCommon(self._msg_status_ok % mfg_model)
+
     def _OnStatusFailure(self, failure_msg, details):
+        self.dc._DgFailure()
+        self.resources.page_failure.SetMessages(
+            failure_msg,
+            details
+        )
         self.SetNext(self.resources.page_failure)
-        GbsPanelBase._OnStatusFailure(self, failure_msg, details)
+        self._OnStatusCommon(self._msg_status_failure)
+
+    def _OnStatusCommon(self, message):
+        self.text_info.UpdateText(message)
+        self.parent.ReenableNext()
+
+    def _OnDetails(self, event):
+        try:
+            msg = ""
+
+            mfg = libconcord.get_mfg()
+            model = libconcord.get_model()
+            codename = libconcord.get_codename()
+            msg += "Model: %s %s (%s)\n" % (msg, model, codename)
+
+            hid_mfg = libconcord.get_hid_mfg_str()
+            hid_prod = libconcord.get_hid_prod_str()
+            msg += "USB HID Model: %s %s\n" % (hid_mfg, hid_prod)
+
+            ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
+            ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
+            ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
+            msg += "Serial:\n    %s\n    %s\n    %s\n" % (ser_1, ser_2, ser_3)
+
+            arch = libconcord.get_arch()
+            proto = libconcord.get_proto()
+            skin = libconcord.get_skin()
+            msg += "Arch:%d Proto:%d Skin:%d\n" % (arch, proto, skin)
+
+            fw_type = libconcord.get_fw_type()
+            fw_ver_maj = libconcord.get_fw_ver_maj()
+            fw_ver_min = libconcord.get_fw_ver_min()
+            msg += "Firmware type:%d, version %d.%d\n" % (
+                fw_type, fw_ver_maj, fw_ver_min
+            )
+
+            hw_ver_maj = libconcord.get_hw_ver_maj()
+            hw_ver_min = libconcord.get_hw_ver_min()
+            msg += "HW version %d.%d\n" % (hw_ver_maj, hw_ver_min)
+
+            flash_mfg = libconcord.get_flash_mfg()
+            flash_id = libconcord.get_flash_id()
+            flash_part_num = libconcord.get_flash_part_num()
+            flash_size = libconcord.get_flash_size()
+            msg += "Flash Manufacturer:%d ID:%d Part:%s Size:%dK\n" % (
+                flash_mfg, flash_id, flash_part_num, flash_size
+            )
+
+            hid_irl = libconcord.get_hid_irl()
+            hid_orl = libconcord.get_hid_orl()
+            hid_frl = libconcord.get_hid_frl()
+            msg += "USB HID Irl:%d Orl:%d Frl:%d\n" % (hid_irl, hid_orl, hid_frl)
+
+            usb_vid = libconcord.get_usb_vid()
+            usb_pid = libconcord.get_usb_pid()
+            usb_bcd = libconcord.get_usb_bcd()
+            msg += "USB VID:%04x PID:%04x BCD:%04x\n" % (usb_vid, usb_pid, usb_bcd)
+
+            config_bytes_used = libconcord.get_config_bytes_used()
+            config_bytes_total = libconcord.get_config_bytes_total()
+            config_pct_used = (config_bytes_used * 100) / config_bytes_total
+            msg += "Config used %d / total %d = %d%%\n" % (
+                config_bytes_used, config_bytes_total, config_pct_used
+            )
+
+            fw_nondirect = libconcord.is_fw_update_supported(0) == 0
+            fw_direct = libconcord.is_fw_update_supported(1) == 0
+            if fw_nondirect or fw_direct:
+                config_safe = libconcord.is_config_safe_after_fw() == 0
+                msg += "Firmware updates: Supported (%s), config%ssafe\n" % (
+                    fw_direct and "Direct" or "Not direct",
+                    config_safe and " " or " NOT "
+                )
+            else:
+                msg += "Firmware updates: NOT supported\n"
+        except:
+            msg = (
+                "Error retrieving remote information:\n" +
+                exception_message()
+            )
+
+        size = self.parent.GetClientSizeTuple()
+        size = (size[0] * 90 / 100, size[1] * 90 / 100)
+        wx.lib.dialogs.ScrolledMessageDialog(
+            self,
+            msg,
+            "Remote Information",
+            (-1, -1),
+            size
+        ).ShowModal()
 
     def SetNext(self, next):
         self.next = next
@@ -392,11 +532,24 @@ class ConnectPanel(GbsPanelBase):
     def GetNext(self):
         return self.next
 
-class ProgramRemotePanelBase(GbsPanelBase):
+class ProgramRemotePanelBase(wx.Panel, DecoratedContainerThreadMixin):
     def __init__(self, parent, resources, file_type):
+        self.parent = parent
+        self.resources = resources
         self.file_type = file_type
+
+        wx.Panel.__init__(self, parent)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.dc = DecoratedContainer(self, resources)
+        DecoratedContainerThreadMixin.__init__(self, self.dc)
+        self._AddWidgets()
+        self.sizer.Add(self.dc, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+
+        self.SetSizerAndFit(self.sizer)
+
         self.next = None
-        GbsPanelBase.__init__(self, parent, resources)
 
     def _WorkerFunction(self):
         try:
@@ -420,11 +573,20 @@ class ProgramRemotePanelBase(GbsPanelBase):
 
     def _OnStatusOk(self):
         self.next = self.resources.page_success
-        GbsPanelBase._OnStatusOk(self)
+        self._OnStatusCommon()
 
     def _OnStatusFailure(self, failure_msg, details):
+        self.dc._DgFailure()
         self.next = self.resources.page_failure
-        GbsPanelBase._OnStatusFailure(self, failure_msg, details)
+        self.resources.page_failure.SetMessages(
+            failure_msg,
+            details
+        )
+        self._OnStatusCommon()
+
+    def _OnStatusCommon(self):
+        self.parent.ReenableCancel()
+        self.parent.ReenableNext()
 
     def OnActivated(self):
         thread.start_new_thread(self._WorkerFunction, ())
@@ -458,7 +620,7 @@ class CheckConnectivityPanel(ProgramRemotePanelBase):
 
     def _AddWidgets(self):
         vpos = counter()
-        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
 
     def _WorkerFunctionBody(self):
         self._DgUpdate(
@@ -490,14 +652,14 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
 
     def _AddWidgets(self):
         vpos = counter()
-        self.dg_check_website = DecoratedGauge(self, "Check Website", vpos.next())
-        self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos.next())
-        self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos.next())
-        self.dg_write = DecoratedGauge(self, "Write Configuration", vpos.next())
-        self.dg_verify = DecoratedGauge(self, "Verify Upgrade", vpos.next())
-        self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos.next())
-        self.dg_set_time = DecoratedGauge(self, "Set Time", vpos.next())
-        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+        self.dg_check_website = DecoratedGauge(self.dc, "Check Website", vpos.next())
+        self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
+        self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
+        self.dg_write = DecoratedGauge(self.dc, "Write Configuration", vpos.next())
+        self.dg_verify = DecoratedGauge(self.dc, "Verify Upgrade", vpos.next())
+        self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
+        self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
 
     def _WorkerFunctionBody(self):
         program_callback = libconcord.callback_type(program_callback_imp)
@@ -571,13 +733,13 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
 
     def _AddWidgets(self):
         vpos = counter()
-        self.dg_prepare = DecoratedGauge(self, "Prepare Remote", vpos.next())
-        self.dg_erase = DecoratedGauge(self, "Erase Flash", vpos.next())
-        self.dg_write = DecoratedGauge(self, "Write Firmware", vpos.next())
-        self.dg_finalize = DecoratedGauge(self, "Finalize Programming", vpos.next())
-        self.dg_reconnect = DecoratedGauge(self, "Reconnect to Remote", vpos.next())
-        self.dg_set_time = DecoratedGauge(self, "Set Time", vpos.next())
-        self.dg_notify_website = DecoratedGauge(self, "Notify Website", vpos.next())
+        self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
+        self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
+        self.dg_write = DecoratedGauge(self.dc, "Write Firmware", vpos.next())
+        self.dg_finalize = DecoratedGauge(self.dc, "Finalize Programming", vpos.next())
+        self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
+        self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
 
     def _WorkerFunctionBody(self):
         program_callback = libconcord.callback_type(program_callback_imp)
@@ -585,8 +747,7 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
         self._DgStart(self.dg_prepare)
 
         # is_fw_update_supported returns error code; 0 OK, otherwise failure
-        # FIXME: Should probably determine this in OnActivated, and
-        # hide dg_finalize if it isn't relevant
+        # FIXME: Should hide dg_finalize if it isn't relevant
         if libconcord.is_fw_update_supported(0) == 0:
             is_direct = False
         elif libconcord.is_fw_update_supported(1) == 0:
@@ -694,20 +855,15 @@ class FailurePanel(wx.Panel):
         self.text_message = WrappedStaticText(self)
         self.sizer.Add(self.text_message, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.btn_details = wx.Button(self, -1, "&Details...")
-        self.Bind(wx.EVT_BUTTON, self.OnShowLogText, self.btn_details)
+        self.Bind(wx.EVT_BUTTON, self._OnDetails, self.btn_details)
         self.sizer.Add(self.btn_details, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.SetSizerAndFit(self.sizer)
 
         self.message = ""
-        self.log_text = ''
+        self.log_text = ""
 
-    def SetMessages(self, message, traceback):
-        self.message = msg = message
-        if traceback:
-            self.message += "\n\nSee below for details."
-        self.log_text = traceback
-
-    def OnShowLogText(self, event):
+    def _OnDetails(self, event):
+        # FIXME: Unify this with ConnectPanel's message box code
         size = self.parent.GetClientSizeTuple()
         size = (size[0] * 90 / 100, size[1] * 90 / 100)
         wx.lib.dialogs.ScrolledMessageDialog(
@@ -718,6 +874,12 @@ class FailurePanel(wx.Panel):
             size
         ).ShowModal()
         self.parent.ReenableNext()
+
+    def SetMessages(self, message, traceback):
+        self.message = message
+        if traceback:
+            self.message += "\n\nSee below for details."
+        self.log_text = traceback
 
     def OnActivated(self):
         if self.log_text:
@@ -764,6 +926,8 @@ class Wizard(wx.Dialog):
         self.sizer_top_right.Add(self.title, 0, wx.EXPAND)
         divider_top_right = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
         self.sizer_top_right.Add(divider_top_right, 0, wx.EXPAND)
+        spacer = wx.StaticText(self, -1, "")
+        self.sizer_top_right.Add(spacer, 0, wx.EXPAND)
 
         sizer_top.Add(self.sizer_top_right, 1, wx.EXPAND | wx.ALL, 5)
         sizer_main.Add(sizer_top, 1, wx.EXPAND | wx.ALL, 5)

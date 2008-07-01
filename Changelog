@@ -1,4 +1,4 @@
-* 2008-06-25 Stephen Warren <s-t-concordance@wwwdotorg.org>
+* 2008-06-25..2008-06-30 Stephen Warren <s-t-concordance@wwwdotorg.org>
 * Inspired by Andreas Schulz <Andreas.R.Schulz@gmx.de>
 - Significant internal structural changes to the implementation, which
   simplify things a lot, and make program flow far more obvious, localized,
