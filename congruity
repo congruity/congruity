@@ -49,6 +49,9 @@ def program_callback_imp(count, current, total, context):
         print
         traceback.print_exc()
 
+class CmdLineException(Exception):
+    pass
+
 def exception_message():
     msg = ''
     if type(sys.exc_value) == libconcord.LibConcordException:
@@ -57,6 +60,13 @@ def exception_message():
                 sys.exc_value.result_str,
                 sys.exc_value.func,
                 sys.exc_value.result
+            )
+        except:
+            pass
+    if type(sys.exc_value) == CmdLineException:
+        try:
+            msg += '%s\n\n' % (
+                str(sys.exc_value)
             )
         except:
             pass
@@ -98,6 +108,17 @@ def worker_body_connect(resources, on_progress, cb_context):
         100,
         cb_context
     )
+
+def show_modal_scrolled_msgbox(parent, title, text):
+    size = parent.GetClientSizeTuple()
+    size = (size[0] * 90 / 100, size[1] * 90 / 100)
+    wx.lib.dialogs.ScrolledMessageDialog(
+        parent,
+        text,
+        title,
+        (-1, -1),
+        size
+    ).ShowModal()
 
 ALIGN_LTA = wx.ALIGN_LEFT | wx.ALIGN_TOP             | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
@@ -242,6 +263,7 @@ class WelcomePanel(MessagePanelBase):
         MessagePanelBase.__init__(self, parent, resources)
 
         self.next = None
+        self.initial_exception = None
 
     def _WorkerFunction(self):
         try:
@@ -249,6 +271,13 @@ class WelcomePanel(MessagePanelBase):
                 self.text_message.UpdateText,
                 self._msg_welcome + self._msg_progress_parsing
             )
+
+            if self.initial_exception:
+                wx.CallAfter(
+                    self._OnStatusFailure,
+                    *self.initial_exception
+                )
+                return
 
             self.next = self.resources.page_connect
 
@@ -315,6 +344,9 @@ class WelcomePanel(MessagePanelBase):
         self.parent.ReenableCancel()
         self.parent.ReenableNext()
 
+    def SetInitialException(self, initial_exception):
+        self.initial_exception = initial_exception
+
     def OnActivated(self):
         thread.start_new_thread(self._WorkerFunction, ())
 
@@ -374,7 +406,6 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
 
         self.SetSizerAndFit(self.sizer)
 
-        self.cancel_requested = False
         self.next = None
 
     def _WorkerFunction(self):
@@ -498,15 +529,7 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
                 exception_message()
             )
 
-        size = self.parent.GetClientSizeTuple()
-        size = (size[0] * 90 / 100, size[1] * 90 / 100)
-        wx.lib.dialogs.ScrolledMessageDialog(
-            self,
-            msg,
-            "Remote Information",
-            (-1, -1),
-            size
-        ).ShowModal()
+        show_modal_scrolled_msgbox(self.parent, "Remote Information", msg)
 
     def SetNext(self, next):
         self.next = next
@@ -592,10 +615,13 @@ class ProgramRemotePanelBase(wx.Panel, DecoratedContainerThreadMixin):
         thread.start_new_thread(self._WorkerFunction, ())
 
     def OnCancel(self):
-        # FIXME: Do something here, like display a "no!" dialog.
-        # We don't just quit, so programming isn't aborted part-way-through
-        # which could leave the remote in a bad state,
-        pass
+        show_modal_scrolled_msgbox(
+            self.parent,
+            "Cannot Cancel",
+            "Cancel is disabled during programming operations, " +
+            "to prevent placing the remote into a state that will " +
+            "potentially be difficult to recover from."
+        )
 
     def IsTerminal(self):
         return False
@@ -747,13 +773,15 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
         self._DgStart(self.dg_prepare)
 
         # is_fw_update_supported returns error code; 0 OK, otherwise failure
-        # FIXME: Should hide dg_finalize if it isn't relevant
         if libconcord.is_fw_update_supported(0) == 0:
             is_direct = False
         elif libconcord.is_fw_update_supported(1) == 0:
             is_direct = True
         else:
-            raise Exception('Firmware update not supported on this remote.')
+            raise Exception(
+                "Sorry, congruity doesn't yet support firmware update " +
+                "on this remote model."
+            )
 
         self._DgUpdate(False, 25, self.dg_prepare)
 
@@ -863,16 +891,7 @@ class FailurePanel(wx.Panel):
         self.log_text = ""
 
     def _OnDetails(self, event):
-        # FIXME: Unify this with ConnectPanel's message box code
-        size = self.parent.GetClientSizeTuple()
-        size = (size[0] * 90 / 100, size[1] * 90 / 100)
-        wx.lib.dialogs.ScrolledMessageDialog(
-            self,
-            self.log_text,
-            "Error Log",
-            (-1, -1),
-            size
-        ).ShowModal()
+        show_modal_scrolled_msgbox(self.parent, "Error Log", self.log_text)
         self.parent.ReenableNext()
 
     def SetMessages(self, message, traceback):
@@ -1101,23 +1120,23 @@ def main(argv):
     app = argv.pop(0)
     appdir = os.path.dirname(app)
 
-    # FIXME: Convert errors here into a jump to the failure page,
-    # so that there's alway GUI feedback on status. If congruity is
-    # run from a GUI app (e.g. browser like Firefox), there may be no
-    # terminal to report these errors on stderr...
-    while len(argv) and argv[0].startswith('-'):
-        arg = argv.pop(0)
-        if arg == '--version':
-            print version
-            sys.exit(0)
-        else:
-            print >>sys.stderr, "ERROR: Option '%s' not recognized" % arg
-            sys.exit(0)
-    if len(argv) != 1:
-        print >>sys.stderr, "ERROR: Precisely one filename argument is required"
-        sys.exit(0)
-    ezhex_filename = argv.pop(0)
-
+    try:
+        while len(argv) and argv[0].startswith('-'):
+            arg = argv.pop(0)
+            if arg == '--version':
+                print version
+                return
+            else:
+                raise CmdLineException("ERROR: Option '%s' not recognized" % arg)
+                sys.exit(0)
+        if len(argv) != 1:
+            raise CmdLineException("ERROR: Precisely one filename argument is required")
+        ezhex_filename = argv.pop(0)
+        initial_exception = None
+    except:
+        ezhex_filename = None
+        initial_exception = ("Command-line error", exception_message())
+        
     app = wx.PySimpleApp()
     wx.InitAllImageHandlers()
 
@@ -1128,6 +1147,8 @@ def main(argv):
     wizard = Wizard(resources)
 
     resources.CreatePages(wizard)
+    if initial_exception:
+        resources.page_welcome.SetInitialException(initial_exception)
     wizard.SetPages([
         resources.page_welcome,
         resources.page_connect,
