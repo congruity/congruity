@@ -149,18 +149,17 @@ class DecoratedContainer(wx.Panel):
         self.last_updated_dg = None
 
     def _DgStart(self, dg):
-        wx.CallAfter(self._OnProgressGauge, False, 0, dg)
+        self._OnProgressGauge(False, 0, dg)
 
     def _DgUpdate(self, is_done, percent, dg):
-        wx.CallAfter(self._OnProgressGauge, is_done, percent, dg)
+        self._OnProgressGauge(is_done, percent, dg)
 
     def _DgEnd(self, dg):
-        wx.CallAfter(self._OnProgressGauge, True, 100, dg)
+        self._OnProgressGauge(True, 100, dg)
 
     def _DgFailure(self):
         if self.last_updated_dg:
-            bitmap = self.last_updated_dg
-            bitmap.SetBitmap(self.resources.icon_failed)
+            self.last_updated_dg.SetBitmap(self.resources.icon_failed)
 
     def _OnProgressGauge(self, is_done, percent, dg):
         if is_done:
