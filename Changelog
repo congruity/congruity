@@ -1,7 +1,9 @@
 * 2008-07-02 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- Increase connect timeout after a reset operation, just to make sure
+  we don't miss the remote coming back.
 * On behalf of Andreas Schulz <Andreas.R.Schulz@gmx.de>
 - Use a simpler and potentially more reliable fix for GTK buttons not
-  accepting clicks if the mouse was inside the widget when if enabled.
+  accepting clicks if the mouse was inside the widget when enabled.
 
 * 2008-07-01 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Command-line parsing errors are displayed by the GUI, instead of being
