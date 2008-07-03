@@ -73,10 +73,10 @@ def exception_message():
     msg += traceback.format_exc()
     return msg
 
-def worker_body_connect(resources, on_progress, cb_context):
+def worker_body_connect(resources, on_progress, cb_context, after_reset):
     program_callback = libconcord.callback_type(program_callback_imp)
 
-    max_attempts = 60
+    max_attempts = after_reset and 180 or 60
     for attempt in range(max_attempts):
         on_progress(
             False,
@@ -418,7 +418,8 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
             worker_body_connect(
                 self.resources,
                 self._DgUpdate,
-                self.dg_connect
+                self.dg_connect,
+                False
             )
             self._DgEnd(self.dg_connect)
 
@@ -734,7 +735,12 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
 
         self._DgStart(self.dg_reconnect)
         libconcord.reset_remote()
-        worker_body_connect(self.resources, self._DgUpdate, self.dg_reconnect)
+        worker_body_connect(
+            self.resources,
+            self._DgUpdate,
+            self.dg_reconnect,
+            True
+        )
 
         self._DgStart(self.dg_set_time)
         libconcord.set_time()
@@ -829,7 +835,12 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
 
         self._DgStart(self.dg_reconnect)
         libconcord.reset_remote()
-        worker_body_connect(self.resources, self._DgUpdate, self.dg_reconnect)
+        worker_body_connect(
+            self.resources,
+            self._DgUpdate,
+            self.dg_reconnect,
+            True
+        )
 
         self._DgStart(self.dg_set_time)
         libconcord.set_time()
