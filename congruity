@@ -1014,12 +1014,8 @@ class Wizard(wx.Dialog):
 
     def _ReenableButton(self, button):
         button.Enable(True)
-
-        mouse_pos = self.ScreenToClient(wx.GetMousePosition())
-        if button.GetRect().Contains(mouse_pos):
-            self.WarpPointer(0, 0)
-            self.WarpPointer(mouse_pos.x, mouse_pos.y)
-
+        button.Hide()
+        button.Show()
         button.SetFocus()
 
     def ReenableNext(self):
