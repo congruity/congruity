@@ -4,7 +4,8 @@ PREFIX  ?= /usr
 BINDIR      ?= $(PREFIX)/bin
 SHAREDIR    ?= $(PREFIX)/share
 APPSHAREDIR ?= $(SHAREDIR)/congruity
-MAN1DIR     ?= $(SHAREDIR)/man/man1
+MANDIR      ?= $(SHAREDIR)/man
+MAN1DIR     ?= $(MANDIR)/man1
 
 INSTALL ?= /usr/bin/install
 
