@@ -28,6 +28,11 @@ import wx
 import wx.lib.dialogs
 
 import libconcord
+# Fix typo in libconcord 0.20 Python bindings
+try:
+    libconcord.delete_blob
+except:
+    libconcord.delete_blob = libconcord.delete_block
 
 version = "7+"
 
@@ -73,7 +78,13 @@ def exception_message():
     msg += traceback.format_exc()
     return msg
 
-def worker_body_connect(resources, on_progress, cb_context, after_reset):
+def worker_body_connect(
+    resources,
+    on_progress,
+    cb_context,
+    cancel_check,
+    after_reset
+):
     program_callback = libconcord.callback_type(program_callback_imp)
 
     max_attempts = after_reset and 180 or 60
@@ -100,7 +111,7 @@ def worker_body_connect(resources, on_progress, cb_context, after_reset):
                     raise
             break
         except:
-            if attempt == max_attempts - 1:
+            if cancel_check() or (attempt == max_attempts - 1):
                 raise
         time.sleep(1)
     on_progress(
@@ -350,7 +361,7 @@ class WelcomePanel(MessagePanelBase):
         thread.start_new_thread(self._WorkerFunction, ())
 
     def OnCancel(self):
-        os._exit(1)
+        self.parent.OnExit(1)
 
     def GetTitle(self):
         return "Welcome"
@@ -406,6 +417,10 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
+        self.finished = False
+        self.cancelled = False
+
+        self.lock = thread.allocate_lock()
 
     def _WorkerFunction(self):
         try:
@@ -419,6 +434,7 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
                 self.resources,
                 self._DgUpdate,
                 self.dg_connect,
+                lambda: self.cancelled,
                 False
             )
             self._DgEnd(self.dg_connect)
@@ -434,6 +450,12 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
                 self._msg_failure_explanation,
                 exception_message()
             )
+
+        self.lock.acquire()
+        self.finished = True
+        if self.cancelled:
+            wx.CallAfter(self.OnCancel)
+        self.lock.release()
 
     def _OnStatusOk(self, mfg_model):
         self.btn_details = wx.Button(self, -1, "&Details...")
@@ -538,7 +560,13 @@ class ConnectPanel(wx.Panel, DecoratedContainerThreadMixin):
         thread.start_new_thread(self._WorkerFunction, ())
 
     def OnCancel(self):
-        os._exit(1)
+        self.lock.acquire()
+        if self.finished:
+            self.lock.release()
+            self.parent.OnExit(1)
+        else:
+            self.cancelled = True
+        self.lock.release()
 
     def GetTitle(self):
         return "Connecting"
@@ -573,6 +601,7 @@ class ProgramRemotePanelBase(wx.Panel, DecoratedContainerThreadMixin):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
+        self.finished = False
 
     def _WorkerFunction(self):
         try:
@@ -608,6 +637,7 @@ class ProgramRemotePanelBase(wx.Panel, DecoratedContainerThreadMixin):
         self._OnStatusCommon()
 
     def _OnStatusCommon(self):
+        self.finished = True
         self.parent.ReenableCancel()
         self.parent.ReenableNext()
 
@@ -615,6 +645,8 @@ class ProgramRemotePanelBase(wx.Panel, DecoratedContainerThreadMixin):
         thread.start_new_thread(self._WorkerFunction, ())
 
     def OnCancel(self):
+        if self.finished:
+            self.parent.OnExit(1)
         show_modal_scrolled_msgbox(
             self.parent,
             "Cannot Cancel",
@@ -739,6 +771,7 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
             self.resources,
             self._DgUpdate,
             self.dg_reconnect,
+            lambda: False,
             True
         )
 
@@ -839,6 +872,7 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
             self.resources,
             self._DgUpdate,
             self.dg_reconnect,
+            lambda: False,
             True
         )
 
@@ -865,7 +899,7 @@ class SuccessPanel(MessagePanelBase):
         self.text_message.UpdateText("Operation has completed successfully.")
 
     def OnCancel(self):
-        os._exit(0)
+        self.parent.OnExit(0)
 
     def GetTitle(self):
         return "Success"
@@ -918,7 +952,7 @@ class FailurePanel(wx.Panel):
         self.text_message.UpdateText(self.message)
 
     def OnCancel(self):
-        os._exit(1)
+        self.parent.OnExit(1)
 
     def GetTitle(self):
         return "Failure"
@@ -936,7 +970,15 @@ class FailurePanel(wx.Panel):
         return True
 
 class Wizard(wx.Dialog):
-    def __init__(self, resources, min_page_width = 450, min_page_height = None):
+    def __init__(
+        self,
+        resources,
+        app_finalizer,
+        min_page_width = 450,
+        min_page_height = None
+    ):
+        self.app_finalizer = app_finalizer
+
         self.min_page_width = min_page_width
         self.min_page_height = min_page_height
 
@@ -1012,6 +1054,11 @@ class Wizard(wx.Dialog):
             raise Exception("Current page already set")
         self._SetPage(page)
 
+    def OnExit(self, retcode):
+        if self.app_finalizer:
+            self.app_finalizer()
+        os._exit(retcode)
+
     def _ReenableButton(self, button):
         button.Enable(True)
         button.Hide()
@@ -1026,7 +1073,7 @@ class Wizard(wx.Dialog):
 
     def _OnNext(self, event):
         if self.cur_page.IsTerminal():
-            os._exit(self.cur_page.GetExitCode())
+            self.OnExit(self.cur_page.GetExitCode())
         next_page = self.cur_page.GetNext()
         self._SetPage(next_page)
 
@@ -1122,6 +1169,27 @@ class Resources(object):
     def SetConnected(self, connected):
         self.connected = connected
 
+class Finalizer(object):
+    def __init__(self, resources):
+        self.resources = resources
+
+    def __call__(self):
+        if self.resources.xml:
+            try:
+                xml = self.resources.xml
+                self.resources.xml = None
+                self.resources.xml_size = None
+                libconcord.delete_blob(xml)
+            except:
+                pass
+
+        if self.resources.connected:
+            try:
+                self.resources.SetConnected(False)
+                libconcord.deinit_concord()
+            except:
+                pass
+
 def main(argv):
     app = argv.pop(0)
     appdir = os.path.dirname(app)
@@ -1150,7 +1218,7 @@ def main(argv):
     resources.LoadImages()
     resources.SetEzHexFilename(ezhex_filename)
 
-    wizard = Wizard(resources)
+    wizard = Wizard(resources, Finalizer(resources))
 
     resources.CreatePages(wizard)
     if initial_exception:

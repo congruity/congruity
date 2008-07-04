@@ -1,3 +1,9 @@
+* 2008-07-03 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- Centralize cancel/exit handling,
+  and clean up any libconcord resources when exiting the application.
+- Add thread-safe cancelling to ConnectPanel.
+- Work around a typo in libconcord 0.20's Python bindings.
+
 * 2008-07-02 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Increase connect timeout after a reset operation, just to make sure
   we don't miss the remote coming back.
