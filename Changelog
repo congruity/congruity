@@ -3,6 +3,8 @@
   and clean up any libconcord resources when exiting the application.
 - Add thread-safe cancelling to ConnectPanel.
 - Work around a typo in libconcord 0.20's Python bindings.
+- Provide a GUI message if libconcord can't be loaded, in case congruity
+  wasn't run from a terminal.
 
 * 2008-07-02 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Increase connect timeout after a reset operation, just to make sure

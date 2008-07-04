@@ -27,14 +27,26 @@ import traceback
 import wx
 import wx.lib.dialogs
 
-import libconcord
-# Fix typo in libconcord 0.20 Python bindings
-try:
-    libconcord.delete_blob
-except:
-    libconcord.delete_blob = libconcord.delete_block
-
 version = "7+"
+
+try:
+    import libconcord
+    # Fix typo in libconcord 0.20 Python bindings
+    try:
+        libconcord.delete_blob
+    except:
+        libconcord.delete_blob = libconcord.delete_block
+except:
+    app = wx.PySimpleApp()
+    dlg = wx.MessageDialog(
+        None,
+        "Could not load libconcord; please ensure it, and the Python "
+        "bindings, are installed and in the relevant search paths.",
+        "congruity: Dependency Error",
+        wx.OK | wx.ICON_ERROR
+    )
+    dlg.ShowModal()
+    os._exit(1)
 
 def counter():
     i=0
