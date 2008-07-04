@@ -1,4 +1,5 @@
 * 2008-07-03 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-8 is released
 - Centralize cancel/exit handling,
   and clean up any libconcord resources when exiting the application.
 - Add thread-safe cancelling to ConnectPanel.
