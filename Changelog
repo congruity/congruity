@@ -1,3 +1,7 @@
+* 2008-09-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-9 is released
+- Use a different remote.png, with a known free license.
+
 * 2008-07-03 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-8 is released
 - Centralize cancel/exit handling,
