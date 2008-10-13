@@ -1,12 +1,12 @@
 Requirements:
 
-Python (tested with 2.5.1 on Fedora 8)
+Python (tested with 2.5.1 on Fedora 9)
   See http://www.python.org/
 Python ctypes library (included with Python 2.5, separate earlier)
   See http://sourceforge.net/projects/ctypes/
-wxPython (tested with wxGTK-2.8.4 on Fedora 8)
+wxPython (tested with wxGTK-2.8.7 on Fedora 9)
   See http://www.wxpython.org/
-libconcord (tested with pre-0.20 CVS snapshot on Fedora 8)
+libconcord (tested with post-0.20 CVS snapshot on Fedora 9)
   See http: http://www.phildev.net/concordance/
 
 Installation/Usage:
@@ -35,9 +35,9 @@ Congruity relies on the libconcord library, which must be obtained and
 installed separately. Note that you will need to install the Python bindings
 for libconcord too; see libconcord/bindings/python/.
 
-Configure your web browser to open files of type *.EZHex and *.EZUp with the
-congruity application. This is typically performed using the dialog box
-that appears when a file is about to be downloaded.
+Configure your web browser to open files of type *.EZHex, *.EZUp, and *.EZTut
+with the congruity application. This is typically set up using the dialog
+box that appears when a file is about to be downloaded.
 
 Note that in Firefox, you'll need to change a setting to see the download
 action prompt; Otherwise, files will simply be saved to disk without you
