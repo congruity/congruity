@@ -1,8 +1,10 @@
-* 2008-10-12 Stephen Warren <s-t-concordance@wwwdotorg.org>
+* 2008-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Implement IR learning feature, with support for learning from the original
   remote using the Harmony, or reading the signal from a "Pronto Hex" file.
   (Merge of /branchs/irlean)
 - Various internal code changes to support IR learning and general cleanup.
+- Implement --no-web command-line option, which prevents posting any data
+  to the Harmony website. This can be useful when testing congruity.
 
 * 2008-09-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-9 is released

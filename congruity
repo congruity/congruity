@@ -759,10 +759,11 @@ class CheckConnectivityPanel(ProgramRemotePanelBase):
             0,
             self.dg_notify_website
         )
-        libconcord.post_connect_test_success(
-            self.resources.xml,
-            self.resources.xml_size
-        )
+        if not self.resources.no_web:
+            libconcord.post_connect_test_success(
+                self.resources.xml,
+                self.resources.xml_size
+            )
         self._DgUpdate(
             True,
             100,
@@ -806,7 +807,8 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         program_callback = libconcord.callback_type(program_callback_imp)
 
         self._DgStart(self.dg_check_website)
-        libconcord.post_preconfig(self.resources.xml, self.resources.xml_size)
+        if not self.resources.no_web:
+            libconcord.post_preconfig(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_check_website)
 
         self._DgStart(self.dg_prepare)
@@ -854,7 +856,8 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         self._DgEnd(self.dg_set_time)
 
         self._DgStart(self.dg_notify_website)
-        libconcord.post_postconfig(self.resources.xml, self.resources.xml_size)
+        if not self.resources.no_web:
+            libconcord.post_postconfig(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_notify_website)
 
     def GetTitle(self):
@@ -952,7 +955,8 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
         self._DgEnd(self.dg_set_time)
 
         self._DgStart(self.dg_notify_website)
-        libconcord.post_postfirmware(self.resources.xml, self.resources.xml_size)
+        if not self.resources.no_web:
+            libconcord.post_postfirmware(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_notify_website)
 
     def GetTitle(self):
@@ -1475,12 +1479,13 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
                 self._DgUpdate(False, 10, self.dg_upload)
 
-                libconcord.post_new_code(
-                    self.resources.xml,
-                    self.resources.xml_size,
-                    self.resources.key_names[self.resources.key_names_index],
-                    post_string
-                )
+                if not self.resources.no_web:
+                    libconcord.post_new_code(
+                        self.resources.xml,
+                        self.resources.xml_size,
+                        self.resources.key_names[self.resources.key_names_index],
+                        post_string
+                    )
             finally:
                 libconcord.delete_encoded_signal(post_string)
 
@@ -1783,8 +1788,9 @@ class Wizard(wx.Dialog):
             (page, data) = self.cur_page.OnActivated(prev_page, data)
 
 class Resources(object):
-    def __init__(self, appdir):
+    def __init__(self, appdir, no_web):
         self.appdir = appdir
+        self.no_web = no_web
 
         self.ezhex_filename = None
         self.xml = None
@@ -1893,12 +1899,15 @@ def main(argv):
     app = argv.pop(0)
     appdir = os.path.dirname(app)
 
+    no_web = False
     try:
         while len(argv) and argv[0].startswith('-'):
             arg = argv.pop(0)
             if arg == '--version':
                 print version
                 return
+            elif arg == '--no-web':
+                no_web = True
             else:
                 raise CmdLineException("ERROR: Option '%s' not recognized" % arg)
                 sys.exit(0)
@@ -1913,7 +1922,7 @@ def main(argv):
     app = wx.PySimpleApp()
     wx.InitAllImageHandlers()
 
-    resources = Resources(appdir)
+    resources = Resources(appdir, no_web)
     resources.LoadImages()
     resources.SetEzHexFilename(ezhex_filename)
 
