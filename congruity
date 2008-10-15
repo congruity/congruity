@@ -1223,6 +1223,8 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
     def _WorkerFunction(self):
         try:
+            program_callback = libconcord.callback_type(program_callback_imp)
+
             self._DgStart(self.dg_learn)
 
             self.resources.cur_ir_allocated_by_libconcord = True
@@ -1232,7 +1234,9 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
             libconcord.learn_from_remote(
                 byref(self.resources.cur_ir_carrier_clock),
                 byref(self.resources.cur_ir_signal),
-                byref(self.resources.cur_ir_signal_length)
+                byref(self.resources.cur_ir_signal_length),
+                program_callback,
+                py_object((self._DgUpdate, self.dg_learn))
             )
 
             self._DgEnd(self.dg_learn)
