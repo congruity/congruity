@@ -2,6 +2,7 @@
 - Implement IR learning feature, with support for learning from the original
   remote using the Harmony, or reading the signal from a "Pronto Hex" file.
   (Merge of /branchs/irlean)
+  Parts based on code by Andreas Schulz <Andreas.R.Schulz@gmx.de>
 - Various internal code changes to support IR learning and general cleanup.
 - Implement --no-web command-line option, which prevents posting any data
   to the Harmony website. This can be useful when testing congruity.
