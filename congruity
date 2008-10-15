@@ -1877,7 +1877,7 @@ class Finalizer(object):
     def __call__(self):
         try:
             if self.resources.xml:
-                libconcord.delete_blob(self.resources.xm)
+                libconcord.delete_blob(self.resources.xml)
         except:
             pass
         self.resources.xml = None
