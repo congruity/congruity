@@ -1244,8 +1244,6 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
             wx.CallAfter(self._OnStatusOk)
             return
         except:
-            # FIXME: Are all errors fatal;
-            # can we retry learning on e.g. empty/quiet signal?
             wx.CallAfter(
                 self._OnStatusFailure,
                 "IR learning failure",
@@ -1266,6 +1264,13 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
             details
         )
         self._OnStatusCommon()
+        self.text_results.Show()
+        self.text_results.UpdateText(
+            "\nRESULTS:\n\n" +
+            "Learning failed; perhaps you did not press a key on the original " +
+            "remote, or you held the key for too long."
+        )
+        self.parent.ReenableBack()
 
     def _OnStatusCommon(self):
         self.parent.ReenableCancel()
