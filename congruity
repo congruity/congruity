@@ -1919,7 +1919,6 @@ def main(argv):
                 no_web = True
             else:
                 raise CmdLineException("ERROR: Option '%s' not recognized" % arg)
-                sys.exit(0)
         if len(argv) != 1:
             raise CmdLineException("ERROR: Precisely one filename argument is required")
         ezhex_filename = argv.pop(0)
@@ -1949,4 +1948,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-
