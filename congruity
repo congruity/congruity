@@ -32,11 +32,12 @@ version = "9+"
 try:
     import libconcord
 except:
+    str = traceback.format_exc()
     app = wx.PySimpleApp()
     dlg = wx.MessageDialog(
         None,
         "Could not load libconcord; please ensure it, and the Python "
-        "bindings, are installed and in the relevant search paths.",
+        "bindings, are installed and in the relevant search paths.\n\n" + str,
         "congruity: Dependency Error",
         wx.OK | wx.ICON_ERROR
     )

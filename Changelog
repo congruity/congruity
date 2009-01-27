@@ -1,4 +1,4 @@
-* 2008-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
+* 2009-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Implement IR learning feature, with support for learning from the original
   remote using the Harmony, or reading the signal from a "Pronto Hex" file.
   (Merge of /branches/irlean)
@@ -9,6 +9,8 @@
 - Change default install prefix to /usr/local; this makes typical end-user
   manual installs slightly simpler. Also, automatically patch install location
   into the app during installation.
+- If libconcord import fails, display the entire backtrace information, to
+  enable easier debugging of the issue.
 
 * 2008-09-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-9 is released
