@@ -7,7 +7,7 @@ APPSHAREDIR ?= $(SHAREDIR)/congruity
 MANDIR      ?= $(SHAREDIR)/man
 MAN1DIR     ?= $(MANDIR)/man1
 
-INSTALL ?= /usr/bin/install
+INSTALL ?= install
 
 all:
 	@echo "Nothing to build, run 'make install' as root"
