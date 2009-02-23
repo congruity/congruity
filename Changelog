@@ -11,6 +11,7 @@
   into the app during installation.
 - If libconcord import fails, display the entire backtrace information, to
   enable easier debugging of the issue.
+- Enhance README
 
 * 2008-09-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-9 is released
