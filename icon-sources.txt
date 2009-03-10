@@ -1,0 +1,20 @@
+icon-failed.png
+  /usr/share/icons/gnome/32x32/emblems/emblem-important.png
+  gnome-icon-theme-2.22.0-6.fc9.noarch
+  GPL+
+
+icon-complete.png
+  /usr/share/icons/gnome/48x48/emblems/emblem-certified.png
+  Resized and recolored
+  gnome-icon-theme-2.22.0-6.fc9.noarch
+  GPL+
+
+icon-in-progress.png
+  /usr/share/f-spot/icons/hicolor/32x32/emblems/emblem-event.png
+  f-spot-0.4.3.1-1.fc9.i386
+  GPL
+
+icon-unstarted.png
+  Part of congruity
+  GPLv3+
+
