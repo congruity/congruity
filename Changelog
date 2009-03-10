@@ -1,4 +1,5 @@
 * 2009-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-10 is released
 - Implement IR learning feature, with support for learning from the original
   remote using the Harmony, or reading the signal from a "Pronto Hex" file.
   (Merge of /branches/irlean)
