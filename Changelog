@@ -1,4 +1,6 @@
 * 2009-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
+- Fix Pronto hex import
+  Patch by Andreas Schulz <Andreas.R.Schulz@gmx.de>
 
 * 2009-03-09 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-10 is released

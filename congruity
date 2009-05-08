@@ -1364,7 +1364,12 @@ class LearnIrEnterProntoHexPanel(WizardPanelBase):
             if bin[0] != 0:
                 raise Exception('Not RAW')
 
-            frequency = int(1000000 / (bin[1] * 0.241246))
+            pronto_clock = 4145146
+            # IR carrier frequency is given as number of Pronto clock cycles
+            frequency = int(pronto_clock / bin[1])
+            # Mark/space durations are given as a count of IR carrier cycles,
+            # but we need them in microseconds
+            carrier_cycle_us = 1000000.0 / frequency
 
             count_1 = 2 * bin[2]
             count_2 = 2 * bin[3]
@@ -1387,12 +1392,12 @@ class LearnIrEnterProntoHexPanel(WizardPanelBase):
             idx = 0
 
             for i in range(count_1):
-                self.resources.cur_ir_signal[idx] = bin[start_1 + i]
+                self.resources.cur_ir_signal[idx] = int(bin[start_1 + i] * carrier_cycle_us)
                 idx += 1
 
             for j in range(repeats):
                 for i in range(count_2):
-                    self.resources.cur_ir_signal[idx] = bin[start_2 + i]
+                    self.resources.cur_ir_signal[idx] = int(bin[start_2 + i] * carrier_cycle_us)
                     idx += 1
 
             self._OnStatusOk()
