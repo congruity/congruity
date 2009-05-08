@@ -24,6 +24,9 @@ import sys
 import thread
 import time
 import traceback
+
+import wxversion
+wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 

@@ -1,6 +1,7 @@
 * 2009-xx-xx Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Fix Pronto hex import
   Patch by Andreas Schulz <Andreas.R.Schulz@gmx.de>
+- Throw runtime error dialog if wxPython version is not at least 2.8
 
 * 2009-03-09 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-10 is released
