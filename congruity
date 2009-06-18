@@ -30,7 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
-version = "10+"
+version = "11"
 
 try:
     import libconcord
