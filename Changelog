@@ -1,3 +1,27 @@
+* 2009-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-11 is released
+- Fix Pronto hex import
+  Patch by Andreas Schulz <Andreas.R.Schulz@gmx.de>
+- Throw runtime error dialog if wxPython version is not at least 2.8
+- Add .desktop file
+  Patch by Adam Williamson <awilliam@redhat.com>
+
+* 2009-03-09 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-10 is released
+- Implement IR learning feature, with support for learning from the original
+  remote using the Harmony, or reading the signal from a "Pronto Hex" file.
+  (Merge of /branches/irlean)
+  Parts based on code by Andreas Schulz <Andreas.R.Schulz@gmx.de>
+- Various internal code changes to support IR learning and general cleanup.
+- Implement --no-web command-line option, which prevents posting any data
+  to the Harmony website. This can be useful when testing congruity.
+- Change default install prefix to /usr/local; this makes typical end-user
+  manual installs slightly simpler. Also, automatically patch install location
+  into the app during installation.
+- If libconcord import fails, display the entire backtrace information, to
+  enable easier debugging of the issue.
+- Enhance README
+
 * 2008-09-07 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-9 is released
 - Use a different remote.png, with a known free license.
