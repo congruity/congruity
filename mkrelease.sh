@@ -22,6 +22,7 @@ cp -rp \
   *.png \
   Changelog \
   congruity.1 \
+  congruity.desktop \
   COPYING \
   LICENSE.txt \
   Makefile \
