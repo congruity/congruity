@@ -1,4 +1,8 @@
 * 2009-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-12 is released
+- Add congruity.desktop to release script
+
+* 2009-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-11 is released
 - Fix Pronto hex import
   Patch by Andreas Schulz <Andreas.R.Schulz@gmx.de>
