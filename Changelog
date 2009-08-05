@@ -1,3 +1,18 @@
+* 2009-08-04 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-13 is released
+- Update MIME types in .desktop file
+  Patch by Adam Williamson <awilliam@redhat.com>
+
+  Apparently, these new MIME types match what the Logitech server sends
+  when you perform a download:
+  https://bugzilla.redhat.com/show_bug.cgi?id=506536#c12
+
+  However, Fedora still packages definitions of these MIME types as part of
+  libconcord. Packagers for other distributions should double-check the
+  Fedora packaging of libconcord; see file libconcord-0.21-mime-type-def.patch
+  which adds file concordance-0.21/libconcord/libconcord.xml to the
+  libconcord sources.
+
 * 2009-06-17 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-12 is released
 - Add congruity.desktop to release script

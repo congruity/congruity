@@ -3,5 +3,5 @@ Name=Congruity
 Exec=congruity %f
 NoDisplay=true
 Type=Application
-MimeType=application/x-libconcord;
+MimeType=application/x-easyzapper-hex;application/x-easyzapper-upgrade;application/x-easyzapper-tutor;
 
