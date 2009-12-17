@@ -24,6 +24,5 @@ Licensing for icon-*.png:
 GPL (sourced from f-spot and Gnome icon sets on Fedora 8)
 
 Licensing for remote.png:
-CC-BY-SA-2.5
-Downloaded from the URL below, resized, and made transparent:
-http://commons.wikimedia.org/wiki/Image:Harmony670.jpg
+GPL v2 or later
+Created by Mathieu Trudel-Lapierre <mathieu.tl@gmail.com>

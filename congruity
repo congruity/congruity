@@ -30,7 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
-version = "13"
+version = "14"
 
 try:
     import libconcord
@@ -184,7 +184,7 @@ class WrappedStaticText(wx.StaticText):
         cur_width = self.parent.GetSize().GetWidth()
         self.SetLabel(new_label)           
         self.Wrap(cur_width)
-        self.parent.Layout()
+        self.Layout()
 
 class DecoratedContainer(wx.Panel):
     def __init__(self, parent, resources):

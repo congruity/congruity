@@ -1,3 +1,10 @@
+* 2009-12-16 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- congruity-14 is released
+- replace remote.png with a GPL-licensed version provided by 
+  Mathieu Trudel-Lapierre <mathieu.tl@gmail.com>
+- Tweak WrappedStaticText.UpdateText so it shows all text and doesn't wrap it
+  strangely, at least with Jaunty's wxpython 2.8.9.1-0ubuntu6.
+
 * 2009-08-04 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-13 is released
 - Update MIME types in .desktop file
