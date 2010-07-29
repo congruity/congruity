@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2008 Stephen Warren
+# Copyright 2008-2010 Stephen Warren
 #
 # This file is part of congruity.
 #
@@ -30,7 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
-version = "14"
+version = "14+"
 
 try:
     import libconcord
@@ -72,6 +72,16 @@ try:
     can_learn_ir = True
 except:
     can_learn_ir = False
+
+# APIs not available in all versions of libconcord
+try:
+    libconcord.prep_config
+    libconcord.finish_config
+except:
+    def dummy_lc_function():
+        pass
+    libconcord.prep_config = dummy_lc_function
+    libconcord.finish_config = dummy_lc_function
 
 def counter():
     i=0
@@ -816,6 +826,7 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         self._DgEnd(self.dg_check_website)
 
         self._DgStart(self.dg_prepare)
+        libconcord.prep_config()
         libconcord.invalidate_flash()
         self._DgEnd(self.dg_prepare)
 
@@ -846,6 +857,7 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         self._DgEnd(self.dg_verify)
 
         self._DgStart(self.dg_reconnect)
+        libconcord.finish_config()
         libconcord.reset_remote()
         worker_body_connect(
             self.resources,
