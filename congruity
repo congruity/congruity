@@ -30,7 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
-version = "15"
+version = "15+"
 
 try:
     import libconcord
@@ -179,9 +179,9 @@ def show_modal_scrolled_msgbox(parent, title, text):
 
 ALIGN_LTA = wx.ALIGN_LEFT  | wx.ALIGN_TOP             | wx.ALL
 ALIGN_XTA = wx.EXPAND      | wx.ALIGN_TOP             | wx.ALL
-ALIGN_LCA = wx.ALIGN_LEFT  | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
-ALIGN_RCA = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
-ALIGN_XCA = wx.EXPAND      | wx.ALIGN_CENTER_VERTICAL | wx.ALL 
+ALIGN_LCA = wx.ALIGN_LEFT  | wx.ALIGN_CENTER_VERTICAL | wx.ALL
+ALIGN_RCA = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
+ALIGN_XCA = wx.EXPAND      | wx.ALIGN_CENTER_VERTICAL | wx.ALL
 ALIGN_LBA = wx.ALIGN_LEFT  | wx.ALIGN_BOTTOM          | wx.ALL
 ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
 
@@ -192,7 +192,7 @@ class WrappedStaticText(wx.StaticText):
 
     def UpdateText(self, new_label):
         cur_width = self.parent.GetSize().GetWidth()
-        self.SetLabel(new_label)           
+        self.SetLabel(new_label)
         self.Wrap(cur_width)
         self.Layout()
         self.parent.Layout()
@@ -327,7 +327,7 @@ class MessagePanelBase(WizardPanelBase):
 
 class WelcomePanel(MessagePanelBase):
     _msg_welcome = (
-        "Welcome to congruity; a programming application " + 
+        "Welcome to congruity; a programming application " +
         "for Logitech Harmony remote controls.\n\n"
     )
 
@@ -337,7 +337,7 @@ class WelcomePanel(MessagePanelBase):
 
     _msg_status_ok = (
         "Please ensure the remote control is connected " +
-        "before proceeding.\n\n" + 
+        "before proceeding.\n\n" +
         "Click next to begin operation."
     )
 
@@ -1107,7 +1107,7 @@ class IRSignalCanvas(wx.ScrolledWindow):
 
         self.pulses = []
         self.scale = 20000
-    
+
     def OnPaint(self, event):
         if not len(self.pulses):
             return
@@ -1139,7 +1139,7 @@ class IRSignalCanvas(wx.ScrolledWindow):
             yoffset = yoffsetmax - yoffset
 
         dc.EndDrawing()
-    
+
     def SetSignal(self, pulses, pulse_count):
         if pulse_count == 0:
             return
@@ -1155,7 +1155,7 @@ class IRSignalCanvas(wx.ScrolledWindow):
 
         self.scale = self.max_scale
         self._OnSetScale()
-        
+
     def OnZoomIn(self):
         if not self.pulses:
             return
@@ -1948,7 +1948,7 @@ def main(argv):
     except:
         ezhex_filename = None
         initial_exception = ("Command-line error", exception_message())
-        
+
     app = wx.PySimpleApp()
     wx.InitAllImageHandlers()
 
