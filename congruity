@@ -338,11 +338,11 @@ class WelcomePanel(MessagePanelBase):
     _msg_status_ok = (
         "Please ensure the remote control is connected " +
         "before proceeding.\n\n" +
-        "Click next to begin operation."
+        "Click 'forward' to begin operation."
     )
 
     _msg_status_failure = (
-        "A problem occurred. Click next for details."
+        "A problem occurred. Click 'forward' for details."
     )
 
     _msg_failure_explanation = (
@@ -477,7 +477,7 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
     )
 
     _msg_status_failure = (
-        "A problem occurred. Click next for details."
+        "A problem occurred. Click 'forward' for details."
     )
 
     _msg_failure_explanation = (
@@ -1078,13 +1078,13 @@ class LearnIrPrepPanel(WizardPanelBase):
                     "(5-10 cm) apart.\n\n" +
                     "Please locate the '%s' button on your original remote, " +
                     "and be prepared to press and hold that button after " +
-                    "you have clicked Next."
+                    "you have clicked 'forward'."
                 ) % self.resources.key_names[self.resources.key_names_index]
             )
         if self.sel == 1:
             self.text_bottom_message.UpdateText(
                 "INSTRUCTIONS:\n\n" +
-                "Press Next to type/paste in the Pronto hex codes."
+                "Click 'forward' to type/paste in the Pronto hex codes."
             )
         if self.sel == 2:
             self.text_bottom_message.UpdateText(

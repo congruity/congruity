@@ -1,3 +1,7 @@
+* 2010-08-13 Stephen Warren <s-t-concordance@wwwdotorg.org>
+- Fixed messages to refer to a "finish" button instead of a "next" button.
+  Related: Refer to "clicking" this button instead of "pressing" it.
+
 * 2010-08-01 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-15 is released
 - Call new APIs in libconcord-0.22, for Harmony 700 support.
