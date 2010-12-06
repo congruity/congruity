@@ -1255,6 +1255,8 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
                 program_callback,
                 py_object((self._DgUpdate, self.dg_learn))
             )
+            if self.resources.cur_ir_carrier_clock.value < 1000:
+                raise Exception('Carrier frequency too low')
 
             self._DgEnd(self.dg_learn)
 

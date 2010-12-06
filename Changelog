@@ -1,6 +1,7 @@
-* 2010-08-13 Stephen Warren <s-t-concordance@wwwdotorg.org>
+* 2010-??-?? Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Fixed messages to refer to a "finish" button instead of a "next" button.
   Related: Refer to "clicking" this button instead of "pressing" it.
+- Detect at least some bad IR learning results.
 
 * 2010-08-01 Stephen Warren <s-t-concordance@wwwdotorg.org>
 - congruity-15 is released
