@@ -83,13 +83,20 @@ except:
     libconcord.prep_config = dummy_lc_function
     libconcord.finish_config = dummy_lc_function
 
+# Test to determine if we have the new zwave API available.
+try:
+    libconcord.update_configuration
+    using_zwave_api = True
+except:
+    using_zwave_api = False
+
 def counter():
     i=0
     while True:
         yield i
         i += 1
 
-def program_callback_imp(count, current, total, context):
+def program_callback_imp_old(count, current, total, context):
     if not context:
         return
 
@@ -100,6 +107,40 @@ def program_callback_imp(count, current, total, context):
     except:
         print
         traceback.print_exc()
+
+def program_callback_imp_zwave(stage_id, count, current, total, type, context):
+    if not context:
+        return
+
+    try:
+        (f, fcontext) = context
+        percent = (current * 100) / total
+        f(False, percent, fcontext)
+    except:
+        print
+        traceback.print_exc()
+
+def program_callback_imp_zwave_multi(stage_id, count, current, total, type, context):
+    if not context:
+        return
+
+    if stage_id == libconcord.LC_CB_STAGE_NUM_STAGES:
+        return
+
+    try:
+        (f, fcontext) = context
+        percent = (current * 100) / total
+        f(False, percent, fcontext[stage_id])
+        if current == total:
+            f(True, percent, fcontext[stage_id])
+    except:
+        print
+        traceback.print_exc()
+
+if using_zwave_api:
+    program_callback_imp = program_callback_imp_zwave
+else:
+    program_callback_imp = program_callback_imp_old
 
 class CmdLineException(Exception):
     pass
@@ -382,17 +423,22 @@ class WelcomePanel(MessagePanelBase):
 
             self.next = self.resources.page_connect
 
-            xml = POINTER(c_ubyte)()
-            xml_size = c_uint()
-            libconcord.read_file(
-                self.resources.ezhex_filename,
-                byref(xml),
-                byref(xml_size)
-            )
-            self.resources.SetXmlData(xml, xml_size)
-
             type = c_int()
-            libconcord.identify_file(xml, xml_size, byref(type))
+            if using_zwave_api:
+                libconcord.read_and_parse_file(
+                    self.resources.ezhex_filename,
+                    byref(type)
+                )
+            else:
+                xml = POINTER(c_ubyte)()
+                xml_size = c_uint()
+                libconcord.read_file(
+                    self.resources.ezhex_filename,
+                    byref(xml),
+                    byref(xml_size)
+                )
+                self.resources.SetXmlData(xml, xml_size)
+                libconcord.identify_file(xml, xml_size, byref(type))
 
             next_map = {
                 libconcord.LC_FILE_TYPE_CONNECTIVITY:
@@ -427,7 +473,8 @@ class WelcomePanel(MessagePanelBase):
                 )
                 return
 
-            next_page.DoParsing()
+            if (not using_zwave_api) or (type.value == libconcord.LC_FILE_TYPE_LEARN_IR):
+                next_page.DoParsing()
 
             wx.CallAfter(self._OnStatusOk, next_page, type_text)
         except:
@@ -691,10 +738,6 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
 
         self.dc = DecoratedContainer(self, self.resources)
         DecoratedContainerThreadMixin.__init__(self, self.dc)
-        self._AddWidgets()
-        self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
-
-        self.SetSizerAndFit(self.sizer)
 
         self.next = None
         self.finished = False
@@ -738,6 +781,9 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
         self.parent.ReenableNext()
 
     def OnActivated(self, prev_page, data):
+        self._AddWidgets()
+        self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
+        self.SetSizerAndFit(self.sizer)
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
@@ -778,10 +824,17 @@ class CheckConnectivityPanel(ProgramRemotePanelBase):
             self.dg_notify_website
         )
         if not self.resources.no_web:
-            libconcord.post_connect_test_success(
-                self.resources.xml,
-                self.resources.xml_size
-            )
+            if using_zwave_api:
+                program_callback = libconcord.callback_type(program_callback_imp)
+                libconcord.post_connect_test_success(
+                    program_callback,
+                    None
+                )
+            else:
+                libconcord.post_connect_test_success(
+                    self.resources.xml,
+                    self.resources.xml_size
+                )
         self._DgUpdate(
             True,
             100,
@@ -803,11 +856,23 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
     def _AddWidgets(self):
         vpos = counter()
         self.dg_check_website = DecoratedGauge(self.dc, "Check Website", vpos.next())
-        self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
-        self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
-        self.dg_write = DecoratedGauge(self.dc, "Write Configuration", vpos.next())
-        self.dg_verify = DecoratedGauge(self.dc, "Verify Upgrade", vpos.next())
-        self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
+        if using_zwave_api:
+            self.dg_widgets = {}
+            stages = POINTER(c_uint)()
+            num_stages = c_int()
+            libconcord.get_stages(self.file_type, byref(stages), byref(num_stages))
+            for i in range(num_stages.value):
+                self.dg_widgets[stages[i]] = DecoratedGauge(
+                    self.dc,
+                    libconcord.lc_cb_stage_str(stages[i]),
+                    vpos.next()
+                 )
+        else:
+            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
+            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
+            self.dg_write = DecoratedGauge(self.dc, "Write Configuration", vpos.next())
+            self.dg_verify = DecoratedGauge(self.dc, "Verify Upgrade", vpos.next())
+            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
         self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
         self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
 
@@ -826,58 +891,75 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
 
         self._DgStart(self.dg_check_website)
         if not self.resources.no_web:
-            libconcord.post_preconfig(self.resources.xml, self.resources.xml_size)
+            if using_zwave_api:
+                libconcord.post_preconfig(program_callback, None)
+            else:
+                libconcord.post_preconfig(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_check_website)
 
-        self._DgStart(self.dg_prepare)
-        libconcord.prep_config()
-        libconcord.invalidate_flash()
-        self._DgEnd(self.dg_prepare)
+        if using_zwave_api:
+            program_callback = libconcord.callback_type(program_callback_imp_zwave_multi)
+            libconcord.update_configuration(
+                program_callback,
+                py_object((self._DgUpdate, self.dg_widgets)),
+                0
+            )
+        else:
+            self._DgStart(self.dg_prepare)
+            libconcord.prep_config()
+            libconcord.invalidate_flash()
+            self._DgEnd(self.dg_prepare)
 
-        self._DgStart(self.dg_erase)
-        libconcord.erase_config(
-            self.bin_size,
-            program_callback,
-            py_object((self._DgUpdate, self.dg_erase))
-        )
-        self._DgEnd(self.dg_erase)
+            self._DgStart(self.dg_erase)
+            libconcord.erase_config(
+                self.bin_size,
+                program_callback,
+                py_object((self._DgUpdate, self.dg_erase))
+            )
+            self._DgEnd(self.dg_erase)
 
-        self._DgStart(self.dg_write)
-        libconcord.write_config_to_remote(
-            self.bin_data,
-            self.bin_size,
-            program_callback,
-            py_object((self._DgUpdate, self.dg_write))
-        )
-        self._DgEnd(self.dg_write)
+            self._DgStart(self.dg_write)
+            libconcord.write_config_to_remote(
+                self.bin_data,
+                self.bin_size,
+                program_callback,
+                py_object((self._DgUpdate, self.dg_write))
+            )
+            self._DgEnd(self.dg_write)
 
-        self._DgStart(self.dg_verify)
-        libconcord.verify_remote_config(
-            self.bin_data,
-            self.bin_size,
-            program_callback,
-            py_object((self._DgUpdate, self.dg_verify))
-        )
-        self._DgEnd(self.dg_verify)
+            self._DgStart(self.dg_verify)
+            libconcord.verify_remote_config(
+                self.bin_data,
+                self.bin_size,
+                program_callback,
+                py_object((self._DgUpdate, self.dg_verify))
+            )
+            self._DgEnd(self.dg_verify)
 
-        self._DgStart(self.dg_reconnect)
-        libconcord.finish_config()
-        libconcord.reset_remote()
-        worker_body_connect(
-            self.resources,
-            self._DgUpdate,
-            self.dg_reconnect,
-            lambda: False,
-            True
-        )
+            self._DgStart(self.dg_reconnect)
+            libconcord.finish_config()
+            libconcord.reset_remote()
+            worker_body_connect(
+                self.resources,
+                self._DgUpdate,
+                self.dg_reconnect,
+                lambda: False,
+                True
+             )
 
         self._DgStart(self.dg_set_time)
-        libconcord.set_time()
+        if using_zwave_api:
+            libconcord.set_time(program_callback, None)
+        else:
+            libconcord.set_time()
         self._DgEnd(self.dg_set_time)
 
         self._DgStart(self.dg_notify_website)
         if not self.resources.no_web:
-            libconcord.post_postconfig(self.resources.xml, self.resources.xml_size)
+            if using_zwave_api:
+                libconcord.post_postconfig(program_callback, None)
+            else:
+                libconcord.post_postconfig(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_notify_website)
 
     def GetTitle(self):
@@ -894,12 +976,24 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
 
     def _AddWidgets(self):
         vpos = counter()
-        self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
-        self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
-        self.dg_write = DecoratedGauge(self.dc, "Write Firmware", vpos.next())
-        self.dg_finalize = DecoratedGauge(self.dc, "Finalize Programming", vpos.next())
-        self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
-        self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
+        if using_zwave_api:
+            self.dg_widgets = {}
+            stages = POINTER(c_uint)()
+            num_stages = c_int()
+            libconcord.get_stages(self.file_type, byref(stages), byref(num_stages))
+            for i in range(num_stages.value):
+                self.dg_widgets[stages[i]] = DecoratedGauge(
+                    self.dc,
+                    libconcord.lc_cb_stage_str(stages[i]),
+                    vpos.next()
+                )
+        else:
+            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
+            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
+            self.dg_write = DecoratedGauge(self.dc, "Write Firmware", vpos.next())
+            self.dg_finalize = DecoratedGauge(self.dc, "Finalize Programming", vpos.next())
+            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
+            self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
         self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
 
     def DoParsing(self):
@@ -915,8 +1009,6 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
     def _WorkerFunctionBody(self):
         program_callback = libconcord.callback_type(program_callback_imp)
 
-        self._DgStart(self.dg_prepare)
-
         # is_fw_update_supported returns error code; 0 OK, otherwise failure
         if libconcord.is_fw_update_supported(0) == 0:
             is_direct = False
@@ -928,55 +1020,69 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
                 "on this remote model."
             )
 
-        if not is_direct:
-            libconcord.prep_firmware()
+        if using_zwave_api:
+            program_callback = libconcord.callback_type(program_callback_imp_zwave_multi)
+            libconcord.update_firmware(
+                program_callback,
+                py_object((self._DgUpdate, self.dg_widgets)),
+                0,
+                c_int(is_direct and 1 or 0)
+            )
+        else:
+            self._DgStart(self.dg_prepare)
 
-        self._DgUpdate(False, 50, self.dg_prepare)
+            if not is_direct:
+                libconcord.prep_firmware()
 
-        libconcord.invalidate_flash()
+            self._DgUpdate(False, 50, self.dg_prepare)
 
-        self._DgEnd(self.dg_prepare)
+            libconcord.invalidate_flash()
 
-        self._DgStart(self.dg_erase)
-        libconcord.erase_firmware(
-            is_direct,
-            program_callback,
-            py_object((self._DgUpdate, self.dg_erase))
-        )
-        self._DgEnd(self.dg_erase)
+            self._DgEnd(self.dg_prepare)
 
-        self._DgStart(self.dg_write)
-        libconcord.write_firmware_to_remote(
-            self.bin_data,
-            self.bin_size,
-            c_int(is_direct and 1 or 0),
-            program_callback,
-            py_object((self._DgUpdate, self.dg_write))
-        )
-        self._DgEnd(self.dg_write)
+            self._DgStart(self.dg_erase)
+            libconcord.erase_firmware(
+                is_direct,
+                program_callback,
+                py_object((self._DgUpdate, self.dg_erase))
+            )
+            self._DgEnd(self.dg_erase)
 
-        self._DgStart(self.dg_finalize)
-        if not is_direct:
-            libconcord.finish_firmware()
-        self._DgEnd(self.dg_finalize)
+            self._DgStart(self.dg_write)
+            libconcord.write_firmware_to_remote(
+                self.bin_data,
+                self.bin_size,
+                c_int(is_direct and 1 or 0),
+                program_callback,
+                py_object((self._DgUpdate, self.dg_write))
+            )
+            self._DgEnd(self.dg_write)
 
-        self._DgStart(self.dg_reconnect)
-        libconcord.reset_remote()
-        worker_body_connect(
-            self.resources,
-            self._DgUpdate,
-            self.dg_reconnect,
-            lambda: False,
-            True
-        )
+            self._DgStart(self.dg_finalize)
+            if not is_direct:
+                libconcord.finish_firmware()
+            self._DgEnd(self.dg_finalize)
 
-        self._DgStart(self.dg_set_time)
-        libconcord.set_time()
-        self._DgEnd(self.dg_set_time)
+            self._DgStart(self.dg_reconnect)
+            libconcord.reset_remote()
+            worker_body_connect(
+                self.resources,
+                self._DgUpdate,
+                self.dg_reconnect,
+                lambda: False,
+                True
+            )
+
+            self._DgStart(self.dg_set_time)
+            libconcord.set_time()
+            self._DgEnd(self.dg_set_time)
 
         self._DgStart(self.dg_notify_website)
         if not self.resources.no_web:
-            libconcord.post_postfirmware(self.resources.xml, self.resources.xml_size)
+            if using_zwave_api:
+                libconcord.post_postfirmware(program_callback, None)
+            else:
+                libconcord.post_postfirmware(self.resources.xml, self.resources.xml_size)
         self._DgEnd(self.dg_notify_website)
 
     def GetTitle(self):
@@ -1018,12 +1124,18 @@ class LearnIrPrepPanel(WizardPanelBase):
     def DoParsing(self):
         key_names = POINTER(c_char_p)()
         key_names_length = c_uint()
-        libconcord.get_key_names(
-            self.resources.xml,
-            self.resources.xml_size,
-            byref(key_names),
-            byref(key_names_length)
-        )
+        if using_zwave_api:
+            libconcord.get_key_names(
+                byref(key_names),
+                byref(key_names_length)
+            )
+        else:
+            libconcord.get_key_names(
+                self.resources.xml,
+                self.resources.xml_size,
+                byref(key_names),
+                byref(key_names_length)
+            )
         try:
             self.resources.key_names = []
             self.resources.key_names_index = -1
@@ -1496,6 +1608,8 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
     def _WorkerFunction(self):
         try:
+            program_callback = libconcord.callback_type(program_callback_imp)
+
             self._DgStart(self.dg_upload)
 
             post_string = c_char_p()
@@ -1516,12 +1630,20 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
                 self._DgUpdate(False, 10, self.dg_upload)
 
                 if not self.resources.no_web:
-                    libconcord.post_new_code(
-                        self.resources.xml,
-                        self.resources.xml_size,
-                        self.resources.key_names[self.resources.key_names_index],
-                        post_string
-                    )
+                    if using_zwave_api:
+                        libconcord.post_new_code(
+                            self.resources.key_names[self.resources.key_names_index],
+                            post_string,
+                            program_callback,
+                            None
+                        )
+                    else:
+                        libconcord.post_new_code(
+                            self.resources.xml,
+                            self.resources.xml_size,
+                            self.resources.key_names[self.resources.key_names_index],
+                            post_string
+                        )
             finally:
                 libconcord.delete_encoded_signal(post_string)
 
@@ -1653,8 +1775,8 @@ class Wizard(wx.Dialog):
         self,
         resources,
         app_finalizer,
-        min_page_width = 450,
-        min_page_height = None
+        min_page_width = 658,
+        min_page_height = 550
     ):
         self.app_finalizer = app_finalizer
 
