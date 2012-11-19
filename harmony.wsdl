@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="myharmony"
+ targetNamespace="http://tempuri.org/"
+ xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:ns="http://tempuri.org/"
+ xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+ xmlns:ns2="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery"
+ xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery" location="discovery.xsd"/>
+
+<types>
+ <schema targetNamespace="http://tempuri.org/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="http://tempuri.org/"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+
+  <complexType name="GetSoapServicesResult">
+    <sequence>
+      <element name="ServiceDescription" type="ns2:ServiceDescription" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+<!--  <complexType name="Id">
+    <all>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </all>
+  </complexType>-->
+  <complexType name="Properties">
+    <sequence>
+      <element name="AnonymizedEmail" type="xsd:string"/>
+      <element name="ContactMe" type="xsd:boolean"/>
+      <element name="CountryType" type="xsd:string"/>
+      <element name="Email" type="xsd:string"/>
+      <element name="FirstName" type="xsd:string"/>
+      <element name="IsPolicyAccepted" type="xsd:boolean"/>
+      <element name="LastName" type="xsd:string"/>
+      <element name="UserKey" type="xsd:string"/>
+      <element name="ZipCode" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="Device">
+    <sequence>
+      <element name="Activities" type="xsd:string"/>
+      <element name="Description" type="xsd:string"/>
+      <element name="DeviceIcon" type="xsd:string"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="Model" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="Remote" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="RemoteProperties">
+    <sequence>
+      <element name="IsActiveRemote" type="xsd:boolean"/>
+      <element name="IsLocked" type="xsd:boolean"/>
+      <element name="RemoteName" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="Remote">
+    <sequence>
+      <element name="DateCreated" type="xsd:string"/>
+      <element name="FirstConnectDate" type="xsd:string"/>
+      <element name="FirstSyncDate" type="xsd:string"/>
+      <element name="GlobalRemoteId" type="xsd:string"/>
+      <element name="GlobalRemoteSkinId" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsAcceptLicense" type="xsd:boolean"/>
+      <element name="IsActiveRemote" type="xsd:boolean"/>
+      <element name="IsGlobalRemoteLocked" type="xsd:boolean"/>
+      <element name="IsSyncRequired" type="xsd:boolean"/>
+      <element name="JabberId" type="xsd:string"/>
+      <element name="KeyboardLayout" type="xsd:string"/>
+      <element name="LastSyncDate" type="xsd:string"/>
+      <element name="LogitechProductId" type="xsd:string"/>
+      <element name="LogitechSerial" type="xsd:string"/>
+      <element name="Pairings" type="xsd:string"/>
+      <element name="RemoteProperties" type="ns:RemoteProperties"/>
+      <element name="SerialNumber" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="Surfaces" type="ns:Surfaces"/>
+    </sequence>
+  </complexType>
+  <complexType name="Devices">
+    <complexContent>
+      <restriction base="soapenc:Array">
+	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:Device[]"/>
+      </restriction>
+    </complexContent>
+  </complexType>
+  <complexType name="Remotes">
+    <sequence>
+      <element name="Remote" type="ns:Remote" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+  <complexType name="Surface">
+    <sequence>
+      <element name="EquadId" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="RemoteId" type="xsd:string"/>
+      <element name="RfSurfaceId" type="xsd:string"/>
+      <element name="SkinId" type="xsd:long"/>
+    </sequence>
+  </complexType>
+  <complexType name="Surfaces">
+    <sequence>
+      <element name="Surface" type="ns:Surface" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+  <complexType name="GetMyAccountResult">
+    <sequence>
+      <element name="AccountTypeId" type="xsd:string"/>
+      <element name="Activities" type="xsd:string"/>
+      <element name="CreateDate" type="xsd:string"/>
+      <element name="Devices" type="ns:Devices"/>
+      <element name="HouseholdId" type="ns1:Id"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsRemoved" type="xsd:string"/>
+      <element name="LastSetupRating" type="xsd:string"/>
+      <element name="Properties" type="ns:Properties"/>
+      <element name="Remotes" type="ns:Remotes"/>
+      <element name="Surfaces" type="ns:Surfaces"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="PrioritizedDeviceCapability">
+    <sequence>
+      <element name="DeviceCapability" type="xsd:string"/>
+      <element name="Priority" type="xsd:integer"/>
+    </sequence>
+  </complexType>
+  <complexType name="DeviceCapabilitiesWithPriority">
+    <complexContent>
+      <restriction base="soapenc:Array">
+	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:PrioritizedDeviceCapability[]"/>
+      </restriction>
+    </complexContent>    
+  </complexType>
+  <complexType name="GlobalDeviceVersionId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:string"/>-->
+      <element name="IsDefault" type="xsd:boolean"/>
+      <element name="VersionId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="Device">
+    <sequence>
+      <element name="DecodedEdid" type="xsd:string"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="EncodedEdid" type="xsd:string"/>
+      <element name="HoldMinRepeats" type="xsd:string"/>
+      <element name="InterDeviceDelay" type="xsd:string"/>
+      <element name="InterKeyDelay" type="xsd:string"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="Model" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="PictureId" type="xsd:string"/>
+      <element name="PressMinRepeats" type="xsd:string"/>
+      <element name="ActivityIds" type="xsd:string"/>
+      <element name="AdditionalControlType" type="xsd:string"/>
+      <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
+      <element name="DeviceClassification" type="xsd:string"/>
+      <element name="DeviceTypeDisplayName" type="xsd:string"/>
+      <element name="GlobalDeviceVersionId" type="ns:GlobalDeviceVersionId"/>
+      <element name="Icon" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
+      <element name="IsScartCableSupported" type="xsd:boolean"/>
+      <element name="ParentDevice" type="ns1:Id"/>
+      <element name="ParentDeviceManufacturer" type="xsd:string"/>
+      <element name="ParentDeviceModel" type="xsd:string"/>
+      <element name="State" type="xsd:string"/>
+      <element name="SuggestedDisplay" type="xsd:string"/>
+    </sequence>
+  </complexType>
+<!--  <complexType name="DeviceId">
+    <all>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </all>
+  </complexType>-->
+  <complexType name="GetDevicesResult">
+    <complexContent>
+      <restriction base="soapenc:Array">
+	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:Device[]"/>
+      </restriction>
+    </complexContent>
+  </complexType>
+
+  <complexType name="StartCompileWithLocaleResult">
+    <sequence>
+      <element name="ApproximateSize" type="xsd:long"/>
+      <element name="DownloadUrl" type="xsd:string"/>
+      <element name="SimulationDownloadUrl" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="CompilerArchitecture">
+    <sequence>
+      <element name="Architecture" type="xsd:string"/>
+      <element name="CompilerArchitectureId" type="xsd:string"/>
+      <element name="DefaultSkinId" type="xsd:string"/>
+      <element name="Flash" type="xsd:string"/>
+      <element name="Protocol" type="xsd:string"/>
+      <element name="RegionID" type="xsd:string"/>
+      <element name="SoftwareType" type="xsd:string"/>
+      <element name="Type" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  
+  <complexType name="Manufacturer">
+    <sequence>
+      <element name="ManufacturerId" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  
+  <complexType name="SupportedCapabilities">
+    <sequence>
+      <element name="SupportedCapability" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetProductResult">
+    <sequence>
+      <element name="CompilerArchitecture" type="ns:CompilerArchitecture"/>
+      <element name="DisplayName" type="xsd:string"/>
+      <element name="Displays" type="xsd:string"/>
+      <element name="IsAlwaysConnected" type="xsd:boolean"/>
+      <element name="IsEnabled" type="xsd:boolean"/>
+      <element name="IsHosted" type="xsd:boolean"/>
+      <element name="IsStaticLocation" type="xsd:boolean"/>
+      <element name="Keyboards" type="xsd:string"/>
+      <element name="Manufacturer" type="ns:Manufacturer"/>
+      <element name="MaxActivities" type="xsd:string"/>
+      <element name="MaxDevicesPerAccount" type="xsd:integer"/>
+      <element name="MaxDevicesPerTimePeriod" type="xsd:integer"/>
+      <element name="MaxFavoriteChannels" type="xsd:integer"/>
+      <element name="MinutesPerTimePeriod" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="NumOfAddDevice" type="xsd:integer"/>
+      <element name="ProductId" type="xsd:string"/>
+      <element name="ProductSettings" type="xsd:string"/>
+      <element name="Region" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="SupportedCapabilities" type="ns:SupportedCapabilities"/>
+    </sequence>
+  </complexType>
+
+ </schema>
+</types>
+
+<message name="GetSoapServices">
+ <part name="clientTypeId" type="xsd:string"/>
+ <part name="clientId" type="xsd:string"/>
+</message>
+<message name="GetSoapServicesResponse">
+ <part name="GetSoapServicesResult" type="GetSoapServicesResult"/>
+</message>
+
+<message name="Login">
+ <part name="username" type="xsd:string"/>
+ <part name="password" type="xsd:string"/>
+ <part name="customCredential" type="xsd:string"/>
+ <part name="isPersistent" type="xsd:boolean"/>
+</message>
+<message name="LoginResponse">
+ <part name="LoginResult" type="xsd:boolean"/>
+</message>
+
+<message name="GetMyAccount">
+</message>
+<message name="GetMyAccountResponse">
+ <part name="GetMyAccountResult" type="GetMyAccountResult"/>
+</message>
+
+<message name="GetDevices">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetDevicesResponse">
+  <part name="GetDevicesResult" type="GetDevicesResult"/>
+</message>
+
+<message name="StartCompileWithLocale">
+  <part name="remoteId" type="ns1:remoteId"/>
+  <part name="localeId" type="xsd:string"/>
+</message>
+<message name="StartCompileWithLocaleResponse">
+  <part name="StartCompileWithLocaleResult" type="StartCompileWithLocaleResult"/>
+</message>
+
+<message name="GetProduct">
+  <part name="skinId" type="xsd:string"/>
+</message>
+<message name="GetProductResponse">
+  <part name="GetProductResult" type="GetProductResult"/>
+</message>
+
+<portType name="DiscoveryPortType">
+ <operation name="GetSoapServices">
+  <input message="ns:GetSoapServices"/>
+  <output message="ns:GetSoapServicesResponse"/>
+ </operation>
+</portType>
+<portType name="AuthenticationServicePortType">
+ <operation name="Login">
+  <input message="ns:Login"/>
+  <output message="ns:LoginResponse"/>
+ </operation>
+</portType>
+<portType name="AccountManagerPortType">
+ <operation name="GetMyAccount">
+  <input message="ns:GetMyAccount"/>
+  <output message="ns:GetMyAccountResponse"/>
+ </operation>
+</portType>
+<portType name="DeviceManagerPortType">
+ <operation name="GetDevices">
+  <input message="ns:GetDevices"/>
+  <output message="ns:GetDevicesResponse"/>
+ </operation>
+</portType>
+<portType name="CompileManagerPortType">
+ <operation name="StartCompileWithLocale">
+  <input message="ns:StartCompileWithLocale"/>
+  <output message="ns:StartCompileWithLocaleResponse"/>
+ </operation>
+</portType>
+<portType name="ProductsManagerPortType">
+ <operation name="GetProduct">
+  <input message="ns:GetProduct"/>
+  <output message="ns:GetProductResponse"/>
+ </operation>
+</portType>
+
+<binding name="DiscoveryBinding" type="ns:DiscoveryPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetSoapServices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDiscovery/GetSoapServices"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="AuthenticationServiceBinding" type="ns:AuthenticationServicePortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="Login">
+  <SOAP:operation style="rpc" soapAction="http://asp.net/ApplicationServices/v200/AuthenticationService/Login"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://asp.net/ApplicationServices/v200"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://asp.net/ApplicationServices/v200"/>
+  </output>
+ </operation>
+</binding>
+<binding name="AccountManagerBinding" type="ns:AccountManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetMyAccount">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyAccount"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="DeviceManagerBinding" type="ns:DeviceManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetDevices"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="CompileManagerBinding" type="ns:CompileManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="StartCompileWithLocale">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/ICompileManager/StartCompileWithLocale"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="ProductsManagerBinding" type="ns:ProductsManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetProduct">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetProduct"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+
+<service name="Discovery">
+ <port name="DiscoveryPortType" binding="ns:DiscoveryBinding">
+  <SOAP:address location="https://svcs.myharmony.com/Discovery/Discovery.svc"/>
+ </port>
+</service>
+<service name="AuthenticationService">
+ <port name="AuthenticationServicePortType" binding="ns:AuthenticationServiceBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/AuthenticationService.svc"/>
+ </port>
+</service>
+<service name="AccountManager">
+ <port name="AccountManagerPortType" binding="ns:AccountManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/AccountManager.svc"/>
+ </port>
+</service>
+<service name="DeviceManager">
+ <port name="DeviceManagerPortType" binding="ns:DeviceManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
+ </port>
+</service>
+<service name="CompileManager">
+ <port name="CompileManagerPortType" binding="ns:CompileManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/SyncPlatform/CompileManager.svc"/>
+ </port>
+</service>
+<service name="ProductsManager">
+ <port name="ProductsManagerPortType" binding="ns:ProductsManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/ProductsPlatform/ProductsManager.svc"/>
+ </port>
+</service>
+
+</definitions>
