@@ -420,7 +420,9 @@ class RemoteSelectPanel(WizardPanelBase):
                 self.next = self.resources.page_add_remote
             else:
                 self.next = self.resources.page_remote_configuration
-                self.resources.page_remote_configuration.SetRemote(self.remoteChoice.GetStringSelection())
+                self.StartBusy()
+                self.resources.page_remote_configuration.SetRemote(self.remotes[self.remoteChoice.GetSelection()])
+                self.EndBusy()
             return True
         else:
             wx.MessageBox('Please make a selection.', 'No selection made.', wx.OK |
@@ -444,6 +446,14 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = wx.StaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+        self.devicesListBox = wx.ListBox(self, style=wx.LB_SINGLE)
+        self.sizer.Add(self.devicesListBox, 0, 0, 0)
+        self.addButton = wx.Button(self, label="Add Device")
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
+        self.sizer.Add(self.addButton, 0, 0, 0)
+        self.deleteButton = wx.Button(self, label="Delete Device")
+        self.deleteButton.Bind(wx.EVT_BUTTON, self.OnDelete)
+        self.sizer.Add(self.deleteButton, 0, 0, 0)
         self.syncButton = wx.Button(self, label="Sync Remote")
         self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
         self.sizer.Add(self.syncButton, 0, 0, 0)
@@ -464,9 +474,29 @@ class RemoteConfigurationPanel(WizardPanelBase):
   
     def SetRemote(self, remote):
         self.remote = remote
-        self._msg_welcome = "Remote Configuration for " + remote
+        self.remoteDisplayName = mhMgr.GetProduct(remote.SkinId).DisplayName
+        self._msg_welcome = "Remote Configuration for " \
+            + self.remoteDisplayName + "\n\nDevices:"
         self.textMessage.SetLabel(self._msg_welcome)
+        self.devices = mhMgr.GetDevices()
+        self.devicesList = []
+        for device in self.devices.Device:
+            self.devicesList.append(device.Name)
+        self.devicesListBox.Set(self.devicesList)
         self.Layout()
+
+    def OnAdd(self, event):
+        print "ADD!"
+
+    def OnDelete(self, event):
+        deviceToDelete = self.devicesListBox.GetSelections()
+        if deviceToDelete != ():
+            print self.devices[deviceToDelete[0]]
+            print self.devices[deviceToDelete[0]].Device.Id
+            print mhMgr.DeleteDevice(self.devices[deviceToDelete[0]].Id)
+        else:
+            wx.MessageBox('Please select a device to delete.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
 
     def OnSync(self, event):
         print "SYNC!"
@@ -481,7 +511,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
             self.StartBusy()
-            mhMgr.GetConfig(filename)
+            mhMgr.GetConfig(self.remote, filename)
             self.EndBusy()
             wx.MessageBox('Config file saved to.' + filename,
                           'Download complete.', wx.OK)

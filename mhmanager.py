@@ -34,13 +34,13 @@ class MHPlugin(MessagePlugin):
             # Remove the type="xxx" attribute for non-built-in types.
             if (element.get('type') is not None) and (element.name is not None):
                 if element.get('type').find(element.name) != -1:
-                    print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
+                    #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
                     element.set('type', '')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
             if (element.prefix is None) and (prefix is not None):
                 element.setPrefix(prefix)
-                print "PLUGIN: set prefix for {0}".format(element)
+                #print "PLUGIN: set prefix for {0}".format(element)
             # Recursively fix the child elements.
             if element.getChildren() is not None:
                 self.fix_elements(element.prefix, element.getChildren())
@@ -84,21 +84,21 @@ class MHManager():
         self.logged_in = False
 
     # Log in to web service - Returns True if login succeeded, False otherwise.
-    def Login(self, username, password):
-        self.logged_in = self.client.service['AuthenticationService'].Login(
-            username=username, password=password, customCredential='',
-            isPersistent=False)
-        return self.logged_in
+    def Login(self, email, password):
+        self.logged_in = self.client.service['Security'].LoginUser(
+            email=email, password=password, customCredential='',
+            isPresistent=False)
+        return self.logged_in is not None
 
-    # Gets the account info.
-    def GetAccount(self):
-        self.account = self.client.service['AccountManager'].GetMyAccount()
+    # Gets the household info.
+    def GetHousehold(self):
+        self.household = self.client.service['AccountManager'].GetMyHousehold()
 
     # Gets the remote(s) for a given account.
     def GetRemotes(self):
-        self.GetAccount()
+        self.GetHousehold()
         remotes = []
-        for remote in self.account.Remotes.Remote:
+        for remote in self.household.Remotes.Remote:
             remotes.append(remote)
         return remotes
 
@@ -106,13 +106,12 @@ class MHManager():
     def GetProduct(self, skinId):
         return self.client.service['ProductsManager'].GetProduct(skinId)
 
-    # Get remote config file and write it to the specified filename.
-    def GetConfig(self, filename):
-        self.GetAccount()
-        # TODO: Do we need to support multiple remotes?
+    # Get remote config file for the specified remote and write it to the
+    # specified filename.
+    def GetConfig(self, remote, filename):
         remoteId = self.client.factory.create('ns10:remoteId')
-        remoteId.IsPersisted = self.account.Remotes.Remote[0].Id.IsPersisted
-        remoteId.Value = self.account.Remotes.Remote[0].Id.Value
+        remoteId.IsPersisted = remote.Id.IsPersisted
+        remoteId.Value = remote.Id.Value
 
         compile = self.client.service['CompileManager'].StartCompileWithLocale(
             remoteId, "Not Implemented")
@@ -144,21 +143,21 @@ class MHManager():
                 time.sleep(4)
                 count += 1
 
-#print account
+    def GetDevices(self):
+        self.GetHousehold()
+        deviceIds = self.client.factory.create('ns10:deviceIds')
+        for device in self.household.Accounts.Account[0].Devices.Device:
+            deviceIds.DeviceId.append(device.Id)
+        return self.client.service['DeviceManager'].GetDevices(deviceIds)
 
-#print "device zero:"
-#print account.Devices.Device[0].Id
-#print
-#print "device one:"
-#print account.Devices.Device[1].Id
-
-#deviceIds = client.factory.create('ns10:deviceIds')
-#print deviceIds
-#deviceIds.DeviceId.append(account.Devices.Device[0].Id)
-#deviceIds.DeviceId.append(account.Devices.Device[1].Id)
-#print deviceIds
-
-#devices = client.service['DeviceManager'].GetDevices(deviceIds)
-#print devices
-
-#print account.Remotes.Remote[0].Id
+    def DeleteDevice(self, deviceId):
+        self.GetHousehold()
+        accountId = self.client.factory.create('ns:accountId')
+        deviceIds = self.client.factory.create('ns10:deviceIds')
+        accountId.IsPersisted = self.household.Accounts.Account[0].Id.IsPersisted
+        accountId.Value = self.household.Accounts.Account[0].Id.Value
+        deviceIds.DeviceId.append(deviceId)
+        print accountId
+        print deviceIds
+        return self.client.service['DeletionManager'].DeleteDevices(accountId,
+                                                                    deviceIds)

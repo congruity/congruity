@@ -157,8 +157,13 @@
   <complexType name="Device">
     <sequence>
       <element name="DecodedEdid" type="xsd:string"/>
+      <element name="DefaultInterDeviceDelay" type="xsd:string"/>
+      <element name="DefaultInterKeyDelay" type="xsd:string"/>
+      <element name="DeviceOrder" type="xsd:string"/>
       <element name="DeviceType" type="xsd:string"/>
       <element name="EncodedEdid" type="xsd:string"/>
+      <element name="HoldInterDeviceDelay" type="xsd:string"/>
+      <element name="HoldInterKeyDelay" type="xsd:string"/>
       <element name="HoldMinRepeats" type="xsd:string"/>
       <element name="InterDeviceDelay" type="xsd:string"/>
       <element name="InterKeyDelay" type="xsd:string"/>
@@ -169,17 +174,24 @@
       <element name="PressMinRepeats" type="xsd:string"/>
       <element name="ActivityIds" type="xsd:string"/>
       <element name="AdditionalControlType" type="xsd:string"/>
+      <element name="Characterization" type="xsd:string"/>
+      <element name="DeviceAddedDate" type="xsd:string"/>
       <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
       <element name="DeviceClassification" type="xsd:string"/>
+      <element name="DeviceProfileUri" type="xsd:string"/>
+      <element name="DeviceSearchType" type="xsd:string"/>
       <element name="DeviceTypeDisplayName" type="xsd:string"/>
       <element name="GlobalDeviceVersionId" type="ns:GlobalDeviceVersionId"/>
       <element name="Icon" type="xsd:string"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
+      <element name="IsMultiCode" type="xsd:string"/>
       <element name="IsScartCableSupported" type="xsd:boolean"/>
       <element name="ParentDevice" type="ns1:Id"/>
       <element name="ParentDeviceManufacturer" type="xsd:string"/>
       <element name="ParentDeviceModel" type="xsd:string"/>
+      <element name="PrivateAddType" type="xsd:string"/>
+      <element name="RegionalCharset" type="xsd:string"/>
       <element name="State" type="xsd:string"/>
       <element name="SuggestedDisplay" type="xsd:string"/>
     </sequence>
@@ -191,11 +203,9 @@
     </all>
   </complexType>-->
   <complexType name="GetDevicesResult">
-    <complexContent>
-      <restriction base="soapenc:Array">
-	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:Device[]"/>
-      </restriction>
-    </complexContent>
+    <sequence>
+      <element name="Device" type="ns:Device" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
   </complexType>
 
   <complexType name="StartCompileWithLocaleResult">
@@ -258,6 +268,55 @@
     </sequence>
   </complexType>
 
+  <complexType name="accountId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="LoginUserResult">
+    <sequence>
+      <element name="AccountId" type="xsd:string"/>
+      <element name="AuthToken" type="xsd:string"/>
+      <element name="Email" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Account">
+    <sequence>
+      <element name="AccountTypeId" type="xsd:string"/>
+      <element name="Activities" type="xsd:string"/>
+      <element name="CreateDate" type="xsd:string"/>
+      <element name="Devices" type="ns:Devices"/>
+      <element name="HouseholdId" type="ns1:Id"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsRemoved" type="xsd:string"/>
+      <element name="LastSetupRating" type="xsd:string"/>
+      <element name="Properties" type="ns:Properties"/>
+      <element name="Remotes" type="ns:Remotes"/>
+      <element name="Surfaces" type="ns:Surfaces"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Accounts">
+    <sequence>
+      <element name="Account" type="ns:Account" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetMyHouseholdResult">
+    <sequence>
+      <element name="Accounts" type="ns:Accounts"/>
+      <element name="DefaultLanguage" type="xsd:string"/>
+      <element name="DefaultUserProfileUri" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="Remotes" type="ns:Remotes"/>
+      <element name="Rooms" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -269,6 +328,7 @@
  <part name="GetSoapServicesResult" type="GetSoapServicesResult"/>
 </message>
 
+<!-- Deprecated?? Replaced by LoginUser -->
 <message name="Login">
  <part name="username" type="xsd:string"/>
  <part name="password" type="xsd:string"/>
@@ -279,6 +339,7 @@
  <part name="LoginResult" type="xsd:boolean"/>
 </message>
 
+<!-- Deprecated?? Replaced by GetMyHousehold -->
 <message name="GetMyAccount">
 </message>
 <message name="GetMyAccountResponse">
@@ -307,6 +368,29 @@
   <part name="GetProductResult" type="GetProductResult"/>
 </message>
 
+<message name="DeleteDevices">
+  <part name="accountId" type="ns:accountId"/>
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="DeleteDevicesResponse">
+</message>
+
+<message name="LoginUser">
+  <part name="email" type="xsd:string"/>
+  <part name="password" type="xsd:string"/>
+  <part name="customCredential" type="xsd:string"/>
+  <part name="isPresistent" type="xsd:boolean"/> <!-- Yes, spelled wrong -->
+</message>
+<message name="LoginUserResponse">
+  <part name="LoginUserResult" type="LoginUserResult"/>
+</message>
+
+<message name="GetMyHousehold">
+</message>
+<message name="GetMyHouseholdResponse">
+  <part name="GetMyHouseholdResult" type="GetMyHouseholdResult"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -323,6 +407,10 @@
  <operation name="GetMyAccount">
   <input message="ns:GetMyAccount"/>
   <output message="ns:GetMyAccountResponse"/>
+ </operation>
+ <operation name="GetMyHousehold">
+   <input message="ns:GetMyHousehold"/>
+   <output message="ns:GetMyHouseholdResponse"/>
  </operation>
 </portType>
 <portType name="DeviceManagerPortType">
@@ -341,6 +429,18 @@
  <operation name="GetProduct">
   <input message="ns:GetProduct"/>
   <output message="ns:GetProductResponse"/>
+ </operation>
+</portType>
+<portType name="DeletionManagerPortType">
+ <operation name="DeleteDevices">
+  <input message="ns:DeleteDevices"/>
+  <output message="ns:DeleteDevicesResponse"/>
+ </operation>
+</portType>
+<portType name="SecurityPortType">
+ <operation name="LoginUser">
+   <input message="ns:LoginUser"/>
+   <output message="ns:LoginUserResponse"/>
  </operation>
 </portType>
 
@@ -372,6 +472,15 @@
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
  <operation name="GetMyAccount">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyAccount"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetMyHousehold">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyHousehold"/>
   <input>
      <SOAP:body use="literal" namespace="http://tempuri.org/"/>
   </input>
@@ -416,6 +525,30 @@
   </output>
  </operation>
 </binding>
+<binding name="DeletionManagerBinding" type="ns:DeletionManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="DeleteDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeletionManager/DeleteDevices"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="SecurityBinding" type="ns:SecurityPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="LoginUser">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/ISecurity/LoginUser"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
 
 <service name="Discovery">
  <port name="DiscoveryPortType" binding="ns:DiscoveryBinding">
@@ -445,6 +578,16 @@
 <service name="ProductsManager">
  <port name="ProductsManagerPortType" binding="ns:ProductsManagerBinding">
   <SOAP:address location="https://svcs.myharmony.com/ProductsPlatform/ProductsManager.svc"/>
+ </port>
+</service>
+<service name="DeletionManager">
+ <port name="DeletionManagerPortType" binding="ns:DeletionManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/SyncPlatform/DeletionManager.svc"/>
+ </port>
+</service>
+<service name="Security">
+ <port name="SecurityPortType" binding="ns:SecurityBinding">
+  <SOAP:address location="https://svcs.myharmony.com/CompositeSecurityServices/Security.svc"/>
  </port>
 </service>
 
