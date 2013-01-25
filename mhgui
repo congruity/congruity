@@ -478,12 +478,15 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self._msg_welcome = "Remote Configuration for " \
             + self.remoteDisplayName + "\n\nDevices:"
         self.textMessage.SetLabel(self._msg_welcome)
+        self.PopulateDevicesList()
+        self.Layout()
+
+    def PopulateDevicesList(self):
         self.devices = mhMgr.GetDevices()
         self.devicesList = []
-        for device in self.devices.Device:
+        for device in self.devices:
             self.devicesList.append(device.Name)
         self.devicesListBox.Set(self.devicesList)
-        self.Layout()
 
     def OnAdd(self, event):
         print "ADD!"
@@ -491,9 +494,17 @@ class RemoteConfigurationPanel(WizardPanelBase):
     def OnDelete(self, event):
         deviceToDelete = self.devicesListBox.GetSelections()
         if deviceToDelete != ():
-            print self.devices[deviceToDelete[0]]
-            print self.devices[deviceToDelete[0]].Device.Id
-            print mhMgr.DeleteDevice(self.devices[deviceToDelete[0]].Id)
+            dlg = wx.MessageDialog(self.parent,
+                                   'Are you sure you want to delete '
+                                   + self.devicesListBox.GetStringSelection()
+                                   + '?', 'Delete Confirmation',
+                                   wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal() == wx.ID_YES
+            dlg.Destroy()
+            if result:
+                mhMgr.DeleteDevice(self.devices[deviceToDelete[0]].Id)
+                self.PopulateDevicesList()
+                self.Layout()
         else:
             wx.MessageBox('Please select a device to delete.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)

@@ -22,4 +22,10 @@
       <element name="Value" type="xsd:long"/>
     </sequence>
   </complexType>
+  <complexType name="accountId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </sequence>
+  </complexType>
 </schema>

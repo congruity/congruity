@@ -29,11 +29,13 @@ from suds.client import Client
 from suds.plugin import MessagePlugin
 
 class MHPlugin(MessagePlugin):
+    XSI_URI = "http://www.w3.org/2001/XMLSchema"
     def fix_elements(self, prefix, elements):
         for element in elements:
             # Remove the type="xxx" attribute for non-built-in types.
             if (element.get('type') is not None) and (element.name is not None):
-                if element.get('type').find(element.name) != -1:
+                ns = element.resolvePrefix(element.get('type').split(':')[0])
+                if ns[1] != MHPlugin.XSI_URI:
                     #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
                     element.set('type', '')
             # Set the namespace prefix where it is set on the parent but not
@@ -148,16 +150,14 @@ class MHManager():
         deviceIds = self.client.factory.create('ns10:deviceIds')
         for device in self.household.Accounts.Account[0].Devices.Device:
             deviceIds.DeviceId.append(device.Id)
-        return self.client.service['DeviceManager'].GetDevices(deviceIds)
+        return self.client.service['DeviceManager'].GetDevices(deviceIds).Device
 
     def DeleteDevice(self, deviceId):
         self.GetHousehold()
-        accountId = self.client.factory.create('ns:accountId')
+        accountId = self.client.factory.create('ns10:accountId')
         deviceIds = self.client.factory.create('ns10:deviceIds')
         accountId.IsPersisted = self.household.Accounts.Account[0].Id.IsPersisted
         accountId.Value = self.household.Accounts.Account[0].Id.Value
         deviceIds.DeviceId.append(deviceId)
-        print accountId
-        print deviceIds
         return self.client.service['DeletionManager'].DeleteDevices(accountId,
                                                                     deviceIds)
