@@ -6,10 +6,17 @@
  xmlns:ns="http://tempuri.org/"
  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
  xmlns:ns2="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery"
+ xmlns:ns3="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
+ xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
+ xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery" location="discovery.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation" location="dm_operation.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
  <schema targetNamespace="http://tempuri.org/"
@@ -310,6 +317,32 @@
     </sequence>
   </complexType>
 
+  <complexType name="Matches">
+    <sequence>
+      <element name="PublicDeviceSearchMatch" type="ns3:PublicDeviceSearchMatch" minOccurs="0" maxOccurs="unbounded"/> 
+    </sequence>
+  </complexType>
+
+  <complexType name="SearchGlobalDevicesResult">
+    <sequence>
+      <element name="Matches" type="ns:Matches"/>
+      <element name="Status" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="KeyValueOfanyTypeAbstract">
+    <sequence>
+      <element name="Key" type="xsd:string"/>
+      <element name="Value" type="ns1:Id"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="UpdateMyDataResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -384,6 +417,24 @@
   <part name="GetMyHouseholdResult" type="GetMyHouseholdResult"/>
 </message>
 
+<message name="SearchGlobalDevices">
+  <part name="manufacturer" type="xsd:string"/>
+  <part name="modelNumber" type="xsd:string"/>
+  <part name="deviceType" type="xsd:string"/>
+  <part name="searchType" type="xsd:string"/>
+  <part name="maxResults" type="xsd:string"/>
+</message>
+<message name="SearchGlobalDevicesResponse">
+  <part name="SearchGlobalDevicesResult" type="SearchGlobalDevicesResult"/>
+</message>
+
+<message name="UpdateMyData">
+  <part name="operation" type="ns5:AddDeviceBySearchResultOperation"/>
+</message>
+<message name="UpdateMyDataResponse">
+  <part name="UpdateMyDataResult" type="UpdateMyDataResult"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -410,6 +461,14 @@
  <operation name="GetDevices">
   <input message="ns:GetDevices"/>
   <output message="ns:GetDevicesResponse"/>
+ </operation>
+ <operation name="SearchGlobalDevices">
+   <input message="ns:SearchGlobalDevices"/>
+   <output message="ns:SearchGlobalDevicesResponse"/>
+ </operation>
+ <operation name="UpdateMyData">
+   <input message="ns:UpdateMyData"/>
+   <output message="ns:UpdateMyDataResponse"/>
  </operation>
 </portType>
 <portType name="CompileManagerPortType">
@@ -493,6 +552,24 @@
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </output>
  </operation>
+ <operation name="SearchGlobalDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/SearchGlobalDevices"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateMyData">
+   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/UpdateMyData"/>
+   <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+   </input>
+   <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+   </output>
+ </operation>
 </binding>
 <binding name="CompileManagerBinding" type="ns:CompileManagerPortType">
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -560,7 +637,7 @@
 </service>
 <service name="DeviceManager">
  <port name="DeviceManagerPortType" binding="ns:DeviceManagerBinding">
-  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
+  <SOAP:address location="http://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
  </port>
 </service>
 <service name="CompileManager">

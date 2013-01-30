@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:mns="http://schemas.microsoft.com/2003/10/Serialization/"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns3="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
+  xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
+  xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
+
+  <complexType name="AddDeviceBySearchResultOperation">
+    <complexContent>
+      <extension base="ns4:AddDeviceBySearchResultOperationStart">
+	<sequence>
+	  <element name="DeviceClassification" type="xsd:string"/>
+	  <element name="DeviceName" type="xsd:string"/>
+	  <element name="HouseholdAccount" type="xsd:string" nillable="true"/>
+	  <element name="IsScartCableSupported" type="xsd:string"/>
+	  <element name="Match" type="ns3:PublicDeviceSearchMatch"/>
+	  <element name="PrivateAddTypeUsed" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

@@ -28,4 +28,11 @@
       <element name="Value" type="xsd:long"/>
     </sequence>
   </complexType>
+  <complexType name="GlobalLanguageVersionId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:string"/>
+      <element name="Value" type="xsd:long"/>
+      <element name="VersionId" type="xsd:string"/>
+    </sequence>
+  </complexType>
 </schema>

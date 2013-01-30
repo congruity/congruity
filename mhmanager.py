@@ -28,16 +28,26 @@ import sys
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
+XSI_NS = "http://www.w3.org/2001/XMLSchema"
+MS_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
+DATA_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
+DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+
 class MHPlugin(MessagePlugin):
-    XSI_URI = "http://www.w3.org/2001/XMLSchema"
     def fix_elements(self, prefix, elements):
         for element in elements:
-            # Remove the type="xxx" attribute for non-built-in types.
+            # This is a bit odd, but the MH parser expects type="xxx" attributes
+            # only for a few certain types.  Currently type attributes are
+            # expected only for xsi:long, guid, and those in the DM_OPERATION_NS
             if (element.get('type') is not None) and (element.name is not None):
                 ns = element.resolvePrefix(element.get('type').split(':')[0])
-                if ns[1] != MHPlugin.XSI_URI:
+                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS):
                     #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
-                    element.set('type', '')
+                    element.unset('type')
+                elif (ns[1] == XSI_NS):
+                    if (element.get('type').split(':')[1] != "long"):
+                        element.unset('type')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
             if (element.prefix is None) and (prefix is not None):
@@ -111,7 +121,7 @@ class MHManager():
     # Get remote config file for the specified remote and write it to the
     # specified filename.
     def GetConfig(self, remote, filename):
-        remoteId = self.client.factory.create('ns10:remoteId')
+        remoteId = self.client.factory.create('{' + DATA_NS + '}remoteId')
         remoteId.IsPersisted = remote.Id.IsPersisted
         remoteId.Value = remote.Id.Value
 
@@ -147,17 +157,33 @@ class MHManager():
 
     def GetDevices(self):
         self.GetHousehold()
-        deviceIds = self.client.factory.create('ns10:deviceIds')
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
         for device in self.household.Accounts.Account[0].Devices.Device:
             deviceIds.DeviceId.append(device.Id)
         return self.client.service['DeviceManager'].GetDevices(deviceIds).Device
 
     def DeleteDevice(self, deviceId):
         self.GetHousehold()
-        accountId = self.client.factory.create('ns10:accountId')
-        deviceIds = self.client.factory.create('ns10:deviceIds')
+        accountId = self.client.factory.create('{' + DATA_NS + '}accountId')
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
         accountId.IsPersisted = self.household.Accounts.Account[0].Id.IsPersisted
         accountId.Value = self.household.Accounts.Account[0].Id.Value
         deviceIds.DeviceId.append(deviceId)
         return self.client.service['DeletionManager'].DeleteDevices(accountId,
                                                                     deviceIds)
+
+    def SearchDevices(self, manufacturer, modelNumber, maxResults):
+        return self.client.service['DeviceManager'].SearchGlobalDevices(
+            manufacturer, modelNumber, "Unknown", "DidYouMeanMatch", maxResults)
+
+    def AddDevice(self, device):
+        self.GetHousehold()
+        operation = self.client.factory.create('{' + DM_OPERATION_NS + '}AddDeviceBySearchResultOperation')
+        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation.ReturnIdAsKey = str(uuid.uuid4())
+        operation.DeviceClassification = "Any"
+        operation.DeviceName = device.Manufacturer + " " + device.DeviceModel
+        operation.IsScartCableSupported = "false"
+        operation.Match = device
+        operation.PrivateAddTypeUsed = "NotApplicable"
+        return self.client.service['DeviceManager'].UpdateMyData(operation)
