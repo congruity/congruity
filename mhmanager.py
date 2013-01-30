@@ -187,3 +187,14 @@ class MHManager():
         operation.Match = device
         operation.PrivateAddTypeUsed = "NotApplicable"
         return self.client.service['DeviceManager'].UpdateMyData(operation)
+
+    def RenameDevice(self, deviceId, newName):
+        self.GetHousehold()
+        operation = self.client.factory.create('{' + DM_OPERATION_NS + '}UpdateDeviceNameOperation')
+        id = self.client.factory.create('{' + DATA_NS + '}Id')
+        id.IsPersisted = deviceId.IsPersisted
+        id.Value = deviceId.Value
+        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation.DeviceId = id
+        operation.DeviceName = newName
+        return self.client.service['DeviceManager'].UpdateMyData(operation)

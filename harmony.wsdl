@@ -337,6 +337,12 @@
     </sequence>
   </complexType>
 
+  <complexType name="operation">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
   <complexType name="UpdateMyDataResult">
     <sequence>
       <any/>
@@ -429,7 +435,7 @@
 </message>
 
 <message name="UpdateMyData">
-  <part name="operation" type="ns5:AddDeviceBySearchResultOperation"/>
+  <part name="operation" type="operation"/>
 </message>
 <message name="UpdateMyDataResponse">
   <part name="UpdateMyDataResult" type="UpdateMyDataResult"/>

@@ -29,4 +29,15 @@
     </complexContent>
   </complexType>
 
+  <complexType name="UpdateDeviceNameOperation">
+    <complexContent>
+      <extension base="ns4:UpdateDeviceNameOperationStart">
+	<sequence>
+	  <element name="DeviceId" type="ns1:Id"/>
+	  <element name="DeviceName" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
 </schema>

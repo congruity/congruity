@@ -22,4 +22,11 @@
     </sequence>
   </complexType>
 
+  <complexType name="UpdateDeviceNameOperationStart">
+    <sequence>
+      <element name="ParentAccount" type="ns1:Id"/>
+      <element name="Object" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
 </schema>
