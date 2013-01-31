@@ -454,6 +454,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.deleteButton = wx.Button(self, label="Delete Device")
         self.deleteButton.Bind(wx.EVT_BUTTON, self.OnDelete)
         self.sizer.Add(self.deleteButton, 0, 0, 0)
+        self.renameButton = wx.Button(self, label="Rename Device")
+        self.renameButton.Bind(wx.EVT_BUTTON, self.OnRename)
+        self.sizer.Add(self.renameButton, 0, 0, 0)
         self.syncButton = wx.Button(self, label="Sync Remote")
         self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
         self.sizer.Add(self.syncButton, 0, 0, 0)
@@ -507,6 +510,24 @@ class RemoteConfigurationPanel(WizardPanelBase):
                 self.Layout()
         else:
             wx.MessageBox('Please select a device to delete.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def OnRename(self, event):
+        deviceToRename = self.devicesListBox.GetSelections()
+        if deviceToRename != ():
+            dlg = wx.TextEntryDialog(self.parent,
+                                     'Enter new name for device "'
+                                     + self.devicesListBox.GetStringSelection()
+                                     + '":', 'Rename Device')
+            result = dlg.ShowModal() == wx.ID_OK
+            newName = dlg.GetValue()
+            dlg.Destroy()
+            if result:
+                mhMgr.RenameDevice(self.devices[deviceToRename[0]].Id, newName)
+                self.PopulateDevicesList()
+                self.Layout()
+        else:
+            wx.MessageBox('Please select a device to rename.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
 
     def OnSync(self, event):
