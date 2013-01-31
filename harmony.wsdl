@@ -643,7 +643,7 @@
 </service>
 <service name="DeviceManager">
  <port name="DeviceManagerPortType" binding="ns:DeviceManagerBinding">
-  <SOAP:address location="http://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
  </port>
 </service>
 <service name="CompileManager">
