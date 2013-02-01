@@ -31,7 +31,7 @@ import wx
 import wx.lib.dialogs
 from mhmanager import MHManager
 
-version = "15+"
+version = "1.0"
 
 mhMgr = MHManager()
 
@@ -224,6 +224,16 @@ class WizardPanelBase(wx.Panel):
     def GetNext(self):
         return (None, None)
 
+    def StartBusy(self):
+        self.parent.Hide()
+        self.busy = wx.BusyInfo("Please wait...")
+        wx.MilliSleep(100)
+        wx.Yield()
+
+    def EndBusy(self):
+        self.busy = None
+        self.parent.Show()
+
 class MessagePanelBase(WizardPanelBase):
     def __init__(self, parent, resources):
         WizardPanelBase.__init__(self, parent, resources)
@@ -375,16 +385,6 @@ class RemoteSelectPanel(WizardPanelBase):
         self.remoteChoice.AppendItems(self.remoteDisplayNames)
         self.Layout()
 
-    def StartBusy(self):
-        self.parent.Hide()
-        self.busy = wx.BusyInfo("Please wait...")
-        wx.MilliSleep(100)
-        wx.Yield()
-
-    def EndBusy(self):
-        self.busy = None
-        self.parent.Show()
-
     def _OnStatusOk(self, next_page, type_text):
         self._OnStatusCommon(self._msg_status_ok)
 
@@ -465,16 +465,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.sizer.Add(self.downloadConfigButton, 0, 0, 0)
         self.SetSizerAndFit(self.sizer)
 
-
         self.next = None
         self.initial_exception = None
 
-    def _WorkerFunction(self):
-
-
-        #self.next = self.resources.page_connect
-        self.parent.ReenableNext()
-  
     def SetRemote(self, remote):
         self.remote = remote
         self.remoteDisplayName = mhMgr.GetProduct(remote.SkinId).DisplayName
@@ -492,7 +485,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.devicesListBox.Set(self.devicesList)
 
     def OnAdd(self, event):
-        print "ADD!"
+        self.parent._SetPage(self.resources.page_add_device, None)
 
     def OnDelete(self, event):
         deviceToDelete = self.devicesListBox.GetSelections()
@@ -548,37 +541,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
             wx.MessageBox('Config file saved to.' + filename,
                           'Download complete.', wx.OK)
 
-    def StartBusy(self):
-        self.parent.Hide()
-        self.busy = wx.BusyInfo("Please wait...")
-        wx.MilliSleep(100)
-        wx.Yield()
-
-    def EndBusy(self):
-        self.busy = None
-        self.parent.Show()
-
-    def _OnStatusOk(self, next_page, type_text):
-        self._OnStatusCommon(self._msg_status_ok)
-
-    def _OnStatusFailure(self, failure_msg, details):
-        self.resources.page_failure.SetMessages(
-            failure_msg,
-            details
-        )
-        self.next = self.resources.page_failure
-        self._OnStatusCommon(self._msg_status_failure)
-
-    def _OnStatusCommon(self, message):
-        self.text_message.UpdateText(self._msg_welcome + message)
-        self.parent.ReenableCancel()
-        self.parent.ReenableNext()
-
-    def SetInitialException(self, initial_exception):
-        self.initial_exception = initial_exception
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
     def GetTitle(self):
@@ -588,15 +551,117 @@ class RemoteConfigurationPanel(WizardPanelBase):
         return False
 
     def OnNext(self):
-        if mhMgr.Login(self.usernameCtrl.GetValue(),
-                       self.passwordCtrl.GetValue()) is True:
-            return True
+        pass
+
+    def GetNext(self):
+        return (self.next, None)
+
+class AddDevicePanel(WizardPanelBase):
+    _msg_welcome = (
+        "Please enter the manufacturer and model number of your device below.\n"
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+        self.manufacturerLabel = wx.StaticText(self, -1, "Manufacturer:")
+        self.manufacturerCtrl = wx.TextCtrl(self, -1, "")
+        self.manufacturerCtrl.SetMinSize((200, 31))
+        self.manufacturerSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.manufacturerSizer.Add(self.manufacturerLabel, 0, ALIGN_LCA, 0)
+        self.manufacturerSizer.Add(self.manufacturerCtrl, 0, ALIGN_RCA, 0)
+        self.sizer.Add(self.manufacturerSizer, 0, wx.EXPAND, 0)
+        self.modelNumberText = wx.StaticText(self, -1, "Model Number:")
+        self.modelNumberCtrl = wx.TextCtrl(self, -1, "")
+        self.modelNumberCtrl.SetMinSize((200, 31))
+        self.modelNumberSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.modelNumberSizer.Add(self.modelNumberText, 0, ALIGN_LCA, 0)
+        self.modelNumberSizer.Add(self.modelNumberCtrl, 0, ALIGN_RCA, 0)
+        self.sizer.Add(self.modelNumberSizer, 0, wx.EXPAND, 0)
+        self.searchButton = wx.Button(self, label="Search")
+        self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearch)
+        self.sizer.Add(self.searchButton, 0, 0, 0)
+
+        self.divider = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        self.sizer.Add(self.divider, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.searchResultsText = wx.StaticText(self, -1, "Search Results:")
+        self.sizer.Add(self.searchResultsText, 0, 0, 0)
+        self.searchResultsListBox = wx.ListBox(self, style=wx.LB_SINGLE, 
+                                               size=(300, 150))
+        self.sizer.Add(self.searchResultsListBox, 0, 0, 0)
+        self.addButton = wx.Button(self, label="Add Device")
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
+        self.sizer.Add(self.addButton, 0, 0, 0)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        return (None, None)
+
+    def OnSearch(self, event):
+        self.searchResultsList = []
+        if self.manufacturerCtrl.IsEmpty():
+            wx.MessageBox('Please enter a manufacturer.',
+                          'No manufacturer entered.', wx.OK | wx.ICON_WARNING)
+        elif self.modelNumberCtrl.IsEmpty():
+            wx.MessageBox('Please enter a model number.',
+                          'No model number entered.', wx.OK | wx.ICON_WARNING)
         else:
-            wx.MessageBox('Login failed.', 'Login failed.', wx.OK |
-                          wx.ICON_WARNING)
-            self.usernameCtrl.Clear()
-            self.passwordCtrl.Clear()
-            return False
+            searchResults = mhMgr.SearchDevices(
+                self.manufacturerCtrl.GetValue(),
+                self.modelNumberCtrl.GetValue(),
+                5)
+            if searchResults.Status == "NoMatchFound":
+                wx.MessageBox('Sorry, no devices were found.',
+                              'No devices found.', wx.OK | wx.ICON_WARNING)
+            else:
+                self.matches = searchResults.Matches.PublicDeviceSearchMatch
+                for match in self.matches:
+                    self.searchResultsList.append(match.Manufacturer + " "
+                                                  + match.DeviceModel)
+        self.searchResultsListBox.Set(self.searchResultsList)
+
+    def OnAdd(self, event):
+        deviceToAdd = self.searchResultsListBox.GetSelections()
+        if deviceToAdd != ():
+            self.StartBusy()
+            result = mhMgr.AddDevice(self.matches[deviceToAdd[0]])
+            if result is None:
+                self.EndBusy()
+                wx.MessageBox('Device addition failed!',
+                              'Failure', wx.OK | wx.ICON_WARNING)
+            else:
+                self.resources.page_remote_configuration.PopulateDevicesList()
+                self.EndBusy()
+                self.parent._SetPage(self.resources.page_remote_configuration, None)
+        else:
+            wx.MessageBox('Please select a device to add.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def GetTitle(self):
+        return "Device Addition"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        pass
 
     def GetNext(self):
         return (self.next, None)
@@ -814,10 +879,12 @@ class Resources(object):
         self.page_welcome = WelcomePanel(wizard, self)
         self.page_remote_select = RemoteSelectPanel(wizard, self)
         self.page_remote_configuration = RemoteConfigurationPanel(wizard, self)
+        self.page_add_device = AddDevicePanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
             self.page_remote_configuration,
+            self.page_add_device,
         ]
 
 class Finalizer(object):
