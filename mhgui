@@ -30,6 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 from mhmanager import MHManager
+from mhmanager import MHAccountDetails
 
 version = "1.0"
 
@@ -274,6 +275,10 @@ class WelcomePanel(WizardPanelBase):
         self.passwordSizer.Add(self.passwordText, 0, ALIGN_LCA, 0)
         self.passwordSizer.Add(self.passwordCtrl, 0, ALIGN_RCA, 0)
         self.sizer.Add(self.passwordSizer, 0, wx.EXPAND, 0)
+        self.sizer.AddSpacer(25)
+        self.createAccountButton = wx.Button(self, label="Create Account")
+        self.createAccountButton.Bind(wx.EVT_BUTTON, self.OnCreateAccount)
+        self.sizer.Add(self.createAccountButton)
 
         self.SetSizerAndFit(self.sizer)
 
@@ -333,6 +338,9 @@ class WelcomePanel(WizardPanelBase):
 
     def GetNext(self):
         return (self.next, None)
+
+    def OnCreateAccount(self, event):
+        self.parent._SetPage(self.resources.page_create_account, None)
 
 class RemoteSelectPanel(WizardPanelBase):
     _msg_welcome = (
@@ -666,6 +674,208 @@ class AddDevicePanel(WizardPanelBase):
     def GetNext(self):
         return (self.next, None)
 
+class CreateAccountPanel(WizardPanelBase):
+    _msg_welcome = (
+        "Please enter the information below in order to create an account.\n"
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.securityQuestionChoices = [
+            "What was the make of your first car?",
+            "What's your mother's maiden name?",
+            "What's the name of your favorite sports team?",
+            "What's your first pet's name?",
+            "Who is your all-time favorite movie character?" ]
+        self.securityQuestionTokens = [
+            "QuestionCar",
+            "QuestionMothersMaidenName",
+            "QuestionSportsTeam",
+            "QuestionFirstPet",
+            "QuestionMovieCharacter" ]
+
+        # Probably should do this in a thread or something as this makes a call
+        # to the website.
+        self.countryLists = mhMgr.GetCountryLists()
+        self.countryCodes = self.countryLists[0]
+        self.countries = self.countryLists[1]
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+    
+        self.lineOneSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.firstNameLabel = wx.StaticText(self, -1, "First Name:")
+        self.lineOneSizer.Add(self.firstNameLabel, 0, ALIGN_LCA)
+        self.firstNameCtrl = wx.TextCtrl(self, size=(120,31))
+        self.firstNameCtrl.SetMaxLength(30)
+        self.lineOneSizer.Add(self.firstNameCtrl)
+        self.lineOneSizer.AddSpacer(25)
+        self.lastNameLabel = wx.StaticText(self, -1, "Last Name:")
+        self.lineOneSizer.Add(self.lastNameLabel, 0, ALIGN_LCA)
+        self.lastNameCtrl = wx.TextCtrl(self, size=(120,31))
+        self.lastNameCtrl.SetMaxLength(30)
+        self.lineOneSizer.Add(self.lastNameCtrl)
+        self.sizer.Add(self.lineOneSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineTwoSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.countryLabel = wx.StaticText(self, -1, "Country:")
+        self.lineTwoSizer.Add(self.countryLabel, 0, ALIGN_LCA)
+        self.countryChoice = wx.Choice(self, -1, choices=self.countries)
+        self.lineTwoSizer.Add(self.countryChoice)
+        self.sizer.Add(self.lineTwoSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineThreeSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.emailAddressLabel = wx.StaticText(self, -1, "Email Address:")
+        self.lineThreeSizer.Add(self.emailAddressLabel, 0, ALIGN_LCA)
+        self.emailAddressCtrl = wx.TextCtrl(self, size=(170,31))
+        self.emailAddressCtrl.SetMaxLength(50)
+        self.lineThreeSizer.Add(self.emailAddressCtrl)
+        self.sizer.Add(self.lineThreeSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineFourSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.passwordLabel = wx.StaticText(self, -1, "Password:")
+        self.lineFourSizer.Add(self.passwordLabel, 0, ALIGN_LCA)
+        self.passwordCtrl = wx.TextCtrl(self, -1, "", style=wx.TE_PASSWORD, 
+                                        size=(120, 31))
+        self.passwordCtrl.SetMaxLength(30)
+        self.lineFourSizer.Add(self.passwordCtrl)
+        self.lineFourSizer.AddSpacer(25)
+        self.retypePasswordLabel = wx.StaticText(self, -1, "Confirm Password:")
+        self.lineFourSizer.Add(self.retypePasswordLabel, 0, ALIGN_LCA)
+        self.retypePasswordCtrl = wx.TextCtrl(self, -1, "",
+                                              style=wx.TE_PASSWORD,
+                                              size=(120, 31))
+        self.retypePasswordCtrl.SetMaxLength(30)
+        self.lineFourSizer.Add(self.retypePasswordCtrl)
+        self.sizer.Add(self.lineFourSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineFiveSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.securityQuestionLabel = wx.StaticText(self, -1,
+                                                   "Security Question:")
+        self.lineFiveSizer.Add(self.securityQuestionLabel, 0, ALIGN_LCA)
+        self.securityQuestionChoice = wx.Choice(self, -1,
+            choices=self.securityQuestionChoices)
+        self.lineFiveSizer.Add(self.securityQuestionChoice)
+        self.sizer.Add(self.lineFiveSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineSixSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.securityAnswerLabel = wx.StaticText(self, -1, "Security Answer:")
+        self.lineSixSizer.Add(self.securityAnswerLabel, 0, ALIGN_LCA)
+        self.securityAnswerCtrl = wx.TextCtrl(self, size=(170,31))
+        self.securityAnswerCtrl.SetMaxLength(30)
+        self.lineSixSizer.Add(self.securityAnswerCtrl)
+        self.sizer.Add(self.lineSixSizer)
+        self.sizer.AddSpacer(12)
+
+        self.lineSevenSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.termsCheckBox = wx.CheckBox(self,
+            label="I agree to Terms of Use and Privacy Policy")
+        self.sizer.Add(self.termsCheckBox)
+        self.contactCheckBox = wx.CheckBox(self,
+            label="I agree to receive a survey from Logitech")
+        self.sizer.Add(self.contactCheckBox)
+
+        self.lineEightSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.termsOfUseLink = wx.HyperlinkCtrl(self, -1, "Terms of Use",
+            "http://files.myharmony.com/Assets/legal/en/termsofuse.html")
+        self.lineEightSizer.Add(self.termsOfUseLink)
+        self.lineEightSizer.AddSpacer(10)
+        self.privacyPolicyLink = wx.HyperlinkCtrl(self, -1, "Privacy Policy",
+            "http://files.myharmony.com/Assets/legal/en/privacypolicy.html")
+        self.lineEightSizer.Add(self.privacyPolicyLink)
+        self.sizer.Add(self.lineEightSizer)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+        self.parent.ReenableNext()
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        return (None, None)
+
+    def GetTitle(self):
+        return "Account Creation"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        if self.firstNameCtrl.IsEmpty():
+            wx.MessageBox('First Name Required.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.lastNameCtrl.IsEmpty():
+            wx.MessageBox('Last Name Required.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.countryChoice.GetSelection() == 0:
+            wx.MessageBox('Country Selection Required.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.emailAddressCtrl.IsEmpty():
+            wx.MessageBox('Email Address Required.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if len(self.passwordCtrl.GetValue()) < 4:
+            wx.MessageBox('Passwords must be at least 4 characters.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.passwordCtrl.GetValue() != self.retypePasswordCtrl.GetValue():
+            wx.MessageBox('Passwords do not match.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.securityAnswerCtrl.IsEmpty():
+            wx.MessageBox('Security Answer Required.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        if self.termsCheckBox.GetValue() is False:
+            wx.MessageBox('Must accept terms and conditions.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+
+        mhAccount = MHAccountDetails()
+        mhAccount.firstName = self.firstNameCtrl.GetValue()
+        mhAccount.lastName = self.lastNameCtrl.GetValue()
+        mhAccount.country = self.countryCodes[self.countryChoice.GetSelection()]
+        mhAccount.email = self.emailAddressCtrl.GetValue()
+        mhAccount.password = self.passwordCtrl.GetValue()
+        mhAccount.securityQuestion = \
+            self.securityQuestionTokens[self.securityQuestionChoice.GetSelection()]
+        mhAccount.securityAnswer = self.securityAnswerCtrl.GetValue()
+        if self.contactCheckBox.GetValue() is True:
+            mhAccount.keepMeInformed = "true"
+        else:
+            mhAccount.keepMeInformed = "false"
+
+        result = mhMgr.CreateAccount(mhAccount)
+        if result is None:
+            wx.MessageBox('Account created successfully.',
+                          'Success', wx.OK)
+            self.parent._SetPage(self.resources.page_welcome, None)
+        else:
+            wx.MessageBox(result, 'Error', wx.OK | wx.ICON_WARNING)
+            return
+
+    def GetNext(self):
+        return (self.next, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -880,11 +1090,13 @@ class Resources(object):
         self.page_remote_select = RemoteSelectPanel(wizard, self)
         self.page_remote_configuration = RemoteConfigurationPanel(wizard, self)
         self.page_add_device = AddDevicePanel(wizard, self)
+        self.page_create_account = CreateAccountPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
             self.page_remote_configuration,
             self.page_add_device,
+            self.page_create_account,
         ]
 
 class Finalizer(object):

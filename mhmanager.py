@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2012 Scott Talbert
+# Copyright 2012-2013 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -18,13 +18,16 @@
 # along with congruity.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import httplib
 import urlparse
+import urllib
 import urllib2
 import uuid
 import re
 import time
 import os
 import sys
+from HTMLParser import HTMLParser
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
@@ -198,3 +201,94 @@ class MHManager():
         operation.DeviceId = id
         operation.DeviceName = newName
         return self.client.service['DeviceManager'].UpdateMyData(operation)
+
+    # Returns 'None' on success.  Otherwise returns a string with an error msg.
+    # Parameter is an instance of MHAccountDetails.
+    def CreateAccount(self, details):
+        host = "www.myharmony.com"
+        url = "http://www.myharmony.com/MartiniWeb/Account/Register"
+        params = urllib.urlencode(
+            {'FirstName': details.firstName, 'LastName': details.lastName,
+             'ctl00$MainContent$selectCountry': '- Select Country -',
+             'region': details.country, 'Emailaddress': details.email,
+             'Password': details.password, 'RetypePassword': details.password,
+             'securityquestion': details.securityQuestion,
+             'Securityanswer': details.securityAnswer,
+             'IsPolicyAccepted': 'true',
+             'Keepmeinformed': details.keepMeInformed})
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
+        conn = httplib.HTTPConnection(host)
+        conn.request("POST", url, params, headers)
+        response = conn.getresponse()
+        data = response.read()
+        conn.close()
+        # We get a redirect response (code 302) on success.  Return.
+        if response.status == 302:
+            return None
+        # Check for field validation errors.
+        parser = CreateAccountResponseHTMLParser()
+        parser.feed(data)
+        if parser.error != "":
+            return parser.error
+        else:
+            return "Unknown Error"
+
+    def GetCountryLists(self):
+        conn = httplib.HTTPConnection("www.myharmony.com")
+        conn.request("GET", "http://www.myharmony.com/Account/Register")
+        response = conn.getresponse()
+        data = unicode(response.read(), 'utf-8')
+        parser = CountryListHTMLParser()
+        parser.feed(parser.unescape(data))
+        return [parser.country_codes, parser.countries]
+
+class MHAccountDetails:
+    def __init__(self):
+        firstName = ""
+        lastName = ""
+        country = ""
+        email = ""
+        password = ""
+        securityQuestion = ""
+        securityAnswer = ""
+        keepMeInformed = ""
+
+class CreateAccountResponseHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.save_data = False
+        self.error = ""
+    def handle_starttag(self, tag, attrs):
+        for attr in attrs:
+            if attr == ('class', 'field-validation-error'):
+                self.save_data = True
+    def handle_data(self, data):
+        if self.save_data:
+            self.error += data
+            self.save_data = False
+
+class CountryListHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.in_country_section = False
+        self.country_codes = []
+        self.countries = []
+        self.country_code = None
+    def handle_starttag(self, tag, attrs):
+        if tag == 'select' and ('id', 'region') in attrs and \
+                ('name', 'region') in attrs:
+            self.in_country_section = True
+            return
+        if self.in_country_section:
+            if tag == 'option':
+                for attr in attrs:
+                    if attr[0] == 'value':
+                        self.country_code = attr[1]
+    def handle_data(self, data):
+        if self.country_code is not None:
+            self.country_codes.append(self.country_code)
+            self.countries.append(data)
+            self.country_code = None
+    def handle_endtag(self, tag):
+        if self.in_country_section and tag == 'select':
+            self.in_country_section = False
