@@ -108,7 +108,7 @@ def program_callback_imp_old(count, current, total, context):
         print
         traceback.print_exc()
 
-def program_callback_imp_zwave(stage_id, count, current, total, type, context):
+def program_callback_imp_zwave(stage_id, count, current, total, type, context, stages):
     if not context:
         return
 
@@ -120,19 +120,37 @@ def program_callback_imp_zwave(stage_id, count, current, total, type, context):
         print
         traceback.print_exc()
 
-def program_callback_imp_zwave_multi(stage_id, count, current, total, type, context):
+def program_callback_imp_zwave_multi(stage_id, count, current, total, type, context, stages):
     if not context:
         return
 
     if stage_id == libconcord.LC_CB_STAGE_NUM_STAGES:
+        for i in range(count):
+            wx.CallAfter(context._AddDg, stages[i])
+        # Wait until we're sure all the widgets have been added.  Lock will be
+        # released by _FinishWidgets().
+        context.dg_widget_lock = thread.allocate_lock()
+        context.dg_widget_lock.acquire()
+        wx.CallAfter(context._FinishWidgets)
+        context.dg_widget_lock.acquire()
         return
 
     try:
-        (f, fcontext) = context
+        # dg_widgets is a list where each element in the list is a 3-item list:
+        # [stage_id, DecoratedGauge, stage_finished (True/False)]
+        # This allows us to support multiple instances of the same stage_id.
+        widget_num = -1
+        for index, item in enumerate(context.dg_widgets):
+            if item[0] == stage_id and item[2] == False:
+                widget_num = index
+                break
+        if widget_num == -1:
+            return
         percent = (current * 100) / total
-        f(False, percent, fcontext[stage_id])
+        context._DgUpdate(False, percent, context.dg_widgets[widget_num][1])
         if current == total:
-            f(True, percent, fcontext[stage_id])
+            context._DgUpdate(True, percent, context.dg_widgets[widget_num][1])
+            context.dg_widgets[widget_num][2] = True
     except:
         print
         traceback.print_exc()
@@ -738,6 +756,10 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
 
         self.dc = DecoratedContainer(self, self.resources)
         DecoratedContainerThreadMixin.__init__(self, self.dc)
+        self._AddWidgets()
+        self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
+
+        self.SetSizerAndFit(self.sizer)
 
         self.next = None
         self.finished = False
@@ -781,9 +803,6 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
         self.parent.ReenableNext()
 
     def OnActivated(self, prev_page, data):
-        self._AddWidgets()
-        self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
-        self.SetSizerAndFit(self.sizer)
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
@@ -800,6 +819,9 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
 
     def GetNext(self):
         return (self.next, None)
+
+    def _AddDg(self, stage_id):
+        self.dg_widgets.append([stage_id, DecoratedGauge(self.dc, libconcord.lc_cb_stage_str(stage_id), self.vpos.next()), False])
 
 class CheckConnectivityPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
@@ -854,27 +876,24 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         )
 
     def _AddWidgets(self):
-        vpos = counter()
-        self.dg_check_website = DecoratedGauge(self.dc, "Check Website", vpos.next())
+        self.vpos = counter()
+        self.dg_check_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
         if using_zwave_api:
-            self.dg_widgets = {}
-            stages = POINTER(c_uint)()
-            num_stages = c_int()
-            libconcord.get_stages(self.file_type, byref(stages), byref(num_stages))
-            for i in range(num_stages.value):
-                self.dg_widgets[stages[i]] = DecoratedGauge(
-                    self.dc,
-                    libconcord.lc_cb_stage_str(stages[i]),
-                    vpos.next()
-                 )
+            self.dg_widgets = []
         else:
-            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
-            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
-            self.dg_write = DecoratedGauge(self.dc, "Write Configuration", vpos.next())
-            self.dg_verify = DecoratedGauge(self.dc, "Verify Upgrade", vpos.next())
-            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
-        self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
-        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
+            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", self.vpos.next())
+            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", self.vpos.next())
+            self.dg_write = DecoratedGauge(self.dc, "Write Configuration", self.vpos.next())
+            self.dg_verify = DecoratedGauge(self.dc, "Verify Upgrade", self.vpos.next())
+            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", self.vpos.next())
+            self.dg_set_time = DecoratedGauge(self.dc, "Set Time", self.vpos.next())
+            self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", self.vpos.next())
+
+    def _FinishWidgets(self):
+        #self.dg_set_time = DecoratedGauge(self.dc, "Set Time", self.vpos.next())
+        self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
+        self.Layout()
+        self.dg_widget_lock.release()
 
     def DoParsing(self):
         self.bin_data = POINTER(c_ubyte)()
@@ -901,7 +920,7 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
             program_callback = libconcord.callback_type(program_callback_imp_zwave_multi)
             libconcord.update_configuration(
                 program_callback,
-                py_object((self._DgUpdate, self.dg_widgets)),
+                self,
                 0
             )
         else:
@@ -947,12 +966,12 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
                 True
              )
 
-        self._DgStart(self.dg_set_time)
+        #self._DgStart(self.dg_set_time)
         if using_zwave_api:
-            libconcord.set_time(program_callback, None)
+            pass #libconcord.set_time(program_callback, None)
         else:
             libconcord.set_time()
-        self._DgEnd(self.dg_set_time)
+        #self._DgEnd(self.dg_set_time)
 
         self._DgStart(self.dg_notify_website)
         if not self.resources.no_web:
@@ -975,26 +994,22 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
         )
 
     def _AddWidgets(self):
-        vpos = counter()
+        self.vpos = counter()
         if using_zwave_api:
-            self.dg_widgets = {}
-            stages = POINTER(c_uint)()
-            num_stages = c_int()
-            libconcord.get_stages(self.file_type, byref(stages), byref(num_stages))
-            for i in range(num_stages.value):
-                self.dg_widgets[stages[i]] = DecoratedGauge(
-                    self.dc,
-                    libconcord.lc_cb_stage_str(stages[i]),
-                    vpos.next()
-                )
+            self.dg_widgets = []
         else:
-            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", vpos.next())
-            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", vpos.next())
-            self.dg_write = DecoratedGauge(self.dc, "Write Firmware", vpos.next())
-            self.dg_finalize = DecoratedGauge(self.dc, "Finalize Programming", vpos.next())
-            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", vpos.next())
-            self.dg_set_time = DecoratedGauge(self.dc, "Set Time", vpos.next())
-        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
+            self.dg_prepare = DecoratedGauge(self.dc, "Prepare Remote", self.vpos.next())
+            self.dg_erase = DecoratedGauge(self.dc, "Erase Flash", self.vpos.next())
+            self.dg_write = DecoratedGauge(self.dc, "Write Firmware", self.vpos.next())
+            self.dg_finalize = DecoratedGauge(self.dc, "Finalize Programming", self.vpos.next())
+            self.dg_reconnect = DecoratedGauge(self.dc, "Reconnect to Remote", self.vpos.next())
+            self.dg_set_time = DecoratedGauge(self.dc, "Set Time", self.vpos.next())
+            self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", self.vpos.next())
+
+    def _FinishWidgets(self):
+        self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
+        self.Layout()
+        self.dg_widget_lock.release()
 
     def DoParsing(self):
         self.bin_data = POINTER(c_ubyte)()
@@ -1024,7 +1039,7 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
             program_callback = libconcord.callback_type(program_callback_imp_zwave_multi)
             libconcord.update_firmware(
                 program_callback,
-                py_object((self._DgUpdate, self.dg_widgets)),
+                self,
                 0,
                 c_int(is_direct and 1 or 0)
             )
