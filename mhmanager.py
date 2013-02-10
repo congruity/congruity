@@ -113,8 +113,9 @@ class MHManager():
     def GetRemotes(self):
         self.GetHousehold()
         remotes = []
-        for remote in self.household.Remotes.Remote:
-            remotes.append(remote)
+        if self.household.Remotes != "":
+            for remote in self.household.Remotes.Remote:
+                remotes.append(remote)
         return remotes
 
     # Gets the product info for a given Skin Id.
