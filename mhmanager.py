@@ -36,6 +36,7 @@ MS_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
 DATA_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
 OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
 DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+ACCOUNT_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
 
 class MHPlugin(MessagePlugin):
     def fix_elements(self, prefix, elements):
@@ -161,10 +162,14 @@ class MHManager():
 
     def GetDevices(self):
         self.GetHousehold()
-        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
-        for device in self.household.Accounts.Account[0].Devices.Device:
-            deviceIds.DeviceId.append(device.Id)
-        return self.client.service['DeviceManager'].GetDevices(deviceIds).Device
+        if self.household.Accounts.Account[0].Devices != "":
+            deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
+            for device in self.household.Accounts.Account[0].Devices.Device:
+                deviceIds.DeviceId.append(device.Id)
+                return self.client.service['DeviceManager'].GetDevices(
+                    deviceIds).Device
+        else:
+            return None
 
     def DeleteDevice(self, deviceId):
         self.GetHousehold()
@@ -242,6 +247,36 @@ class MHManager():
         parser = CountryListHTMLParser()
         parser.feed(parser.unescape(data))
         return [parser.country_codes, parser.countries]
+
+    def AddRemote(self, serialNumber, skinId, usbPid, usbVid):
+        self.GetHousehold()
+        remoteInfo = self.client.factory.create(
+            '{' + ACCOUNT_NS + '}remoteInfo')
+        remoteInfo.AccountId = self.household.Accounts.Account[0].Id
+        remoteInfo.KeyPadLayout = "Undefined"
+        remoteInfo.SerialNumber = serialNumber
+        remoteInfo.SkinId = skinId
+        remoteInfo.UsbPid = usbPid
+        remoteInfo.UsbVid = usbVid
+        return self.client.service['UserAccountDirector'].AddRemoteToAccount(remoteInfo)
+
+    # Returns a set of the remote skins supported by this web interface.
+    def GetSupportedRemoteSkinIds(self):
+        products = self.client.service['ProductsManager'].GetHarmonyProducts()
+        skinIds = set()
+        for product in products.HarmonyProduct:
+            skinIds.add(int(product.SkinId))
+        return skinIds
+
+    # Returns a list of the remote names supported by this web interface.
+    def GetSupportedRemoteNames(self):
+        products = self.client.service['ProductsManager'].GetHarmonyProducts()
+        remoteNames = set()
+        for product in products.HarmonyProduct:
+            remoteNames.add(product.DisplayName)
+        remoteNames = list(remoteNames)
+        remoteNames.sort()
+        return remoteNames
 
 class MHAccountDetails:
     def __init__(self):

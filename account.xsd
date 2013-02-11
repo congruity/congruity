@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="remoteInfo">
+    <sequence>
+      <element name="AccountId" type="ns1:Id"/>
+      <element name="KeyPadLayout" type="xsd:string"/>
+      <element name="ProductId" type="xsd:string" nillable="true"/>
+      <element name="SerialNumber" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="UsbPid" type="xsd:string"/>
+      <element name="UsbVid" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+</schema>

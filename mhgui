@@ -94,6 +94,9 @@ ALIGN_XCA = wx.EXPAND      | wx.ALIGN_CENTER_VERTICAL | wx.ALL
 ALIGN_LBA = wx.ALIGN_LEFT  | wx.ALIGN_BOTTOM          | wx.ALL
 ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
 
+def dummy_callback_imp(stage_id, count, current, total, type, context, stages):
+    pass
+
 class WrappedStaticText(wx.StaticText):
     def __init__(self, parent):
         self.parent = parent
@@ -374,13 +377,7 @@ class RemoteSelectPanel(WizardPanelBase):
 
         # Get list of remotes for this account from the web service
         wx.CallAfter(self.StartBusy)
-        self.remotes = mhMgr.GetRemotes()
-        self.remoteDisplayNames = []
-        for remote in self.remotes:
-            product = mhMgr.GetProduct(remote.SkinId)
-            self.remoteDisplayNames.append(product.DisplayName)
-        self.remoteDisplayNames.append(self.newRemoteString)
-        wx.CallAfter(self.UpdateRemoteChoice)
+        wx.CallAfter(self.UpdateRemotes)
         wx.CallAfter(self.EndBusy)
 
         #self.next = self.resources.page_connect
@@ -388,7 +385,13 @@ class RemoteSelectPanel(WizardPanelBase):
 
         #wx.CallAfter(self._OnStatusOk, next_page, type_text)
   
-    def UpdateRemoteChoice(self):
+    def UpdateRemotes(self):
+        self.remotes = mhMgr.GetRemotes()
+        self.remoteDisplayNames = []
+        for remote in self.remotes:
+            product = mhMgr.GetProduct(remote.SkinId)
+            self.remoteDisplayNames.append(product.DisplayName)
+        self.remoteDisplayNames.append(self.newRemoteString)
         self.remoteChoice.Clear()
         self.remoteChoice.AppendItems(self.remoteDisplayNames)
         self.Layout()
@@ -425,7 +428,71 @@ class RemoteSelectPanel(WizardPanelBase):
     def OnNext(self):
         if self.remoteChoice.GetSelection() is not wx.NOT_FOUND:
             if self.remoteChoice.GetStringSelection() == self.newRemoteString:
-                self.next = self.resources.page_add_remote
+                supportedRemotes = mhMgr.GetSupportedRemoteNames()
+                msg = 'Please ensure your remote control is connected.'
+                msg += '\n\nSupported models are:'
+                for name in supportedRemotes:
+                    msg += '\n' + name
+                wx.MessageBox(msg, 'Connect Remote', wx.OK)
+                try:
+                    libconcord.init_concord()
+                except:
+                    msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                        sys.exc_value.result_str,
+                        sys.exc_value.func,
+                        sys.exc_value.result
+                    )
+                    wx.MessageBox('Could not detect remote: ' + msg, 'Error',
+                                  wx.OK | wx.ICON_WARNING)
+                    return
+                cb = libconcord.callback_type(dummy_callback_imp)
+                try:
+                    libconcord.get_identity(cb, None)
+                except:
+                    msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                        sys.exc_value.result_str,
+                        sys.exc_value.func,
+                        sys.exc_value.result
+                    )
+                    wx.MessageBox('Could not identify remote: ' + msg, 'Error',
+                                  wx.OK | wx.ICON_WARNING)
+                    libconcord.deinit_concord()
+                    return
+                ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
+                ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
+                ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
+                serialNumber = ser_1 + ser_2 + ser_3
+                skinId = libconcord.get_skin()
+                usbPid = hex(libconcord.get_usb_pid())
+                usbVid = hex(libconcord.get_usb_vid())
+                model = libconcord.get_mfg() + ' ' + libconcord.get_model()
+                libconcord.deinit_concord()
+                # Check whether this is a supported remote.
+                supportedSkins = mhMgr.GetSupportedRemoteSkinIds()
+                if skinId not in supportedSkins:
+                    wx.MessageBox('Sorry, this remote model (' + model + ') is '
+                                  + 'not supported by this software.  Please '
+                                  + 'use members.harmonyremote.com.',
+                                  'Unsupported Remote', wx.OK | wx.ICON_WARNING)
+                    return
+                # Check whether this remote is already on this account.
+                for remote in self.remotes:
+                    if remote.SerialNumber == serialNumber:
+                        wx.MessageBox('Sorry, this remote already exists in '
+                                      + 'your account.', 'Existing Remote',
+                                      wx.OK | wx.ICON_WARNING)
+                        return
+                # Actually add the remote!
+                result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
+                if result is not None:
+                    wx.MessageBox('Remote successfully added.', 'Success',
+                                  wx.OK)
+                    self.UpdateRemotes()
+                    return
+                else:
+                    wx.MessageBox('Remote addition failed.', 'Failure',
+                                  wx.OK, wx.ICON_WARNING)
+                    return
             else:
                 self.next = self.resources.page_remote_configuration
                 self.StartBusy()
@@ -488,9 +555,10 @@ class RemoteConfigurationPanel(WizardPanelBase):
     def PopulateDevicesList(self):
         self.devices = mhMgr.GetDevices()
         self.devicesList = []
-        for device in self.devices:
-            self.devicesList.append(device.Name)
-        self.devicesListBox.Set(self.devicesList)
+        if self.devices is not None:
+            for device in self.devices:
+                self.devicesList.append(device.Name)
+            self.devicesListBox.Set(self.devicesList)
 
     def OnAdd(self, event):
         self.parent._SetPage(self.resources.page_add_device, None)
