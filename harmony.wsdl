@@ -184,6 +184,7 @@
       <element name="ActivityIds" type="xsd:string"/>
       <element name="AdditionalControlType" type="xsd:string"/>
       <element name="Characterization" type="xsd:string"/>
+      <element name="ControlPort" type="xsd:string"/>
       <element name="DeviceAddedDate" type="xsd:string"/>
       <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
       <element name="DeviceClassification" type="xsd:string"/>
@@ -203,6 +204,7 @@
       <element name="RegionalCharset" type="xsd:string"/>
       <element name="State" type="xsd:string"/>
       <element name="SuggestedDisplay" type="xsd:string"/>
+      <element name="Transport" type="xsd:string"/>
     </sequence>
   </complexType>
 <!--  <complexType name="DeviceId">
