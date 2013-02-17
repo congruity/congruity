@@ -166,8 +166,8 @@ class MHManager():
             deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
             for device in self.household.Accounts.Account[0].Devices.Device:
                 deviceIds.DeviceId.append(device.Id)
-                return self.client.service['DeviceManager'].GetDevices(
-                    deviceIds).Device
+            return self.client.service['DeviceManager'].GetDevices(
+                deviceIds).Device
         else:
             return None
 
