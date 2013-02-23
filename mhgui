@@ -29,6 +29,7 @@ import wxversion
 wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
+from tempfile import NamedTemporaryFile
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 
@@ -600,7 +601,15 @@ class RemoteConfigurationPanel(WizardPanelBase):
                           'No selection made.', wx.OK | wx.ICON_WARNING)
 
     def OnSync(self, event):
-        print "SYNC!"
+        tempFile = NamedTemporaryFile(delete=False)
+        tempFile.close()
+        self.StartBusy()
+        mhMgr.GetConfig(self.remote, tempFile.name)
+        self.EndBusy()
+        self.Hide()
+        os.system("congruity " + tempFile.name)
+        os.unlink(tempFile.name)
+        self.Show()
 
     def OnDownloadConfig(self, event):
         dialog = wx.FileDialog(
