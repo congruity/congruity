@@ -546,9 +546,10 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def SetRemote(self, remote):
         self.remote = remote
-        self.remoteDisplayName = mhMgr.GetProduct(remote.SkinId).DisplayName
+        self.product = mhMgr.GetProduct(remote.SkinId)
         self._msg_welcome = "Remote Configuration for " \
-            + self.remoteDisplayName + "\n\nDevices:"
+            + self.product.DisplayName + "\n\nDevices (maximum of " \
+            + str(self.product.MaxDevicesPerAccount) + "):"
         self.textMessage.SetLabel(self._msg_welcome)
         self.PopulateDevicesList()
         self.Layout()
@@ -562,7 +563,11 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.devicesListBox.Set(self.devicesList)
 
     def OnAdd(self, event):
-        self.parent._SetPage(self.resources.page_add_device, None)
+        if len(self.devicesList) < self.product.MaxDevicesPerAccount:
+            self.parent._SetPage(self.resources.page_add_device, None)
+        else:
+            wx.MessageBox('Remote cannot support additional devices.',
+                          'Cannot Add Device.', wx.OK | wx.ICON_WARNING)
 
     def OnDelete(self, event):
         deviceToDelete = self.devicesListBox.GetSelections()
