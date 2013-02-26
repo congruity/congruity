@@ -33,10 +33,12 @@ from suds.plugin import MessagePlugin
 
 XSI_NS = "http://www.w3.org/2001/XMLSchema"
 MS_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
+TEMPURI_NS = "http://tempuri.org/"
 DATA_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
 OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
 DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
 ACCOUNT_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
+BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
 
 class MHPlugin(MessagePlugin):
     def fix_elements(self, prefix, elements):
@@ -46,11 +48,15 @@ class MHPlugin(MessagePlugin):
             # expected only for xsi:long, guid, and those in the DM_OPERATION_NS
             if (element.get('type') is not None) and (element.name is not None):
                 ns = element.resolvePrefix(element.get('type').split(':')[0])
-                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS):
+                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS) and (ns[1] != BUTTON_MAPPING_NS):
                     #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
                     element.unset('type')
                 elif (ns[1] == XSI_NS):
                     if (element.get('type').split(':')[1] != "long"):
+                        element.unset('type')
+                elif (ns[1] == BUTTON_MAPPING_NS):
+                    type = element.get('type').split(':')[1]
+                    if (type != "HardButton") and (type != "CommandButtonAssignment"):
                         element.unset('type')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
@@ -122,6 +128,61 @@ class MHManager():
     # Gets the product info for a given Skin Id.
     def GetProduct(self, skinId):
         return self.client.service['ProductsManager'].GetProduct(skinId)
+
+    def GetProductButtonList(self, skinId):
+        return self.client.service['ProductsManager'].GetProductButtonList(skinId).Buttons.ButtonDefinition
+
+    def GetCommands(self, deviceId):
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
+        deviceIds.DeviceId.append(deviceId)
+        result = self.client.service['DeviceManager'].GetCommands(deviceIds)
+        if result is not None:
+            return result[0].Value[0]
+        else:
+            return None
+
+    def GetButtonMap(self, deviceId):
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
+        deviceIds.DeviceId.append(deviceId)
+        result = self.client.service['UserButtonMappingManager'] \
+            .GetDeviceModeButtonMaps(deviceIds)
+        if result is not None:
+            return result[0].Value
+        else:
+            return None
+
+    def UpdateButtonMap(self, existingButtonMap, button, command,
+                        existingButton):
+        buttonMaps = self.client.factory.create('{' + BUTTON_MAPPING_NS
+                                                + '}buttonMaps')
+        buttonMap = self.client.factory.create('{' + BUTTON_MAPPING_NS
+                                               + '}ButtonMap')
+        # Have to do this because existingButtonMap doesn't have the correct
+        # namespaces.  Same with the others below.
+        buttonMap.ButtonMapId.IsPersisted = \
+            existingButtonMap.ButtonMapId.IsPersisted
+        buttonMap.ButtonMapId.Value = existingButtonMap.ButtonMapId.Value
+        buttonMap.ButtonMapType = existingButtonMap.ButtonMapType
+        if existingButton is not None:
+            newButton = existingButton
+        else:
+            newButton = self.client.factory.create('{' + BUTTON_MAPPING_NS
+                                               + '}HardButton')
+        newButton.ButtonAssignment.CommandId.IsPersisted = \
+            command.Id.IsPersisted
+        newButton.ButtonAssignment.CommandId.Value = command.Id.Value
+        newButton.ButtonAssignment.OverriddenDeviceId = None
+        newButton.ButtonAssignment.OverriddenButtonMapType = "NoSetting"
+        newButton.ButtonKey = button.ButtonKey
+        buttonMap.Buttons.AbstractButton = newButton
+        buttonMap.PrimaryDeviceReferenceId.IsPersisted = \
+            existingButtonMap.PrimaryDeviceReferenceId.IsPersisted
+        buttonMap.PrimaryDeviceReferenceId.Value = \
+            existingButtonMap.PrimaryDeviceReferenceId.Value
+        buttonMap.SurfaceId = "0"
+        buttonMaps.ButtonMap = buttonMap
+        self.client.service['UserButtonMappingManager'] \
+            .UpdateDeviceModeButtonMaps(buttonMaps)
 
     # Get remote config file for the specified remote and write it to the
     # specified filename.

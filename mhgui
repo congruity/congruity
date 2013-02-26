@@ -533,6 +533,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.renameButton = wx.Button(self, label="Rename Device")
         self.renameButton.Bind(wx.EVT_BUTTON, self.OnRename)
         self.sizer.Add(self.renameButton, 0, 0, 0)
+        self.configureButton = wx.Button(self, label="Configure Device")
+        self.configureButton.Bind(wx.EVT_BUTTON, self.OnConfigure)
+        self.sizer.Add(self.configureButton, 0, 0, 0)
         self.syncButton = wx.Button(self, label="Sync Remote")
         self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
         self.sizer.Add(self.syncButton, 0, 0, 0)
@@ -603,6 +606,17 @@ class RemoteConfigurationPanel(WizardPanelBase):
                 self.Layout()
         else:
             wx.MessageBox('Please select a device to rename.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def OnConfigure(self, event):
+        deviceToConfigure = self.devicesListBox.GetSelections()
+        if deviceToConfigure != ():
+            self.StartBusy()
+            self.resources.page_configure_device.SetDevice(self.remote.SkinId, self.devices[deviceToConfigure[0]].Id, self.devices[deviceToConfigure[0]].Name)
+            self.EndBusy()
+            self.parent._SetPage(self.resources.page_configure_device, None)
+        else:
+            wx.MessageBox('Please select a device to configure.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
 
     def OnSync(self, event):
@@ -958,6 +972,133 @@ class CreateAccountPanel(WizardPanelBase):
     def GetNext(self):
         return (self.next, None)
 
+class ConfigureDevicePanel(WizardPanelBase):
+    _msg_welcome = (
+        "Please select a remote control button to modify on the left.\n" +
+        "Then, select a device command to assign to that button on the right.\n"
+        + "If there is an existing device command assigned to a button, it\n"
+        + "will be selected when you select the remote control button."
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
+        self.hSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.leftSizer = wx.BoxSizer(wx.VERTICAL)
+        self.remoteButtonsLabel = wx.StaticText(self, -1, "Remote Buttons:")
+        self.leftSizer.Add(self.remoteButtonsLabel, 0, 0, 0)
+        self.remoteButtonsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
+        self.remoteButtonsListBox.Bind(wx.EVT_LISTBOX,
+                                       self.OnRemoteButtonSelection)
+        self.leftSizer.Add(self.remoteButtonsListBox, 0, 0, 0)
+        self.hSizer.Add(self.leftSizer, 0, 0, 0)
+        self.hSizer.AddSpacer(20)
+        self.rightSizer = wx.BoxSizer(wx.VERTICAL)
+        self.deviceCommandsLabel = wx.StaticText(self, -1, "Device Commands:")
+        self.rightSizer.Add(self.deviceCommandsLabel, 0, 0, 0)
+        self.deviceCommandsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
+        self.rightSizer.Add(self.deviceCommandsListBox, 0, 0, 0)
+        self.hSizer.Add(self.rightSizer, 0, 0, 0)
+        self.sizer.Add(self.hSizer, 0, 0, 0)
+
+        self.updateButton = wx.Button(self, label="Update Button")
+        self.updateButton.Bind(wx.EVT_BUTTON, self.OnUpdate)
+        self.sizer.Add(self.updateButton, 0, 0, 0)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def SetDevice(self, skinId, deviceId, deviceName):
+        self.skinId = skinId
+        self.deviceId = deviceId
+        self.deviceName = deviceName
+        self.title = self.deviceName
+        self.PopulateCommandsLists()
+
+    def PopulateCommandsLists(self):
+        self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+        self.remoteButtonsList = []
+        if self.remoteButtons is not None:
+            for button in self.remoteButtons:
+                self.remoteButtonsList.append(button.ButtonKey)
+            self.remoteButtonsListBox.Set(self.remoteButtonsList)
+            
+        self.deviceCommands = mhMgr.GetCommands(self.deviceId)
+        self.deviceCommandsList = []
+        if self.deviceCommands is not None:
+            for command in self.deviceCommands:
+                self.deviceCommandsList.append(command.Name)
+            self.deviceCommandsListBox.Set(self.deviceCommandsList)
+
+        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+
+    def OnRemoteButtonSelection(self, event):
+        key = self.remoteButtons[self.remoteButtonsListBox.GetSelection()] \
+            .ButtonKey
+        foundCommand = self.FindCommand(key)
+        if foundCommand is not None:
+            for i in range(len(self.deviceCommands)):
+                if foundCommand.ButtonAssignment.CommandId.Value == \
+                        self.deviceCommands[i].Id.Value:
+                    self.deviceCommandsListBox.SetSelection(i)
+                    return
+        self.deviceCommandsListBox.DeselectAll()
+
+    def FindCommand(self, buttonKey):
+        for button in self.buttonMap.Buttons.AbstractButton:
+            if buttonKey == button.ButtonKey:
+                return button
+        return None
+
+    def OnUpdate(self, event):
+        buttonSelection = self.remoteButtonsListBox.GetSelection()
+        commandSelection = self.deviceCommandsListBox.GetSelection()
+        if (buttonSelection == -1) or (commandSelection == -1):
+            wx.MessageBox('Please select a button and command to assign.',
+                          'No selection(s) made.', wx.OK | wx.ICON_WARNING)
+            return
+        self.StartBusy()
+        button = self.remoteButtons[buttonSelection]
+        command = self.deviceCommands[commandSelection]
+        existingButton = self.FindCommand(button.ButtonKey)
+        mhMgr.UpdateButtonMap(self.buttonMap, button, command, existingButton)
+        self.PopulateCommandsLists()
+        self.EndBusy()
+
+    def GetTitle(self):
+        return self.title
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        pass
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -1173,12 +1314,14 @@ class Resources(object):
         self.page_remote_configuration = RemoteConfigurationPanel(wizard, self)
         self.page_add_device = AddDevicePanel(wizard, self)
         self.page_create_account = CreateAccountPanel(wizard, self)
+        self.page_configure_device = ConfigureDevicePanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
             self.page_remote_configuration,
             self.page_add_device,
             self.page_create_account,
+            self.page_configure_device,
         ]
 
 class Finalizer(object):

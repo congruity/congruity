@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns7="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="CommandButtonAssignment">
+    <sequence>
+      <element name="CommandId" type="ns1:Id"/>
+      <element name="OverriddenButtonMapType" type="xsd:string"/>
+      <element name="OverriddenDeviceId" type="ns1:Id" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="HardButton">
+    <sequence>
+      <element name="ButtonAssignment" type="ns7:CommandButtonAssignment"/>
+      <element name="ButtonKey" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Buttons">
+    <sequence>
+      <element name="AbstractButton" type="ns7:HardButton"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ButtonMap">
+    <sequence>
+      <element name="ButtonMapId" type="ns1:Id"/>
+      <element name="ButtonMapType" type="xsd:string"/>
+      <element name="Buttons" type="ns7:Buttons"/>
+      <element name="PrimaryDeviceReferenceId" type="ns1:Id"/>
+      <element name="Remote" type="xsd:string" nillable="true"/>
+      <element name="SurfaceId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="buttonMaps">
+    <sequence>
+      <element name="ButtonMap" type="ns7:ButtonMap" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+</schema>

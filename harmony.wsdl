@@ -10,6 +10,7 @@
  xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
  xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
  xmlns:ns6="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
+ xmlns:ns7="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -18,6 +19,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation" location="dm_operation.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account" location="account.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping" location="button_mapping.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -368,6 +370,41 @@
     </sequence>
   </complexType>
 
+  <complexType name="ButtonDefinition">
+    <sequence>
+      <element name="ButtonKey" type="xsd:string"/>
+      <element name="ButtonType" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Buttons">
+    <sequence>
+      <element name="ButtonDefinition" type="ns:ButtonDefinition" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetProductButtonListResult">
+    <sequence>
+      <element name="Buttons" type="ns:Buttons"/>
+    </sequence>
+  </complexType>
+
+  <!-- Contains a KeyValueOfDeviceIdArrayOfCommandXXXX where XXXX varies, not
+       sure how to deal with other than using an any.-->
+  <complexType name="GetCommandsResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
+  <!-- Contains a KeyValueOfDeviceIdButtonMapXXXX where XXXX varies, not sure
+       how to deal with other than using an any.-->
+  <complexType name="GetDeviceModeButtonMapsResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -473,6 +510,33 @@
   <part name="GetHarmonyProductsResult" type="GetHarmonyProductsResult"/>
 </message>
 
+<message name="GetProductButtonList">
+  <part name="skinId" type="xsd:string"/>
+</message>
+<message name="GetProductButtonListResponse">
+  <part name="GetProductButtonListResult" type="GetProductButtonListResult"/>
+</message>
+
+<message name="GetCommands">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetCommandsResponse">
+  <part name="GetCommandsResult" type="GetCommandsResult"/>
+</message>
+
+<message name="GetDeviceModeButtonMaps">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetDeviceModeButtonMapsResponse">
+  <part name="GetDeviceModeButtonMapsResult" type="GetDeviceModeButtonMapsResult"/>
+</message>
+
+<message name="UpdateDeviceModeButtonMaps">
+  <part name="buttonMaps" type="ns7:buttonMaps"/>
+</message>
+<message name="UpdateDeviceModeButtonMapsResponse">
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -508,6 +572,10 @@
    <input message="ns:UpdateMyData"/>
    <output message="ns:UpdateMyDataResponse"/>
  </operation>
+ <operation name="GetCommands">
+   <input message="ns:GetCommands"/>
+   <output message="ns:GetCommandsResponse"/>
+ </operation>
 </portType>
 <portType name="CompileManagerPortType">
  <operation name="StartCompileWithLocale">
@@ -523,6 +591,10 @@
  <operation name="GetHarmonyProducts">
    <input message="ns:GetHarmonyProducts"/>
    <output message="ns:GetHarmonyProductsResponse"/>
+ </operation>
+ <operation name="GetProductButtonList">
+   <input message="ns:GetProductButtonList"/>
+   <output message="ns:GetProductButtonListResponse"/>
  </operation>
 </portType>
 <portType name="DeletionManagerPortType">
@@ -541,6 +613,16 @@
  <operation name="AddRemoteToAccount">
    <input message="ns:AddRemoteToAccount"/>
    <output message="ns:AddRemoteToAccountResponse"/>
+ </operation>
+</portType>
+<portType name="UserButtonMappingManagerPortType">
+ <operation name="GetDeviceModeButtonMaps">
+   <input message="ns:GetDeviceModeButtonMaps"/>
+   <output message="ns:GetDeviceModeButtonMapsResponse"/>
+ </operation>
+ <operation name="UpdateDeviceModeButtonMaps">
+   <input message="ns:UpdateDeviceModeButtonMaps"/>
+   <output message="ns:UpdateDeviceModeButtonMapsResponse"/>
  </operation>
 </portType>
 
@@ -618,6 +700,15 @@
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
    </output>
  </operation>
+ <operation name="GetCommands">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetCommands"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
 </binding>
 <binding name="CompileManagerBinding" type="ns:CompileManagerPortType">
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -644,6 +735,15 @@
  </operation>
  <operation name="GetHarmonyProducts">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetHarmonyProducts"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetProductButtonList">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetProductButtonList"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>
@@ -680,6 +780,27 @@
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
  <operation name="AddRemoteToAccount">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserAccountDirector/AddRemoteToAccount"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="UserButtonMappingManagerBinding" type="ns:UserButtonMappingManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetDeviceModeButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/GetDeviceModeButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateDeviceModeButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/UpdateDeviceModeButtonMaps"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>
@@ -732,6 +853,11 @@
 <service name="UserAccountDirector">
  <port name="UserAccountDirectorPortType" binding="ns:UserAccountDirectorBinding">
   <SOAP:address location="https://svcs.myharmony.com/UserAccountDirectorPlatform/UserAccountDirector.svc"/>
+ </port>
+</service>
+<service name="UserButtonMappingManager">
+ <port name="UserButtonMappingManagerPortType" binding="ns:UserButtonMappingManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/UserButtonMappingPlatform/UserButtonMappingManager.svc"/>
  </port>
 </service>
 
