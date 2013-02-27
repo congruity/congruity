@@ -1057,10 +1057,15 @@ class ConfigureDevicePanel(WizardPanelBase):
         foundCommand = self.FindCommand(key)
         if foundCommand is not None:
             for i in range(len(self.deviceCommands)):
-                if foundCommand.ButtonAssignment.CommandId.Value == \
-                        self.deviceCommands[i].Id.Value:
-                    self.deviceCommandsListBox.SetSelection(i)
-                    return
+                # ButtonAssignment might not be a CommandButtonAssignment, but
+                # ignore the error if it isn't.
+                try:
+                    if foundCommand.ButtonAssignment.CommandId.Value == \
+                            self.deviceCommands[i].Id.Value:
+                        self.deviceCommandsListBox.SetSelection(i)
+                        return
+                except AttributeError:
+                    pass
         self.deviceCommandsListBox.DeselectAll()
 
     def FindCommand(self, buttonKey):

@@ -8,17 +8,37 @@
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
 
-  <complexType name="CommandButtonAssignment">
+  <complexType name="ButtonAssignment" abstract="true">
     <sequence>
-      <element name="CommandId" type="ns1:Id"/>
-      <element name="OverriddenButtonMapType" type="xsd:string"/>
-      <element name="OverriddenDeviceId" type="ns1:Id" nillable="true"/>
     </sequence>
+  </complexType>
+
+  <complexType name="CommandButtonAssignment">
+    <complexContent>
+      <extension base="ns7:ButtonAssignment">
+	<sequence>
+	  <element name="CommandId" type="ns1:Id"/>
+	  <element name="OverriddenButtonMapType" type="xsd:string"/>
+	  <element name="OverriddenDeviceId" type="ns1:Id" nillable="true"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ChannelButtonAssignment">
+    <complexContent>
+      <extension base="ns7:ButtonAssignment">
+	<sequence>
+	  <element name="Channel" type="xsd:string"/>
+	  <element name="DeviceId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
   </complexType>
 
   <complexType name="HardButton">
     <sequence>
-      <element name="ButtonAssignment" type="ns7:CommandButtonAssignment"/>
+      <element name="ButtonAssignment" type="ns7:ButtonAssignment"/>
       <element name="ButtonKey" type="xsd:string"/>
     </sequence>
   </complexType>
