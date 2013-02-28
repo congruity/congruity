@@ -536,6 +536,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.configureButton = wx.Button(self, label="Configure Device")
         self.configureButton.Bind(wx.EVT_BUTTON, self.OnConfigure)
         self.sizer.Add(self.configureButton, 0, 0, 0)
+        self.favoriteChannelsButton = wx.Button(self, label="Edit Favorite Channels")
+        self.favoriteChannelsButton.Bind(wx.EVT_BUTTON, self.OnFavoriteChannels)
+        self.sizer.Add(self.favoriteChannelsButton, 0, 0, 0)
         self.syncButton = wx.Button(self, label="Sync Remote")
         self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
         self.sizer.Add(self.syncButton, 0, 0, 0)
@@ -618,6 +621,18 @@ class RemoteConfigurationPanel(WizardPanelBase):
         else:
             wx.MessageBox('Please select a device to configure.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def OnFavoriteChannels(self, event):
+        deviceToConfigure = self.devicesListBox.GetSelections()
+        if deviceToConfigure != ():
+            self.StartBusy()
+            self.resources.page_favorite_channels.SetDevice(self.remote.SkinId, self.devices[deviceToConfigure[0]].Id, self.devices[deviceToConfigure[0]].Name)
+            self.EndBusy()
+            self.parent._SetPage(self.resources.page_favorite_channels, None)
+        else:
+            wx.MessageBox('Please select a device for which to configure the '
+                          + "favorite channels.", 'No selection made.',
+                          wx.OK | wx.ICON_WARNING)
 
     def OnSync(self, event):
         tempFile = NamedTemporaryFile(delete=False)
@@ -1084,9 +1099,133 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.StartBusy()
         button = self.remoteButtons[buttonSelection]
         command = self.deviceCommands[commandSelection]
-        existingButton = self.FindCommand(button.ButtonKey)
-        mhMgr.UpdateButtonMap(self.buttonMap, button, command, existingButton)
+        mhMgr.UpdateButtonMap(self.buttonMap, button, command)
         self.PopulateCommandsLists()
+        self.EndBusy()
+
+    def GetTitle(self):
+        return self.title
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        pass
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
+class FavoriteChannelsPanel(WizardPanelBase):
+    _msg_welcome = (
+        "Please select a favorite channel button to modify on the left.\n" +
+        "Then, type the channel on the right as you would enter it on your " +
+        "remote.\n"
+        + "If there is an existing channel assigned to a button, it\n"
+        + "will be displayed when you select the favorite control button."
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
+        self.hSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.leftSizer = wx.BoxSizer(wx.VERTICAL)
+        self.remoteButtonsLabel = wx.StaticText(self, -1, "Buttons:")
+        self.leftSizer.Add(self.remoteButtonsLabel, 0, 0, 0)
+        self.remoteButtonsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
+        self.remoteButtonsListBox.Bind(wx.EVT_LISTBOX,
+                                       self.OnRemoteButtonSelection)
+        self.leftSizer.Add(self.remoteButtonsListBox, 0, 0, 0)
+        self.hSizer.Add(self.leftSizer, 0, 0, 0)
+        self.hSizer.AddSpacer(20)
+        self.rightSizer = wx.BoxSizer(wx.VERTICAL)
+        self.channelLabel = wx.StaticText(self, -1, "Channel:")
+        self.rightSizer.Add(self.channelLabel, 0, 0, 0)
+        self.channelCtrl = wx.TextCtrl(self, -1, "")
+        self.channelCtrl.SetMinSize((70, 31))
+        self.rightSizer.Add(self.channelCtrl, 0, 0, 0)
+        self.hSizer.Add(self.rightSizer, 0, 0, 0)
+        self.sizer.Add(self.hSizer, 0, 0, 0)
+        self.sizer.AddSpacer(20)
+
+        self.updateButton = wx.Button(self, label="Update Button")
+        self.updateButton.Bind(wx.EVT_BUTTON, self.OnUpdate)
+        self.sizer.Add(self.updateButton, 0, 0, 0)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def SetDevice(self, skinId, deviceId, deviceName):
+        self.skinId = skinId
+        self.deviceId = deviceId
+        self.deviceName = deviceName
+        self.title = self.deviceName
+        self.PopulateData()
+
+    def PopulateData(self):
+        self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+        self.remoteButtonsList = []
+        if self.remoteButtons is not None:
+            for button in self.remoteButtons:
+                if button.ButtonType == "FavoriteChannelButton":
+                    self.remoteButtonsList.append(button.ButtonKey)
+            self.remoteButtonsListBox.Set(self.remoteButtonsList)
+            
+        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+
+    def OnRemoteButtonSelection(self, event):
+        key = self.remoteButtons[self.remoteButtonsListBox.GetSelection()] \
+            .ButtonKey
+        foundCommand = self.FindCommand(key)
+        if foundCommand is not None:
+            # ButtonAssignment might not be a ChannelButtonAssignment, but
+            # ignore the error if it isn't.
+            try:
+                self.channelCtrl.SetValue(foundCommand.ButtonAssignment.Channel)
+                return
+            except AttributeError:
+                pass
+        self.channelCtrl.Clear()
+
+    def FindCommand(self, buttonKey):
+        for button in self.buttonMap.Buttons.AbstractButton:
+            if buttonKey == button.ButtonKey:
+                return button
+        return None
+
+    def OnUpdate(self, event):
+        buttonSelection = self.remoteButtonsListBox.GetSelection()
+        channel = self.channelCtrl.GetValue()
+        if (buttonSelection == -1) or (not channel.isdigit()):
+            wx.MessageBox('Please select a button and channel to assign.',
+                          'No selection(s) made.', wx.OK | wx.ICON_WARNING)
+            return
+        self.StartBusy()
+        button = self.remoteButtons[buttonSelection]
+        mhMgr.UpdateButtonMap(self.buttonMap, button, channel,
+                              isChannelButton = True)
+        self.PopulateData()
         self.EndBusy()
 
     def GetTitle(self):
@@ -1320,6 +1459,7 @@ class Resources(object):
         self.page_add_device = AddDevicePanel(wizard, self)
         self.page_create_account = CreateAccountPanel(wizard, self)
         self.page_configure_device = ConfigureDevicePanel(wizard, self)
+        self.page_favorite_channels = FavoriteChannelsPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -1327,6 +1467,7 @@ class Resources(object):
             self.page_add_device,
             self.page_create_account,
             self.page_configure_device,
+            self.page_favorite_channels,
         ]
 
 class Finalizer(object):

@@ -56,7 +56,7 @@ class MHPlugin(MessagePlugin):
                         element.unset('type')
                 elif (ns[1] == BUTTON_MAPPING_NS):
                     type = element.get('type').split(':')[1]
-                    if (type != "HardButton") and (type != "CommandButtonAssignment"):
+                    if (type != "HardButton") and (type != "CommandButtonAssignment") and (type != "ChannelButtonAssignment"):
                         element.unset('type')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
@@ -152,7 +152,7 @@ class MHManager():
             return None
 
     def UpdateButtonMap(self, existingButtonMap, button, command,
-                        existingButton):
+                        isChannelButton = False):
         buttonMaps = self.client.factory.create('{' + BUTTON_MAPPING_NS
                                                 + '}buttonMaps')
         buttonMap = self.client.factory.create('{' + BUTTON_MAPPING_NS
@@ -163,16 +163,24 @@ class MHManager():
             existingButtonMap.ButtonMapId.IsPersisted
         buttonMap.ButtonMapId.Value = existingButtonMap.ButtonMapId.Value
         buttonMap.ButtonMapType = existingButtonMap.ButtonMapType
-        if existingButton is not None:
-            newButton = existingButton
-        else:
-            newButton = self.client.factory.create('{' + BUTTON_MAPPING_NS
+        newButton = self.client.factory.create('{' + BUTTON_MAPPING_NS
                                                + '}HardButton')
-        newButton.ButtonAssignment.CommandId.IsPersisted = \
-            command.Id.IsPersisted
-        newButton.ButtonAssignment.CommandId.Value = command.Id.Value
-        newButton.ButtonAssignment.OverriddenDeviceId = None
-        newButton.ButtonAssignment.OverriddenButtonMapType = "NoSetting"
+        if isChannelButton is False:
+            newButton.ButtonAssignment = self.client.factory.create(
+                '{' + BUTTON_MAPPING_NS + '}CommandButtonAssignment')
+            newButton.ButtonAssignment.CommandId.IsPersisted = \
+                command.Id.IsPersisted
+            newButton.ButtonAssignment.CommandId.Value = command.Id.Value
+            newButton.ButtonAssignment.OverriddenDeviceId = None
+            newButton.ButtonAssignment.OverriddenButtonMapType = "NoSetting"
+        else:
+            newButton.ButtonAssignment = self.client.factory.create(
+                '{' + BUTTON_MAPPING_NS + '}ChannelButtonAssignment')
+            newButton.ButtonAssignment.Channel = command
+            newButton.ButtonAssignment.DeviceId.IsPersisted = \
+                existingButtonMap.PrimaryDeviceReferenceId.IsPersisted
+            newButton.ButtonAssignment.DeviceId.Value = \
+                existingButtonMap.PrimaryDeviceReferenceId.Value
         newButton.ButtonKey = button.ButtonKey
         buttonMap.Buttons.AbstractButton = newButton
         buttonMap.PrimaryDeviceReferenceId.IsPersisted = \
