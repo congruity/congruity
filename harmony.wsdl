@@ -11,6 +11,8 @@
  xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
  xmlns:ns6="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
  xmlns:ns7="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+ xmlns:ns8="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
+ xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -20,6 +22,8 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation" location="dm_operation.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account" location="account.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping" location="button_mapping.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data" location="ir_data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -405,6 +409,11 @@
     </sequence>
   </complexType>
 
+  <complexType name="UpdateMultipleResult">
+    <sequence>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -537,6 +546,28 @@
 <message name="UpdateDeviceModeButtonMapsResponse">
 </message>
 
+<message name="AnalyzeInfrared">
+  <part name="deviceId" type="xsd:string" nillable="true"/>
+  <part name="rawSequence" type="xsd:string"/>
+</message>
+<message name="AnalyzeInfraredResponse">
+  <part name="AnalyzeInfraredResult" type="ns8:AnalyzeInfraredResult"/>
+</message>
+
+<message name="UpdateMultiple">
+  <part name="operation" type="ns4:OperationBag"/>
+</message>
+<message name="UpdateMultipleResponse">
+  <part name="UpdateMultipleResult" type="ns:UpdateMultipleResult"/>
+</message>
+
+<message name="DeleteTaughtDeviceModeCommandButtonMaps">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+  <part name="taughtCommandIds" type="ns9:taughtCommandIds"/>
+</message>
+<message name="DeleteTaughtDeviceModeCommandButtonMapsResponse">
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -575,6 +606,10 @@
  <operation name="GetCommands">
    <input message="ns:GetCommands"/>
    <output message="ns:GetCommandsResponse"/>
+ </operation>
+ <operation name="UpdateMultiple">
+   <input message="ns:UpdateMultiple"/>
+   <output message="ns:UpdateMultipleResponse"/>
  </operation>
 </portType>
 <portType name="CompileManagerPortType">
@@ -623,6 +658,16 @@
  <operation name="UpdateDeviceModeButtonMaps">
    <input message="ns:UpdateDeviceModeButtonMaps"/>
    <output message="ns:UpdateDeviceModeButtonMapsResponse"/>
+ </operation>
+ <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
+   <input message="ns:DeleteTaughtDeviceModeCommandButtonMaps"/>
+   <output message="ns:DeleteTaughtDeviceModeCommandButtonMapsResponse"/>
+ </operation>
+</portType>
+<portType name="InfraredAnalysisManagerPortType">
+ <operation name="AnalyzeInfrared">
+   <input message="ns:AnalyzeInfrared"/>
+   <output message="ns:AnalyzeInfraredResponse"/>
  </operation>
 </portType>
 
@@ -702,6 +747,15 @@
  </operation>
  <operation name="GetCommands">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetCommands"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateMultiple">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/UpdateMultiple"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>
@@ -808,6 +862,27 @@
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </output>
  </operation>
+ <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/DeleteTaughtDeviceModeCommandButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="InfraredAnalysisManagerBinding" type="ns:InfraredAnalysisManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="AnalyzeInfrared">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IInfraredAnalysisManager/AnalyzeInfrared"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
 </binding>
 
 <service name="Discovery">
@@ -858,6 +933,11 @@
 <service name="UserButtonMappingManager">
  <port name="UserButtonMappingManagerPortType" binding="ns:UserButtonMappingManagerBinding">
   <SOAP:address location="https://svcs.myharmony.com/UserButtonMappingPlatform/UserButtonMappingManager.svc"/>
+ </port>
+</service>
+<service name="InfraredAnalysisManager">
+ <port name="InfraredAnalysisManagerPortType" binding="ns:InfraredAnalysisManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/InfraredAnalysisPlatform/InfraredAnalysisManager.svc"/>
  </port>
 </service>
 

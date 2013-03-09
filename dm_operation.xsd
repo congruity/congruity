@@ -6,17 +6,24 @@
   xmlns:ns3="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
   xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
   xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+  xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
+
+  <complexType name="Operation">
+    <sequence>
+    </sequence>
+  </complexType>
 
   <complexType name="AddDeviceBySearchResultOperation">
     <complexContent>
-      <extension base="ns4:AddDeviceBySearchResultOperationStart">
+      <extension base="ns4:AddOperationBase">
 	<sequence>
 	  <element name="DeviceClassification" type="xsd:string"/>
 	  <element name="DeviceName" type="xsd:string"/>
@@ -35,6 +42,30 @@
 	<sequence>
 	  <element name="DeviceId" type="ns1:Id"/>
 	  <element name="DeviceName" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="AddCommandOperation">
+    <complexContent>
+      <extension base="ns4:AddOperationBase">
+	<sequence>
+	  <element name="DeviceId" type="ns1:Id"/>
+	  <element name="KeyCode" type="xsd:string"/>
+	  <element name="Name" type="xsd:string"/>
+	  <element name="RawInfrared" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="DeleteCommandOperation">
+    <complexContent>
+      <extension base="ns4:DeleteOperationBase">
+	<sequence>
+	  <element name="DeviceId" type="ns1:Id"/>
+	  <element name="LanguageElementIds" type="ns9:LanguageElementIds"/>
 	</sequence>
       </extension>
     </complexContent>

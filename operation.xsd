@@ -11,14 +11,22 @@
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation" location="dm_operation.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
-  <complexType name="AddDeviceBySearchResultOperationStart">
+  <complexType name="AddOperationBase">
     <sequence>
       <element name="ParentAccount" type="ns1:Id"/>
-      <element name="ReturnIdAsKey" type="mns:guid"/>
+      <element name="ReturnIdAsKey" type="mns:guid" nillable="true"/>
       <element name="ReturnObjectAsKey" type="xsd:string" nillable="true"/>
       <element name="TemporaryId" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="DeleteOperationBase">
+    <sequence>
+      <element name="ParentAccount" type="ns1:Id"/>
+      <element name="ObjectId" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
 
@@ -26,6 +34,19 @@
     <sequence>
       <element name="ParentAccount" type="ns1:Id"/>
       <element name="Object" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Items">
+    <sequence>
+      <element name="Operation" type="ns5:Operation"/> 
+    </sequence>
+  </complexType>
+
+  <complexType name="OperationBag">
+    <sequence>
+      <element name="ParentAccount" type="ns1:Id"/>
+      <element name="Items" type="ns4:Items"/>
     </sequence>
   </complexType>
 

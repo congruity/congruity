@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns8="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+
+  <complexType name="AnalyzeInfraredResult" abstract="true">
+    <sequence>
+    </sequence>
+  </complexType>
+
+  <complexType name="SuccessAnalyzeInfraredResult">
+    <complexContent>
+      <extension base="ns8:AnalyzeInfraredResult">
+	<sequence>
+	  <element name="KeyCode" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="FailedAnalyzeInfraredResult">
+    <complexContent>
+      <extension base="ns8:AnalyzeInfraredResult">
+	<sequence>
+	  <element name="ErrorCondition" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

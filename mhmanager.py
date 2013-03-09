@@ -39,6 +39,7 @@ OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Service
 DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
 ACCOUNT_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
 BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+ARRAYS_NS = "http://schemas.microsoft.com/2003/10/Serialization/Arrays"
 
 class MHPlugin(MessagePlugin):
     def fix_elements(self, prefix, elements):
@@ -48,7 +49,7 @@ class MHPlugin(MessagePlugin):
             # expected only for xsi:long, guid, and those in the DM_OPERATION_NS
             if (element.get('type') is not None) and (element.name is not None):
                 ns = element.resolvePrefix(element.get('type').split(':')[0])
-                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS) and (ns[1] != BUTTON_MAPPING_NS):
+                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS) and (ns[1] != BUTTON_MAPPING_NS) and (ns[1] != OPERATION_NS):
                     #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
                     element.unset('type')
                 elif (ns[1] == XSI_NS):
@@ -57,6 +58,10 @@ class MHPlugin(MessagePlugin):
                 elif (ns[1] == BUTTON_MAPPING_NS):
                     type = element.get('type').split(':')[1]
                     if (type != "HardButton") and (type != "CommandButtonAssignment") and (type != "ChannelButtonAssignment"):
+                        element.unset('type')
+                elif (ns[1] == OPERATION_NS):
+                    type = element.get('type').split(':')[1]
+                    if (type != "OperationBag"):
                         element.unset('type')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
@@ -346,6 +351,55 @@ class MHManager():
         remoteNames = list(remoteNames)
         remoteNames.sort()
         return remoteNames
+
+    # Adds a learned IR command (if the command name does not already exist) or
+    # updates the IR command for the specified command name and device.
+    def UpdateIRCommand(self, commandName, rawSequence, deviceId):
+        result = self.client.service['InfraredAnalysisManager'].AnalyzeInfrared(
+            None, rawSequence)
+        try:
+            result.KeyCode
+        except:
+            return "AnalyzeInfrared failed:" + str(result)
+
+        operation = self.client.factory.create('{' + OPERATION_NS
+                                               + '}OperationBag')
+        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation.Items.Operation = self.client.factory.create('{' + DM_OPERATION_NS + '}AddCommandOperation')
+        operation.Items.Operation.ParentAccount = operation.ParentAccount
+        operation.Items.Operation.DeviceId = deviceId
+        operation.Items.Operation.KeyCode = result.KeyCode
+        operation.Items.Operation.Name = commandName
+        operation.Items.Operation.RawInfrared = rawSequence
+        result = self.client.service['DeviceManager'].UpdateMultiple(operation)
+        if result is None:
+            return "UpdateMultiple failed"
+        return None
+
+    # Deletes an IR command (if it is a user-added one) or removes the override
+    # if the command is an officially provided one.
+    def DeleteIRCommand(self, commandId, deviceId):
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
+        deviceIds.DeviceId.append(deviceId)
+        taughtCommandIds = self.client.factory.create('{' + ARRAYS_NS
+                                                      + '}taughtCommandIds')
+        taughtCommandIds.long = commandId.Value
+        result = self.client.service['UserButtonMappingManager']. \
+            DeleteTaughtDeviceModeCommandButtonMaps(deviceIds, taughtCommandIds)
+        if result is not None:
+            return "DeleteTaughtDeviceModeCommandButtonMaps:" + str(result)
+
+        operation = self.client.factory.create('{' + OPERATION_NS
+                                               + '}OperationBag')
+        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation.Items.Operation = self.client.factory.create('{' + DM_OPERATION_NS + '}DeleteCommandOperation')
+        operation.Items.Operation.ParentAccount = operation.ParentAccount
+        operation.Items.Operation.DeviceId = deviceId
+        operation.Items.Operation.LanguageElementIds.long = commandId.Value
+        result = self.client.service['DeviceManager'].UpdateMultiple(operation)
+        if result is None:
+            return "UpdateMultiple failed"
+        return None
 
 class MHAccountDetails:
     def __init__(self):

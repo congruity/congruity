@@ -1,4 +1,5 @@
 > Account: Edit Account Details
 > Account: Add Remote (multiple remotes on account)
-> Device: Fix Command
-> Device: Add Command
+
+> Bug: when adding devices, when returning to add device page, old data there.
+> Bug: when deleting devices (last device), device list doesn't clear.

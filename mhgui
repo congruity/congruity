@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2012 Scott Talbert
+# Copyright 2012-2013 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -657,7 +657,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.StartBusy()
             mhMgr.GetConfig(self.remote, filename)
             self.EndBusy()
-            wx.MessageBox('Config file saved to.' + filename,
+            wx.MessageBox('Config file saved to ' + filename,
                           'Download complete.', wx.OK)
 
     def OnActivated(self, prev_page, data):
@@ -1019,13 +1019,26 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.deviceCommandsLabel = wx.StaticText(self, -1, "Device Commands:")
         self.rightSizer.Add(self.deviceCommandsLabel, 0, 0, 0)
         self.deviceCommandsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
+        self.deviceCommandsListBox.Bind(wx.EVT_LISTBOX,
+                                        self.OnDeviceCommandSelection)
         self.rightSizer.Add(self.deviceCommandsListBox, 0, 0, 0)
         self.hSizer.Add(self.rightSizer, 0, 0, 0)
         self.sizer.Add(self.hSizer, 0, 0, 0)
 
+        self.bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.updateButton = wx.Button(self, label="Update Button")
         self.updateButton.Bind(wx.EVT_BUTTON, self.OnUpdate)
-        self.sizer.Add(self.updateButton, 0, 0, 0)
+        self.bottomSizer.Add(self.updateButton, 0, 0, 0)
+        self.overrideButton = wx.Button(self, label="Override Command")
+        self.overrideButton.Bind(wx.EVT_BUTTON, self.OnOverride)
+        self.bottomSizer.Add(self.overrideButton, 0, 0, 0)
+        self.addButton = wx.Button(self, label="Add Command")
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
+        self.bottomSizer.Add(self.addButton, 0, 0, 0)
+        self.restoreButton = wx.Button(self, label="Restore Command")
+        self.restoreButton.Bind(wx.EVT_BUTTON, self.OnRestore)
+        self.bottomSizer.Add(self.restoreButton, 0, 0, 0)
+        self.sizer.Add(self.bottomSizer, 0, 0, 0)
 
         self.SetSizerAndFit(self.sizer)
 
@@ -1061,7 +1074,10 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.deviceCommandsList = []
         if self.deviceCommands is not None:
             for command in self.deviceCommands:
-                self.deviceCommandsList.append(command.Name)
+                name = command.Name
+                if command.IsLearned == "true":
+                    name += "*"
+                self.deviceCommandsList.append(name)
             self.deviceCommandsListBox.Set(self.deviceCommandsList)
 
         self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
@@ -1083,6 +1099,9 @@ class ConfigureDevicePanel(WizardPanelBase):
                     pass
         self.deviceCommandsListBox.DeselectAll()
 
+    def OnDeviceCommandSelection(self, event):
+        self.remoteButtonsListBox.DeselectAll()
+
     def FindCommand(self, buttonKey):
         for button in self.buttonMap.Buttons.AbstractButton:
             if buttonKey == button.ButtonKey:
@@ -1102,6 +1121,99 @@ class ConfigureDevicePanel(WizardPanelBase):
         mhMgr.UpdateButtonMap(self.buttonMap, button, command)
         self.PopulateCommandsLists()
         self.EndBusy()
+
+    def OnOverride(self, event):
+        commandSelection = self.deviceCommandsListBox.GetSelection()
+        if commandSelection == -1:
+            wx.MessageBox('Please select a command to override.',
+                          'No command selected.', wx.OK | wx.ICON_WARNING)
+            return
+        command = self.deviceCommands[commandSelection].Name
+        self.UpdateIR(command)
+
+    def OnAdd(self, event):
+        dlg = wx.TextEntryDialog(None, "Enter the name of the new command:",
+                                 "Add Command")
+        if dlg.ShowModal() != wx.ID_OK:
+            return
+        command = dlg.GetValue()
+        self.UpdateIR(command)
+
+    def OnRestore(self, event):
+        commandSelection = self.deviceCommandsListBox.GetSelection()
+        if commandSelection == -1:
+            wx.MessageBox('Please select a command to restore.',
+                          'No command selected.', wx.OK | wx.ICON_WARNING)
+            return
+        command = self.deviceCommands[commandSelection]
+        if command.IsLearned != "true":
+            wx.MessageBox('Selected command is not a learned command.',
+                          'Error', wx.OK | wx.ICON_WARNING)
+            return
+        result = mhMgr.DeleteIRCommand(command.Id, self.deviceId)
+        if result is not None:
+            wx.MessageBox('IR command deletion failed: ' + result, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+        self.PopulateCommandsLists()
+
+    def UpdateIR(self, commandName):
+        msg = 'Please ensure your remote control is connected.'
+        wx.MessageBox(msg, 'Connect Remote', wx.OK)
+        try:
+            libconcord.init_concord()
+        except:
+            msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+            wx.MessageBox('Could not detect remote: ' + msg, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return
+
+        msg = 'Please place your two remotes 3 inches (8 cm) apart.  After ' \
+            + 'pressing OK, press the button on your non-Harmony remote that ' \
+            + 'you wish to be learned.'
+        wx.MessageBox(msg, 'Position Remotes', wx.OK)
+        carrierClock = c_uint()
+        signal = POINTER(c_uint)()
+        signalLength = c_uint()
+        self.StartBusy()
+        try:
+            libconcord.learn_from_remote(
+                byref(carrierClock),
+                byref(signal),
+                byref(signalLength),
+                libconcord.callback_type(dummy_callback_imp),
+                None
+            )
+        except:
+            self.EndBusy()
+            msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+            wx.MessageBox('IR learning failed: ' + msg + '\nPerhaps you did '
+                          + 'not press a key?', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            libconcord.deinit_concord()
+            return
+        self.EndBusy()
+
+        rawSequence = c_char_p()
+        libconcord.encode_for_posting(carrierClock, signal, signalLength,
+                                      rawSequence)
+        
+        result = mhMgr.UpdateIRCommand(commandName, rawSequence.value,
+                                       self.deviceId)
+        if result is not None:
+            wx.MessageBox('IR learning update failed: ' + result, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+        self.PopulateCommandsLists()
+        libconcord.delete_ir_signal(signal)
+        libconcord.delete_encoded_signal(rawSequence)
+        libconcord.deinit_concord()
 
     def GetTitle(self):
         return self.title
