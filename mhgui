@@ -730,6 +730,7 @@ class AddDevicePanel(WizardPanelBase):
         )
 
     def OnActivated(self, prev_page, data):
+        self.ClearPage()
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
@@ -772,6 +773,11 @@ class AddDevicePanel(WizardPanelBase):
         else:
             wx.MessageBox('Please select a device to add.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def ClearPage(self):
+        self.manufacturerCtrl.Clear()
+        self.modelNumberCtrl.Clear()
+        self.searchResultsListBox.Clear()
 
     def GetTitle(self):
         return "Device Addition"
