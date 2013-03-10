@@ -567,6 +567,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
             for device in self.devices:
                 self.devicesList.append(device.Name)
             self.devicesListBox.Set(self.devicesList)
+        else:
+            self.devicesListBox.Clear()
 
     def OnAdd(self, event):
         if len(self.devicesList) < self.product.MaxDevicesPerAccount:
