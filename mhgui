@@ -1416,7 +1416,7 @@ class Wizard(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self._OnNext, self.btn_close)
         sizer_buttons.Add(self.btn_close, 0, wx.EXPAND | wx.ALL, 5)
 
-        self.btn_cancel = wx.Button(self, wx.ID_CANCEL)
+        self.btn_cancel = wx.Button(self, wx.ID_CLOSE)
         self.Bind(wx.EVT_BUTTON, self._OnCancel, self.btn_cancel)
         self.Bind(wx.EVT_CLOSE, self._OnCancel)
         sizer_buttons.Add(self.btn_cancel, 0, wx.EXPAND | wx.ALL, 5)
