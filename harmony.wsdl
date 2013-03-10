@@ -362,6 +362,7 @@
   <complexType name="HarmonyProduct">
     <sequence>
       <element name="DisplayName" type="xsd:string"/>
+      <element name="DisplayPriority" type="xsd:string"/>
       <element name="Name" type="xsd:string"/>
       <element name="ProductId" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>

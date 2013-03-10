@@ -348,7 +348,8 @@ class WelcomePanel(WizardPanelBase):
 
 class RemoteSelectPanel(WizardPanelBase):
     _msg_welcome = (
-        "Please select a remote control below.\n"
+        "Please select a remote control below.\n\n" +
+        "Remotes (maximum of 6 per account):"
     )
 
     def __init__(self, parent, resources):
@@ -357,15 +358,17 @@ class RemoteSelectPanel(WizardPanelBase):
 
         WizardPanelBase.__init__(self, parent, resources)
 
-        self.newRemoteString = "<Add New Remote>"
-
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = WrappedStaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
-        self.remoteChoice = wx.Choice(self, -1, choices=[])
-        self.sizer.Add(self.remoteChoice, 0, 0, 0)
+        self.remotesListBox = wx.ListBox(self, style=wx.LB_SINGLE,
+                                         size=(134, 75))
+        self.sizer.Add(self.remotesListBox)
+        self.sizer.AddSpacer(20)
+        self.addButton = wx.Button(self, label="Add New Remote")
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAddRemote)
+        self.sizer.Add(self.addButton)
         self.SetSizerAndFit(self.sizer)
-
 
         self.next = None
         self.initial_exception = None
@@ -381,40 +384,17 @@ class RemoteSelectPanel(WizardPanelBase):
         wx.CallAfter(self.UpdateRemotes)
         wx.CallAfter(self.EndBusy)
 
-        #self.next = self.resources.page_connect
         self.parent.ReenableNext()
 
-        #wx.CallAfter(self._OnStatusOk, next_page, type_text)
-  
     def UpdateRemotes(self):
         self.remotes = mhMgr.GetRemotes()
         self.remoteDisplayNames = []
         for remote in self.remotes:
             product = mhMgr.GetProduct(remote.SkinId)
             self.remoteDisplayNames.append(product.DisplayName)
-        self.remoteDisplayNames.append(self.newRemoteString)
-        self.remoteChoice.Clear()
-        self.remoteChoice.AppendItems(self.remoteDisplayNames)
+        self.remotesListBox.Clear()
+        self.remotesListBox.Set(self.remoteDisplayNames)
         self.Layout()
-
-    def _OnStatusOk(self, next_page, type_text):
-        self._OnStatusCommon(self._msg_status_ok)
-
-    def _OnStatusFailure(self, failure_msg, details):
-        self.resources.page_failure.SetMessages(
-            failure_msg,
-            details
-        )
-        self.next = self.resources.page_failure
-        self._OnStatusCommon(self._msg_status_failure)
-
-    def _OnStatusCommon(self, message):
-        self.text_message.UpdateText(self._msg_welcome + message)
-        self.parent.ReenableCancel()
-        self.parent.ReenableNext()
-
-    def SetInitialException(self, initial_exception):
-        self.initial_exception = initial_exception
 
     def OnActivated(self, prev_page, data):
         thread.start_new_thread(self._WorkerFunction, ())
@@ -426,83 +406,87 @@ class RemoteSelectPanel(WizardPanelBase):
     def IsCancelInitiallyDisabled(self):
         return False
 
+    def OnAddRemote(self, event):
+        supportedRemotes = mhMgr.GetSupportedRemoteNames()
+        msg = 'Please ensure your remote control is connected.'
+        msg += '\n\nSupported models are:'
+        for name in supportedRemotes:
+            msg += '\n' + name
+        wx.MessageBox(msg, 'Connect Remote', wx.OK)
+
+        try:
+            libconcord.init_concord()
+        except:
+            msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+            wx.MessageBox('Could not detect remote: ' + msg, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return
+
+        cb = libconcord.callback_type(dummy_callback_imp)
+        try:
+            libconcord.get_identity(cb, None)
+        except:
+            msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+            wx.MessageBox('Could not identify remote: ' + msg, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            libconcord.deinit_concord()
+            return
+
+        ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
+        ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
+        ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
+        serialNumber = ser_1 + ser_2 + ser_3
+        skinId = libconcord.get_skin()
+        usbPid = hex(libconcord.get_usb_pid())
+        usbVid = hex(libconcord.get_usb_vid())
+        model = libconcord.get_mfg() + ' ' + libconcord.get_model()
+        libconcord.deinit_concord()
+        # Check whether this is a supported remote.
+        supportedSkins = mhMgr.GetSupportedRemoteSkinIds()
+        if skinId not in supportedSkins:
+            wx.MessageBox('Sorry, this remote model (' + model + ') is '
+                          + 'not supported by this software.  Please '
+                          + 'use members.harmonyremote.com.',
+                          'Unsupported Remote', wx.OK | wx.ICON_WARNING)
+            return
+        # Check whether this remote is already on this account.
+        for remote in self.remotes:
+            if remote.SerialNumber == serialNumber:
+                wx.MessageBox('Sorry, this remote already exists in '
+                              + 'your account.', 'Existing Remote',
+                              wx.OK | wx.ICON_WARNING)
+                return
+        # Actually add the remote!
+        result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
+        if result is not None:
+            wx.MessageBox('Remote successfully added.', 'Success',
+                          wx.OK)
+            self.UpdateRemotes()
+            return
+        else:
+            wx.MessageBox('Remote addition failed.', 'Failure',
+                          wx.OK, wx.ICON_WARNING)
+            return
+
     def OnNext(self):
-        if self.remoteChoice.GetSelection() is not wx.NOT_FOUND:
-            if self.remoteChoice.GetStringSelection() == self.newRemoteString:
-                supportedRemotes = mhMgr.GetSupportedRemoteNames()
-                msg = 'Please ensure your remote control is connected.'
-                msg += '\n\nSupported models are:'
-                for name in supportedRemotes:
-                    msg += '\n' + name
-                wx.MessageBox(msg, 'Connect Remote', wx.OK)
-                try:
-                    libconcord.init_concord()
-                except:
-                    msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                        sys.exc_value.result_str,
-                        sys.exc_value.func,
-                        sys.exc_value.result
-                    )
-                    wx.MessageBox('Could not detect remote: ' + msg, 'Error',
-                                  wx.OK | wx.ICON_WARNING)
-                    return
-                cb = libconcord.callback_type(dummy_callback_imp)
-                try:
-                    libconcord.get_identity(cb, None)
-                except:
-                    msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                        sys.exc_value.result_str,
-                        sys.exc_value.func,
-                        sys.exc_value.result
-                    )
-                    wx.MessageBox('Could not identify remote: ' + msg, 'Error',
-                                  wx.OK | wx.ICON_WARNING)
-                    libconcord.deinit_concord()
-                    return
-                ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
-                ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
-                ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
-                serialNumber = ser_1 + ser_2 + ser_3
-                skinId = libconcord.get_skin()
-                usbPid = hex(libconcord.get_usb_pid())
-                usbVid = hex(libconcord.get_usb_vid())
-                model = libconcord.get_mfg() + ' ' + libconcord.get_model()
-                libconcord.deinit_concord()
-                # Check whether this is a supported remote.
-                supportedSkins = mhMgr.GetSupportedRemoteSkinIds()
-                if skinId not in supportedSkins:
-                    wx.MessageBox('Sorry, this remote model (' + model + ') is '
-                                  + 'not supported by this software.  Please '
-                                  + 'use members.harmonyremote.com.',
-                                  'Unsupported Remote', wx.OK | wx.ICON_WARNING)
-                    return
-                # Check whether this remote is already on this account.
-                for remote in self.remotes:
-                    if remote.SerialNumber == serialNumber:
-                        wx.MessageBox('Sorry, this remote already exists in '
-                                      + 'your account.', 'Existing Remote',
-                                      wx.OK | wx.ICON_WARNING)
-                        return
-                # Actually add the remote!
-                result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
-                if result is not None:
-                    wx.MessageBox('Remote successfully added.', 'Success',
-                                  wx.OK)
-                    self.UpdateRemotes()
-                    return
-                else:
-                    wx.MessageBox('Remote addition failed.', 'Failure',
-                                  wx.OK, wx.ICON_WARNING)
-                    return
-            else:
-                self.next = self.resources.page_remote_configuration
-                self.StartBusy()
-                self.resources.page_remote_configuration.SetRemote(self.remotes[self.remoteChoice.GetSelection()])
-                self.EndBusy()
+        if self.remotesListBox.GetSelection() != -1:
+            self.next = self.resources.page_remote_configuration
+            self.StartBusy()
+            self.resources.page_remote_configuration.SetRemote(
+                self.remotes[self.remotesListBox.GetSelection()])
+            self.EndBusy()
             return True
         else:
-            wx.MessageBox('Please make a selection.', 'No selection made.', wx.OK |
-                          wx.ICON_WARNING)
+            wx.MessageBox('Please make a selection.', 'No selection made.',
+                          wx.OK | wx.ICON_WARNING)
             return False
 
     def GetNext(self):
