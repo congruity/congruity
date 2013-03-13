@@ -20,4 +20,18 @@
     </sequence>
   </complexType>
 
+  <complexType name="accountProperties">
+    <sequence>
+      <element name="AnonymizedEmail" type="xsd:string" nillable="true"/>
+      <element name="ContactMe" type="xsd:string"/>
+      <element name="CountryType" type="xsd:string"/>
+      <element name="Email" type="xsd:string"/>
+      <element name="FirstName" type="xsd:string"/>
+      <element name="IsPolicyAccepted" type="xsd:string"/>
+      <element name="LastName" type="xsd:string"/>
+      <element name="UserKey" type="xsd:string"/>
+      <element name="ZipCode" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
 </schema>

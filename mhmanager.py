@@ -27,6 +27,7 @@ import re
 import time
 import os
 import sys
+import random
 from HTMLParser import HTMLParser
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -115,6 +116,7 @@ class MHManager():
         self.logged_in = self.client.service['Security'].LoginUser(
             email=email, password=password, customCredential='',
             isPresistent=False)
+        self.password = password
         return self.logged_in is not None
 
     # Gets the household info.
@@ -312,6 +314,73 @@ class MHManager():
             return parser.error
         else:
             return "Unknown Error"
+
+    # Returns an instance of MHAccountDetails with the existing account's
+    # details filled in.
+    def GetAccountDetails(self):
+        details = MHAccountDetails()
+        self.GetHousehold()
+        properties = self.household.Accounts.Account[0].Properties
+        passwordQuestion = self.client.service['AccountManager']. \
+            GetPasswordQuestion(properties.Email)
+        details.firstName = properties.FirstName
+        details.lastName = properties.LastName
+        details.country = properties.CountryType
+        details.email = properties.Email
+        details.password = self.password
+        details.securityQuestion = passwordQuestion.PasswordQuestion
+        details.securityAnswer = None
+        details.keepMeInformed = properties.ContactMe
+        return details
+
+    # Updates an account with the provided details, which should be an instance
+    # of MHAccountDetails.
+    def UpdateAccountDetails(self, details):
+        randGen = random.SystemRandom()
+        nonce = randGen.randint(100000000,2000000000)
+        handshakeResult = self.client.service['AccountManager']. \
+            SecureControllerHandshake(nonce)
+        if handshakeResult is None:
+            print "SecureControllerHandshake failed."
+            return False
+
+        accountId = self.household.Accounts.Account[0].Id
+        properties = self.client.factory.create('{' + ACCOUNT_NS
+                                                + '}accountProperties')
+        properties.ContactMe = details.keepMeInformed
+        properties.CountryType = details.country
+        properties.Email = details.email
+        properties.FirstName = details.firstName
+        properties.IsPolicyAccepted = "true"
+        properties.LastName = details.lastName
+        properties.UserKey = \
+            self.household.Accounts.Account[0].Properties.UserKey
+        result = self.client.service['AccountManager']. \
+            SecureUpdateAccountProperties(accountId, properties,
+                                          handshakeResult.Challenge)
+        if result is not None:
+            print "SecureUpdateAccountProperties failed: " + str(result)
+            return False
+
+        if details.securityAnswer != "":
+            result = self.client.service['AccountManager']. \
+                UpdatePasswordQuestionAndAnswer(self.password,
+                                                details.securityQuestion,
+                                                details.securityAnswer)
+            if result != "true":
+                print "UpdatePasswordQuestionAndAnswer failed: " + str(result)
+                return False
+
+        if details.password != self.password:
+            result = self.client.service['AccountManager']. \
+                UpdatePasswordByOldPassword(details.email, self.password,
+                                            details.password)
+            if result != "true":
+                print "UpdatePasswordByOldPassword failed: " + str(result)
+                return False
+            self.password = details.password
+
+        return True
 
     def GetCountryLists(self):
         conn = httplib.HTTPConnection("www.myharmony.com")

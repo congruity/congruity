@@ -13,6 +13,7 @@
  xmlns:ns7="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
  xmlns:ns8="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
  xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
+ xmlns:ns10="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -24,6 +25,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping" location="button_mapping.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data" location="ir_data.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data" location="am_data.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -569,6 +571,46 @@
 <message name="DeleteTaughtDeviceModeCommandButtonMapsResponse">
 </message>
 
+<message name="GetPasswordQuestion">
+  <part name="email" type="xsd:string"/>
+</message>
+<message name="GetPasswordQuestionResponse">
+  <part name="GetPasswordQuestionResult" type="ns10:GetPasswordQuestionResult"/>
+</message>
+
+<message name="SecureControllerHandshake">
+  <part name="nonce" type="xsd:string"/>
+</message>
+<message name="SecureControllerHandshakeResponse">
+  <part name="SecureControllerHandshakeResult" type="ns10:SecureControllerHandshakeResult"/>
+</message>
+
+<message name="UpdatePasswordByOldPassword">
+  <part name="email" type="xsd:string"/>
+  <part name="oldPassword" type="xsd:string"/>
+  <part name="newPassword" type="xsd:string"/>
+</message>
+<message name="UpdatePasswordByOldPasswordResponse">
+  <part name="UpdatePasswordByOldPasswordResult" type="xsd:string"/>
+</message>
+
+<message name="SecureUpdateAccountProperties">
+  <part name="accountId" type="ns1:Id"/>
+  <part name="accountProperties" type="ns6:accountProperties"/>
+  <part name="challenge" type="xsd:string"/>
+</message>
+<message name="SecureUpdateAccountPropertiesResponse">
+</message>
+
+<message name="UpdatePasswordQuestionAndAnswer">
+  <part name="password" type="xsd:string"/>
+  <part name="newPasswordQuestion" type="xsd:string"/>
+  <part name="newPasswordAnswer" type="xsd:string"/>
+</message>
+<message name="UpdatePasswordQuestionAndAnswerResponse">
+  <part name="UpdatePasswordQuestionAndAnswerResult" type="xsd:string"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -589,6 +631,26 @@
  <operation name="GetMyHousehold">
    <input message="ns:GetMyHousehold"/>
    <output message="ns:GetMyHouseholdResponse"/>
+ </operation>
+ <operation name="GetPasswordQuestion">
+   <input message="ns:GetPasswordQuestion"/>
+   <output message="ns:GetPasswordQuestionResponse"/>
+ </operation>
+ <operation name="SecureControllerHandshake">
+   <input message="ns:SecureControllerHandshake"/>
+   <output message="ns:SecureControllerHandshakeResponse"/>
+ </operation>
+ <operation name="UpdatePasswordByOldPassword">
+   <input message="ns:UpdatePasswordByOldPassword"/>
+   <output message="ns:UpdatePasswordByOldPasswordResponse"/>
+ </operation>
+ <operation name="SecureUpdateAccountProperties">
+   <input message="ns:SecureUpdateAccountProperties"/>
+   <output message="ns:SecureUpdateAccountPropertiesResponse"/>
+ </operation>
+ <operation name="UpdatePasswordQuestionAndAnswer">
+   <input message="ns:UpdatePasswordQuestionAndAnswer"/>
+   <output message="ns:UpdatePasswordQuestionAndAnswerResponse"/>
  </operation>
 </portType>
 <portType name="DeviceManagerPortType">
@@ -714,6 +776,51 @@
   </input>
   <output>
      <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetPasswordQuestion">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetPasswordQuestion"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SecureControllerHandshake">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/SecureControllerHandshake"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdatePasswordByOldPassword">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/UpdatePasswordByOldPassword"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SecureUpdateAccountProperties">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/SecureUpdateAccountProperties"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdatePasswordQuestionAndAnswer">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/UpdatePasswordQuestionAndAnswer"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </output>
  </operation>
 </binding>

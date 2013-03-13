@@ -365,9 +365,15 @@ class RemoteSelectPanel(WizardPanelBase):
                                          size=(134, 75))
         self.sizer.Add(self.remotesListBox)
         self.sizer.AddSpacer(20)
-        self.addButton = wx.Button(self, label="Add New Remote")
+        self.addButton = wx.Button(self, label="Add New Remote",
+                                   size=(127, 33))
         self.addButton.Bind(wx.EVT_BUTTON, self.OnAddRemote)
         self.sizer.Add(self.addButton)
+        self.sizer.AddSpacer(10)
+        self.updateAccountButton = wx.Button(self, label="Update Account",
+                                             size=(127,33))
+        self.updateAccountButton.Bind(wx.EVT_BUTTON, self.OnUpdateAccount)
+        self.sizer.Add(self.updateAccountButton)
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
@@ -475,6 +481,9 @@ class RemoteSelectPanel(WizardPanelBase):
             wx.MessageBox('Remote addition failed.', 'Failure',
                           wx.OK, wx.ICON_WARNING)
             return
+
+    def OnUpdateAccount(self, event):
+        self.parent._SetPage(self.resources.page_create_account, True)
 
     def OnNext(self):
         if self.remotesListBox.GetSelection() != -1:
@@ -796,8 +805,11 @@ class AddDevicePanel(WizardPanelBase):
         return (self.next, None)
 
 class CreateAccountPanel(WizardPanelBase):
-    _msg_welcome = (
+    _msg_welcome_create = (
         "Please enter the information below in order to create an account.\n"
+    )
+    _msg_welcome_update = (
+        "Please update the information below.\n"
     )
 
     def __init__(self, parent, resources):
@@ -928,8 +940,36 @@ class CreateAccountPanel(WizardPanelBase):
         self.parent.ReenableNext()
 
     def OnActivated(self, prev_page, data):
+        if data is not None:
+            self.isUpdate = True
+            self.parent.title.SetLabel("Account Update")
+            self._msg_welcome = self._msg_welcome_update
+            self.PopulateData()
+        else:
+            self.isUpdate = False
+            self._msg_welcome = self._msg_welcome_create
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
+
+    def PopulateData(self):
+        details = mhMgr.GetAccountDetails()
+        self.firstNameCtrl.SetValue(details.firstName)
+        self.lastNameCtrl.SetValue(details.lastName)
+        self.countryChoice.SetSelection(
+            self.countryCodes.index(details.country)
+        )
+        self.emailAddressCtrl.SetValue(details.email)
+        self.passwordCtrl.SetValue(details.password) 
+        self.retypePasswordCtrl.SetValue(details.password)
+        self.securityQuestionChoice.SetSelection(
+            self.securityQuestionTokens.index(details.securityQuestion)
+        )
+        self.securityAnswerCtrl.Clear()
+        self.termsCheckBox.SetValue(True)
+        if str(details.keepMeInformed).lower() == "true":
+            self.contactCheckBox.SetValue(True)
+        else:
+            self.contactCheckBox.SetValue(False)
 
     def GetTitle(self):
         return "Account Creation"
@@ -962,7 +1002,7 @@ class CreateAccountPanel(WizardPanelBase):
             wx.MessageBox('Passwords do not match.',
                           'Error', wx.OK | wx.ICON_WARNING)
             return
-        if self.securityAnswerCtrl.IsEmpty():
+        if (not self.isUpdate) and (self.securityAnswerCtrl.IsEmpty()):
             wx.MessageBox('Security Answer Required.',
                           'Error', wx.OK | wx.ICON_WARNING)
             return
@@ -985,14 +1025,25 @@ class CreateAccountPanel(WizardPanelBase):
         else:
             mhAccount.keepMeInformed = "false"
 
-        result = mhMgr.CreateAccount(mhAccount)
-        if result is None:
-            wx.MessageBox('Account created successfully.',
-                          'Success', wx.OK)
-            self.parent._SetPage(self.resources.page_welcome, None)
+        if not self.isUpdate:
+            result = mhMgr.CreateAccount(mhAccount)
+            if result is None:
+                wx.MessageBox('Account created successfully.',
+                              'Success', wx.OK)
+                self.parent._SetPage(self.resources.page_welcome, None)
+            else:
+                wx.MessageBox(result, 'Error', wx.OK | wx.ICON_WARNING)
+                return
         else:
-            wx.MessageBox(result, 'Error', wx.OK | wx.ICON_WARNING)
-            return
+            result = mhMgr.UpdateAccountDetails(mhAccount)
+            if result:
+                wx.MessageBox('Account updated successfully.', 'Success',
+                              wx.OK)
+                self.parent._SetPage(self.resources.page_remote_select, None)
+            else:
+                wx.MessageBox('Account update failed.', 'Failure',
+                              wx.OK | wx.ICON_WARNING)
+                return
 
     def GetNext(self):
         return (self.next, None)

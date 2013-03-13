@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns10="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+
+  <complexType name="GetPasswordQuestionResult">
+    <sequence>
+      <element name="PasswordQuestion" type="xsd:string"/>
+      <element name="Status" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="SecureControllerHandshakeResult">
+    <sequence>
+      <element name="Challenge" type="xsd:string"/>
+      <element name="Nonce" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+</schema>
