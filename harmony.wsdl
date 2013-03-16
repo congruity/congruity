@@ -45,111 +45,6 @@
     </sequence>
   </complexType>
 
-<!--  <complexType name="Id">
-    <all>
-      <element name="IsPersisted" type="xsd:boolean"/>
-      <element name="Value" type="xsd:long"/>
-    </all>
-  </complexType>-->
-  <complexType name="Properties">
-    <sequence>
-      <element name="AnonymizedEmail" type="xsd:string"/>
-      <element name="ContactMe" type="xsd:boolean"/>
-      <element name="CountryType" type="xsd:string"/>
-      <element name="Email" type="xsd:string"/>
-      <element name="FirstName" type="xsd:string"/>
-      <element name="IsPolicyAccepted" type="xsd:boolean"/>
-      <element name="LastName" type="xsd:string"/>
-      <element name="UserKey" type="xsd:string"/>
-      <element name="ZipCode" type="xsd:string"/>
-    </sequence>
-  </complexType>
-  <complexType name="Device">
-    <sequence>
-      <element name="Activities" type="xsd:string"/>
-      <element name="Description" type="xsd:string"/>
-      <element name="DeviceIcon" type="xsd:string"/>
-      <element name="DeviceType" type="xsd:string"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="Manufacturer" type="xsd:string"/>
-      <element name="Model" type="xsd:string"/>
-      <element name="Name" type="xsd:string"/>
-      <element name="Remote" type="xsd:string"/>
-    </sequence>
-  </complexType>
-  <complexType name="RemoteProperties">
-    <sequence>
-      <element name="IsActiveRemote" type="xsd:boolean"/>
-      <element name="IsLocked" type="xsd:boolean"/>
-      <element name="RemoteName" type="xsd:string"/>
-    </sequence>
-  </complexType>
-  <complexType name="Remote">
-    <sequence>
-      <element name="DateCreated" type="xsd:string"/>
-      <element name="FirstConnectDate" type="xsd:string"/>
-      <element name="FirstSyncDate" type="xsd:string"/>
-      <element name="GlobalRemoteId" type="xsd:string"/>
-      <element name="GlobalRemoteSkinId" type="xsd:string"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="IsAcceptLicense" type="xsd:boolean"/>
-      <element name="IsActiveRemote" type="xsd:boolean"/>
-      <element name="IsGlobalRemoteLocked" type="xsd:boolean"/>
-      <element name="IsSyncRequired" type="xsd:boolean"/>
-      <element name="JabberId" type="xsd:string"/>
-      <element name="KeyboardLayout" type="xsd:string"/>
-      <element name="LastSyncDate" type="xsd:string"/>
-      <element name="LogitechProductId" type="xsd:string"/>
-      <element name="LogitechSerial" type="xsd:string"/>
-      <element name="Pairings" type="xsd:string"/>
-      <element name="RemoteProperties" type="ns:RemoteProperties"/>
-      <element name="SerialNumber" type="xsd:string"/>
-      <element name="SkinId" type="xsd:string"/>
-      <element name="Surfaces" type="ns:Surfaces"/>
-    </sequence>
-  </complexType>
-  <complexType name="Devices">
-    <complexContent>
-      <restriction base="soapenc:Array">
-	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:Device[]"/>
-      </restriction>
-    </complexContent>
-  </complexType>
-  <complexType name="Remotes">
-    <sequence>
-      <element name="Remote" type="ns:Remote" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-  <complexType name="Surface">
-    <sequence>
-      <element name="EquadId" type="xsd:string"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="RemoteId" type="xsd:string"/>
-      <element name="RfSurfaceId" type="xsd:string"/>
-      <element name="SkinId" type="xsd:long"/>
-    </sequence>
-  </complexType>
-  <complexType name="Surfaces">
-    <sequence>
-      <element name="Surface" type="ns:Surface" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-  <complexType name="GetMyAccountResult">
-    <sequence>
-      <element name="AccountTypeId" type="xsd:string"/>
-      <element name="Activities" type="xsd:string"/>
-      <element name="CreateDate" type="xsd:string"/>
-      <element name="Devices" type="ns:Devices"/>
-      <element name="HouseholdId" type="ns1:Id"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="IsRemoved" type="xsd:string"/>
-      <element name="LastSetupRating" type="xsd:string"/>
-      <element name="Properties" type="ns:Properties"/>
-      <element name="Remotes" type="ns:Remotes"/>
-      <element name="Surfaces" type="ns:Surfaces"/>
-    </sequence>
-  </complexType>
-
   <complexType name="PrioritizedDeviceCapability">
     <sequence>
       <element name="DeviceCapability" type="xsd:string"/>
@@ -166,7 +61,7 @@
   <complexType name="GlobalDeviceVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:boolean"/>
-      <element name="Value" type="xsd:string"/>-->
+      <element name="Value" type="xsd:string"/>
       <element name="IsDefault" type="xsd:boolean"/>
       <element name="VersionId" type="xsd:string"/>
     </sequence>
@@ -215,12 +110,6 @@
       <element name="Transport" type="xsd:string"/>
     </sequence>
   </complexType>
-<!--  <complexType name="DeviceId">
-    <all>
-      <element name="IsPersisted" type="xsd:boolean"/>
-      <element name="Value" type="xsd:long"/>
-    </all>
-  </complexType>-->
   <complexType name="GetDevicesResult">
     <sequence>
       <element name="Device" type="ns:Device" minOccurs="0" maxOccurs="unbounded"/>
@@ -295,36 +184,14 @@
     </sequence>
   </complexType>
 
-  <complexType name="Account">
-    <sequence>
-      <element name="AccountTypeId" type="xsd:string"/>
-      <element name="Activities" type="xsd:string"/>
-      <element name="CreateDate" type="xsd:string"/>
-      <element name="Devices" type="ns:Devices"/>
-      <element name="HouseholdId" type="ns1:Id"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="IsRemoved" type="xsd:string"/>
-      <element name="LastSetupRating" type="xsd:string"/>
-      <element name="Properties" type="ns:Properties"/>
-      <element name="Remotes" type="ns:Remotes"/>
-      <element name="Surfaces" type="ns:Surfaces"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="Accounts">
-    <sequence>
-      <element name="Account" type="ns:Account" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-
   <complexType name="GetMyHouseholdResult">
     <sequence>
-      <element name="Accounts" type="ns:Accounts"/>
+      <element name="Accounts" type="ns6:Accounts"/>
       <element name="DefaultLanguage" type="xsd:string"/>
       <element name="DefaultUserProfileUri" type="xsd:string"/>
       <element name="Id" type="ns1:Id"/>
       <element name="Name" type="xsd:string"/>
-      <element name="Remotes" type="ns:Remotes"/>
+      <element name="Remotes" type="ns6:Remotes"/>
       <element name="Rooms" type="xsd:string"/>
     </sequence>
   </complexType>
@@ -437,13 +304,6 @@
 </message>
 <message name="LoginResponse">
  <part name="LoginResult" type="xsd:boolean"/>
-</message>
-
-<!-- Deprecated?? Replaced by GetMyHousehold -->
-<message name="GetMyAccount">
-</message>
-<message name="GetMyAccountResponse">
- <part name="GetMyAccountResult" type="GetMyAccountResult"/>
 </message>
 
 <message name="GetDevices">
@@ -596,7 +456,7 @@
 
 <message name="SecureUpdateAccountProperties">
   <part name="accountId" type="ns1:Id"/>
-  <part name="accountProperties" type="ns6:accountProperties"/>
+  <part name="accountProperties" type="ns6:Properties"/>
   <part name="challenge" type="xsd:string"/>
 </message>
 <message name="SecureUpdateAccountPropertiesResponse">
@@ -609,6 +469,12 @@
 </message>
 <message name="UpdatePasswordQuestionAndAnswerResponse">
   <part name="UpdatePasswordQuestionAndAnswerResult" type="xsd:string"/>
+</message>
+
+<message name="CreateNewAccountInMyHousehold">
+</message>
+<message name="CreateNewAccountInMyHouseholdResponse">
+  <part name="CreateNewAccountInMyHouseholdResult" type="ns6:Account"/>
 </message>
 
 <portType name="DiscoveryPortType">
@@ -624,10 +490,6 @@
  </operation>
 </portType>
 <portType name="AccountManagerPortType">
- <operation name="GetMyAccount">
-  <input message="ns:GetMyAccount"/>
-  <output message="ns:GetMyAccountResponse"/>
- </operation>
  <operation name="GetMyHousehold">
    <input message="ns:GetMyHousehold"/>
    <output message="ns:GetMyHouseholdResponse"/>
@@ -651,6 +513,10 @@
  <operation name="UpdatePasswordQuestionAndAnswer">
    <input message="ns:UpdatePasswordQuestionAndAnswer"/>
    <output message="ns:UpdatePasswordQuestionAndAnswerResponse"/>
+ </operation>
+ <operation name="CreateNewAccountInMyHousehold">
+   <input message="ns:CreateNewAccountInMyHousehold"/>
+   <output message="ns:CreateNewAccountInMyHouseholdResponse"/>
  </operation>
 </portType>
 <portType name="DeviceManagerPortType">
@@ -760,15 +626,6 @@
 </binding>
 <binding name="AccountManagerBinding" type="ns:AccountManagerPortType">
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
- <operation name="GetMyAccount">
-  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyAccount"/>
-  <input>
-     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
-  </input>
-  <output>
-     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
-  </output>
- </operation>
  <operation name="GetMyHousehold">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyHousehold"/>
   <input>
@@ -816,6 +673,15 @@
  </operation>
  <operation name="UpdatePasswordQuestionAndAnswer">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/UpdatePasswordQuestionAndAnswer"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="CreateNewAccountInMyHousehold">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/CreateNewAccountInMyHousehold"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>

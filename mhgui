@@ -413,6 +413,11 @@ class RemoteSelectPanel(WizardPanelBase):
         return False
 
     def OnAddRemote(self, event):
+        if len(self.remotes) >= 6:
+            wx.MessageBox('Each account can support up to 6 remotes.',
+                          'Maximum Number of Remotes Reached',
+                          wx.OK | wx.ICON_WARNING)
+            return            
         supportedRemotes = mhMgr.GetSupportedRemoteNames()
         msg = 'Please ensure your remote control is connected.'
         msg += '\n\nSupported models are:'
@@ -572,7 +577,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.Layout()
 
     def PopulateDevicesList(self):
-        self.devices = mhMgr.GetDevices()
+        self.devices = mhMgr.GetDevices(self.remote.Id)
         self.devicesList = []
         if self.devices is not None:
             for device in self.devices:
@@ -583,7 +588,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnAdd(self, event):
         if len(self.devicesList) < self.product.MaxDevicesPerAccount:
-            self.parent._SetPage(self.resources.page_add_device, None)
+            self.parent._SetPage(self.resources.page_add_device, self.remote)
         else:
             wx.MessageBox('Remote cannot support additional devices.',
                           'Cannot Add Device.', wx.OK | wx.ICON_WARNING)
@@ -743,6 +748,7 @@ class AddDevicePanel(WizardPanelBase):
         )
 
     def OnActivated(self, prev_page, data):
+        self.remote = data
         self.ClearPage()
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
@@ -774,7 +780,8 @@ class AddDevicePanel(WizardPanelBase):
         deviceToAdd = self.searchResultsListBox.GetSelections()
         if deviceToAdd != ():
             self.StartBusy()
-            result = mhMgr.AddDevice(self.matches[deviceToAdd[0]])
+            result = mhMgr.AddDevice(self.matches[deviceToAdd[0]],
+                                     self.remote.Id)
             if result is None:
                 self.EndBusy()
                 wx.MessageBox('Device addition failed!',

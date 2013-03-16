@@ -34,7 +34,6 @@ from suds.plugin import MessagePlugin
 
 XSI_NS = "http://www.w3.org/2001/XMLSchema"
 MS_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
-TEMPURI_NS = "http://tempuri.org/"
 DATA_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
 OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
 DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
@@ -127,9 +126,10 @@ class MHManager():
     def GetRemotes(self):
         self.GetHousehold()
         remotes = []
-        if self.household.Remotes != "":
-            for remote in self.household.Remotes.Remote:
-                remotes.append(remote)
+        for account in self.household.Accounts.Account:
+            if account.Remotes != "":
+                for remote in account.Remotes.Remote:
+                    remotes.append(remote)
         return remotes
 
     # Gets the product info for a given Skin Id.
@@ -236,11 +236,30 @@ class MHManager():
                 time.sleep(4)
                 count += 1
 
-    def GetDevices(self):
+    def GetAccountForRemote(self, remoteId):
+        for account in self.household.Accounts.Account:
+            if account.Remotes != "":
+                for remote in account.Remotes.Remote:
+                    if (remote.Id.IsPersisted == remoteId.IsPersisted) and \
+                            (remote.Id.Value == remoteId.Value):
+                        return account
+        return None
+
+    def GetAccountIdForDevice(self, deviceId):
+        for account in self.household.Accounts.Account:
+            if account.Devices != "":
+                for device in account.Devices.Device:
+                    if (device.Id.IsPersisted == deviceId.IsPersisted) and \
+                            (device.Id.Value == deviceId.Value):
+                        return account.Id
+        return None
+
+    def GetDevices(self, remoteId):
         self.GetHousehold()
-        if self.household.Accounts.Account[0].Devices != "":
+        account = self.GetAccountForRemote(remoteId)
+        if account.Devices != "":
             deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
-            for device in self.household.Accounts.Account[0].Devices.Device:
+            for device in account.Devices.Device:
                 deviceIds.DeviceId.append(device.Id)
             return self.client.service['DeviceManager'].GetDevices(
                 deviceIds).Device
@@ -249,10 +268,8 @@ class MHManager():
 
     def DeleteDevice(self, deviceId):
         self.GetHousehold()
-        accountId = self.client.factory.create('{' + DATA_NS + '}accountId')
+        accountId = self.GetAccountIdForDevice(deviceId)
         deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
-        accountId.IsPersisted = self.household.Accounts.Account[0].Id.IsPersisted
-        accountId.Value = self.household.Accounts.Account[0].Id.Value
         deviceIds.DeviceId.append(deviceId)
         return self.client.service['DeletionManager'].DeleteDevices(accountId,
                                                                     deviceIds)
@@ -261,10 +278,12 @@ class MHManager():
         return self.client.service['DeviceManager'].SearchGlobalDevices(
             manufacturer, modelNumber, "Unknown", "DidYouMeanMatch", maxResults)
 
-    def AddDevice(self, device):
+    def AddDevice(self, device, remoteId):
         self.GetHousehold()
-        operation = self.client.factory.create('{' + DM_OPERATION_NS + '}AddDeviceBySearchResultOperation')
-        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation = self.client.factory.create(
+            '{' + DM_OPERATION_NS + '}AddDeviceBySearchResultOperation'
+        )
+        operation.ParentAccount = self.GetAccountForRemote(remoteId).Id
         operation.ReturnIdAsKey = str(uuid.uuid4())
         operation.DeviceClassification = "Any"
         operation.DeviceName = device.Manufacturer + " " + device.DeviceModel
@@ -275,11 +294,13 @@ class MHManager():
 
     def RenameDevice(self, deviceId, newName):
         self.GetHousehold()
-        operation = self.client.factory.create('{' + DM_OPERATION_NS + '}UpdateDeviceNameOperation')
+        operation = self.client.factory.create(
+            '{' + DM_OPERATION_NS + '}UpdateDeviceNameOperation'
+        )
         id = self.client.factory.create('{' + DATA_NS + '}Id')
         id.IsPersisted = deviceId.IsPersisted
         id.Value = deviceId.Value
-        operation.ParentAccount = self.household.Accounts.Account[0].Id
+        operation.ParentAccount = self.GetAccountIdForDevice(deviceId)
         operation.DeviceId = id
         operation.DeviceName = newName
         return self.client.service['DeviceManager'].UpdateMyData(operation)
@@ -346,7 +367,7 @@ class MHManager():
 
         accountId = self.household.Accounts.Account[0].Id
         properties = self.client.factory.create('{' + ACCOUNT_NS
-                                                + '}accountProperties')
+                                                + '}Properties')
         properties.ContactMe = details.keepMeInformed
         properties.CountryType = details.country
         properties.Email = details.email
@@ -393,15 +414,26 @@ class MHManager():
 
     def AddRemote(self, serialNumber, skinId, usbPid, usbVid):
         self.GetHousehold()
+        accountId = None
+        for account in self.household.Accounts.Account:
+            if account.Remotes is None or account.Remotes == "":
+                accountId = account.Id
+                break
+        if accountId is None:
+            result = self.client.service['AccountManager']. \
+                CreateNewAccountInMyHousehold()
+            accountId = result.Id
+
         remoteInfo = self.client.factory.create(
             '{' + ACCOUNT_NS + '}remoteInfo')
-        remoteInfo.AccountId = self.household.Accounts.Account[0].Id
+        remoteInfo.AccountId = accountId
         remoteInfo.KeyPadLayout = "Undefined"
         remoteInfo.SerialNumber = serialNumber
         remoteInfo.SkinId = skinId
         remoteInfo.UsbPid = usbPid
         remoteInfo.UsbVid = usbVid
-        return self.client.service['UserAccountDirector'].AddRemoteToAccount(remoteInfo)
+        return self.client.service['UserAccountDirector'].AddRemoteToAccount(
+            remoteInfo)
 
     # Returns a set of the remote skins supported by this web interface.
     def GetSupportedRemoteSkinIds(self):
@@ -433,8 +465,10 @@ class MHManager():
 
         operation = self.client.factory.create('{' + OPERATION_NS
                                                + '}OperationBag')
-        operation.ParentAccount = self.household.Accounts.Account[0].Id
-        operation.Items.Operation = self.client.factory.create('{' + DM_OPERATION_NS + '}AddCommandOperation')
+        operation.ParentAccount = self.GetAccountIdForDevice(deviceId)
+        operation.Items.Operation = self.client.factory.create(
+            '{' + DM_OPERATION_NS + '}AddCommandOperation'
+        )
         operation.Items.Operation.ParentAccount = operation.ParentAccount
         operation.Items.Operation.DeviceId = deviceId
         operation.Items.Operation.KeyCode = result.KeyCode
@@ -460,8 +494,10 @@ class MHManager():
 
         operation = self.client.factory.create('{' + OPERATION_NS
                                                + '}OperationBag')
-        operation.ParentAccount = self.household.Accounts.Account[0].Id
-        operation.Items.Operation = self.client.factory.create('{' + DM_OPERATION_NS + '}DeleteCommandOperation')
+        operation.ParentAccount = self.GetAccountIdForDevice(deviceId)
+        operation.Items.Operation = self.client.factory.create(
+            '{' + DM_OPERATION_NS + '}DeleteCommandOperation'
+        )
         operation.Items.Operation.ParentAccount = operation.ParentAccount
         operation.Items.Operation.DeviceId = deviceId
         operation.Items.Operation.LanguageElementIds.long = commandId.Value

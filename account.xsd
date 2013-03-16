@@ -3,10 +3,86 @@
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:ns="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
   xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns6="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="Device">
+    <sequence>
+      <element name="Activities" type="xsd:string"/>
+      <element name="Description" type="xsd:string"/>
+      <element name="DeviceIcon" type="xsd:string"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="Model" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="Remote" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Devices">
+    <sequence>
+      <element name="Device" type="ns6:Device" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Surface">
+    <sequence>
+      <element name="EquadId" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="RemoteId" type="xsd:string"/>
+      <element name="RfSurfaceId" type="xsd:string"/>
+      <element name="SkinId" type="xsd:long"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Surfaces">
+    <sequence>
+      <element name="Surface" type="ns6:Surface" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="RemoteProperties">
+    <sequence>
+      <element name="IsActiveRemote" type="xsd:boolean"/>
+      <element name="IsLocked" type="xsd:boolean"/>
+      <element name="RemoteName" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Remote">
+    <sequence>
+      <element name="DateCreated" type="xsd:string"/>
+      <element name="FirstConnectDate" type="xsd:string"/>
+      <element name="FirstSyncDate" type="xsd:string"/>
+      <element name="GlobalRemoteId" type="xsd:string"/>
+      <element name="GlobalRemoteSkinId" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsAcceptLicense" type="xsd:boolean"/>
+      <element name="IsActiveRemote" type="xsd:boolean"/>
+      <element name="IsGlobalRemoteLocked" type="xsd:boolean"/>
+      <element name="IsSyncRequired" type="xsd:boolean"/>
+      <element name="JabberId" type="xsd:string"/>
+      <element name="KeyboardLayout" type="xsd:string"/>
+      <element name="LastSyncDate" type="xsd:string"/>
+      <element name="LogitechProductId" type="xsd:string"/>
+      <element name="LogitechSerial" type="xsd:string"/>
+      <element name="Pairings" type="xsd:string"/>
+      <element name="RemoteProperties" type="ns6:RemoteProperties"/>
+      <element name="SerialNumber" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="Surfaces" type="ns6:Surfaces"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Remotes">
+    <sequence>
+      <element name="Remote" type="ns6:Remote" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
 
   <complexType name="remoteInfo">
     <sequence>
@@ -20,7 +96,7 @@
     </sequence>
   </complexType>
 
-  <complexType name="accountProperties">
+  <complexType name="Properties">
     <sequence>
       <element name="AnonymizedEmail" type="xsd:string" nillable="true"/>
       <element name="ContactMe" type="xsd:string"/>
@@ -31,6 +107,28 @@
       <element name="LastName" type="xsd:string"/>
       <element name="UserKey" type="xsd:string"/>
       <element name="ZipCode" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Account">
+    <sequence>
+      <element name="AccountTypeId" type="xsd:string"/>
+      <element name="Activities" type="xsd:string" nillable="true"/>
+      <element name="CreateDate" type="xsd:string"/>
+      <element name="Devices" type="ns:Devices"/>
+      <element name="HouseholdId" type="ns1:Id"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsRemoved" type="xsd:string"/>
+      <element name="LastSetupRating" type="xsd:string"/>
+      <element name="Properties" type="ns6:Properties"/>
+      <element name="Remotes" type="ns6:Remotes"/>
+      <element name="Surfaces" type="ns6:Surfaces" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Accounts">
+    <sequence>
+      <element name="Account" type="ns6:Account" minOccurs="0" maxOccurs="unbounded"/>
     </sequence>
   </complexType>
 
