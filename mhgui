@@ -680,6 +680,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
                           'Download complete.', wx.OK)
 
     def OnActivated(self, prev_page, data):
+        self.parent.ReenableBack()
         return (None, None)
 
     def GetTitle(self):
@@ -693,6 +694,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def GetNext(self):
         return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_select, None)
 
 class AddDevicePanel(WizardPanelBase):
     _msg_welcome = (
@@ -751,6 +755,7 @@ class AddDevicePanel(WizardPanelBase):
     def OnActivated(self, prev_page, data):
         self.remote = data
         self.ClearPage()
+        self.parent.ReenableBack()
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
@@ -811,6 +816,9 @@ class AddDevicePanel(WizardPanelBase):
 
     def GetNext(self):
         return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
 
 class CreateAccountPanel(WizardPanelBase):
     _msg_welcome_create = (
@@ -946,6 +954,7 @@ class CreateAccountPanel(WizardPanelBase):
             self._msg_welcome
         )
         self.parent.ReenableNext()
+        self.parent.ReenableBack()
 
     def OnActivated(self, prev_page, data):
         if data is not None:
@@ -956,6 +965,7 @@ class CreateAccountPanel(WizardPanelBase):
         else:
             self.isUpdate = False
             self._msg_welcome = self._msg_welcome_create
+            self.ClearData()
         thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
@@ -978,6 +988,18 @@ class CreateAccountPanel(WizardPanelBase):
             self.contactCheckBox.SetValue(True)
         else:
             self.contactCheckBox.SetValue(False)
+
+    def ClearData(self):
+        self.firstNameCtrl.Clear()
+        self.lastNameCtrl.Clear()
+        self.countryChoice.SetSelection(0)
+        self.emailAddressCtrl.Clear()
+        self.passwordCtrl.Clear()
+        self.retypePasswordCtrl.Clear()
+        self.securityQuestionChoice.SetSelection(0)
+        self.securityAnswerCtrl.Clear()
+        self.termsCheckBox.SetValue(False)
+        self.contactCheckBox.SetValue(False)
 
     def GetTitle(self):
         return "Account Creation"
@@ -1055,6 +1077,12 @@ class CreateAccountPanel(WizardPanelBase):
 
     def GetNext(self):
         return (self.next, None)
+
+    def GetBack(self):
+        if self.isUpdate:
+            return (self.resources.page_remote_select, None)
+        else:
+            return (self.resources.page_welcome, None)
 
 class ConfigureDevicePanel(WizardPanelBase):
     _msg_welcome = (
