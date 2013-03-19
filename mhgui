@@ -22,13 +22,11 @@ import os
 import os.path
 import sys
 import thread
-import time
 import traceback
 
 import wxversion
 wxversion.ensureMinimal('2.8')
 import wx
-import wx.lib.dialogs
 from tempfile import NamedTemporaryFile
 sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
@@ -53,41 +51,6 @@ except:
     dlg.ShowModal()
     os._exit(1)
 
-class CmdLineException(Exception):
-    pass
-
-def exception_message():
-    msg = ''
-    if type(sys.exc_value) == libconcord.LibConcordException:
-        try:
-            msg += '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
-            )
-        except:
-            pass
-    if type(sys.exc_value) == CmdLineException:
-        try:
-            msg += '%s\n\n' % (
-                str(sys.exc_value)
-            )
-        except:
-            pass
-    msg += traceback.format_exc()
-    return msg
-
-def show_modal_scrolled_msgbox(parent, title, text):
-    size = parent.GetClientSizeTuple()
-    size = (size[0] * 90 / 100, size[1] * 90 / 100)
-    wx.lib.dialogs.ScrolledMessageDialog(
-        parent,
-        text,
-        title,
-        (-1, -1),
-        size
-    ).ShowModal()
-
 ALIGN_LTA = wx.ALIGN_LEFT  | wx.ALIGN_TOP             | wx.ALL
 ALIGN_XTA = wx.EXPAND      | wx.ALIGN_TOP             | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT  | wx.ALIGN_CENTER_VERTICAL | wx.ALL
@@ -110,85 +73,6 @@ class WrappedStaticText(wx.StaticText):
         self.Wrap(cur_width)
         self.Layout()
         self.parent.Layout()
-
-class DecoratedContainer(wx.Panel):
-    def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
-        wx.Panel.__init__(self, parent)
-
-        self.sizer = wx.GridBagSizer(5, 5)
-        self.sizer.AddGrowableCol(2)
-        self.SetSizer(self.sizer)
-
-        self.last_updated_dg = None
-
-    def _DgStart(self, dg):
-        self._OnProgressGauge(False, 0, dg)
-
-    def _DgUpdate(self, is_done, percent, dg):
-        self._OnProgressGauge(is_done, percent, dg)
-
-    def _DgEnd(self, dg):
-        self._OnProgressGauge(True, 100, dg)
-
-    def _DgFailure(self):
-        if self.last_updated_dg:
-            self.last_updated_dg.SetBitmap(self.resources.icon_failed)
-
-    def _OnProgressGauge(self, is_done, percent, dg):
-        if is_done:
-            new_bitmap = self.resources.icon_complete
-        else:
-            new_bitmap = self.resources.icon_in_progress
-        dg.SetBitmap(new_bitmap)
-        dg.gauge.SetValue(percent)
-        self.last_updated_dg = dg
-
-class DecoratedContainerThreadMixin(object):
-    def __init__(self, dc):
-        self.dc = dc
-
-    def _DgStart(self, dg):
-        wx.CallAfter(self.dc._DgStart, dg)
-
-    def _DgUpdate(self, is_done, percent, dg):
-        wx.CallAfter(self.dc._DgUpdate, is_done, percent, dg)
-
-    def _DgEnd(self, dg):
-        wx.CallAfter(self.dc._DgEnd, dg)
-
-    def _DgFailure(self):
-        wx.CallAfter(self.dc._DgFailure)
-
-class DecoratedGauge(object):
-    def __init__(self, parent, caption, vpos):
-        self.current_bitmap = parent.resources.icon_unstarted
-        self.bitmap = wx.StaticBitmap(
-            parent,
-            -1,
-            self.current_bitmap,
-            None,
-            parent.resources.iwh
-        )
-        self.text = wx.StaticText(parent, -1, caption)
-        self.gauge = wx.Gauge(
-            parent,
-            -1,
-            100,
-            None,
-            (250, parent.resources.iwh[1])
-        )
-        parent.sizer.Add(self.bitmap, (vpos, 0), (1, 1), ALIGN_LBA, 5)
-        parent.sizer.Add(self.text,   (vpos, 1), (1, 1), ALIGN_LCA, 5)
-        parent.sizer.Add(self.gauge,  (vpos, 2), (1, 1), ALIGN_XBA, 5)
-
-    def SetBitmap(self, new_bitmap):
-        if self.current_bitmap == new_bitmap:
-            return
-        self.current_bitmap = new_bitmap
-        self.bitmap.SetBitmap(self.current_bitmap)
 
 class WizardPanelBase(wx.Panel):
     def __init__(self, parent, resources):
@@ -240,15 +124,6 @@ class WizardPanelBase(wx.Panel):
         self.busy = None
         self.parent.Show()
 
-class MessagePanelBase(WizardPanelBase):
-    def __init__(self, parent, resources):
-        WizardPanelBase.__init__(self, parent, resources)
-
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text_message = WrappedStaticText(self)
-        self.sizer.Add(self.text_message, 0, ALIGN_XTA, 5)
-        self.SetSizerAndFit(self.sizer)
-
 class WelcomePanel(WizardPanelBase):
     _msg_welcome = (
         "Welcome to MHGUI: an application for accessing " +
@@ -288,7 +163,6 @@ class WelcomePanel(WizardPanelBase):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
-        self.initial_exception = None
 
     def _WorkerFunction(self):
         wx.CallAfter(
@@ -298,27 +172,6 @@ class WelcomePanel(WizardPanelBase):
 
         self.next = self.resources.page_remote_select
         self.parent.ReenableNext()
-
-        #wx.CallAfter(self._OnStatusOk, next_page, type_text)
-  
-    def _OnStatusOk(self, next_page, type_text):
-        self._OnStatusCommon(self._msg_status_ok)
-
-    def _OnStatusFailure(self, failure_msg, details):
-        self.resources.page_failure.SetMessages(
-            failure_msg,
-            details
-        )
-        self.next = self.resources.page_failure
-        self._OnStatusCommon(self._msg_status_failure)
-
-    def _OnStatusCommon(self, message):
-        self.text_message.UpdateText(self._msg_welcome + message)
-        self.parent.ReenableCancel()
-        self.parent.ReenableNext()
-
-    def SetInitialException(self, initial_exception):
-        self.initial_exception = initial_exception
 
     def OnActivated(self, prev_page, data):
         thread.start_new_thread(self._WorkerFunction, ())
@@ -381,7 +234,6 @@ class RemoteSelectPanel(WizardPanelBase):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
-        self.initial_exception = None
 
     def _WorkerFunction(self):
         wx.CallAfter(
@@ -580,7 +432,6 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
-        self.initial_exception = None
 
     def SetRemote(self, remote):
         self.remote = remote
@@ -649,7 +500,11 @@ class RemoteConfigurationPanel(WizardPanelBase):
         deviceToConfigure = self.devicesListBox.GetSelections()
         if deviceToConfigure != ():
             self.StartBusy()
-            self.resources.page_configure_device.SetDevice(self.remote.SkinId, self.devices[deviceToConfigure[0]].Id, self.devices[deviceToConfigure[0]].Name)
+            self.resources.page_configure_device.SetDevice(
+                self.remote.SkinId,
+                self.devices[deviceToConfigure[0]].Id,
+                self.devices[deviceToConfigure[0]].Name
+            )
             self.EndBusy()
             self.parent._SetPage(self.resources.page_configure_device, None)
         else:
@@ -660,7 +515,11 @@ class RemoteConfigurationPanel(WizardPanelBase):
         deviceToConfigure = self.devicesListBox.GetSelections()
         if deviceToConfigure != ():
             self.StartBusy()
-            self.resources.page_favorite_channels.SetDevice(self.remote.SkinId, self.devices[deviceToConfigure[0]].Id, self.devices[deviceToConfigure[0]].Name)
+            self.resources.page_favorite_channels.SetDevice(
+                self.remote.SkinId,
+                self.devices[deviceToConfigure[0]].Id,
+                self.devices[deviceToConfigure[0]].Name
+            )
             self.EndBusy()
             self.parent._SetPage(self.resources.page_favorite_channels, None)
         else:
@@ -675,7 +534,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         mhMgr.GetConfig(self.remote, tempFile.name)
         self.EndBusy()
         self.Hide()
-        os.system("congruity " + tempFile.name)
+        os.system("congruity --no-web " + tempFile.name)
         os.unlink(tempFile.name)
         self.Show()
 
@@ -810,7 +669,8 @@ class AddDevicePanel(WizardPanelBase):
             else:
                 self.resources.page_remote_configuration.PopulateDevicesList()
                 self.EndBusy()
-                self.parent._SetPage(self.resources.page_remote_configuration, None)
+                self.parent._SetPage(self.resources.page_remote_configuration,
+                                     None)
         else:
             wx.MessageBox('Please select a device to add.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
@@ -1674,22 +1534,6 @@ class Resources(object):
             raise Exception("Can't load " + filename)
 
         self.img_remote       = load("remote.png")
-        self.icon_unstarted   = load("icon-unstarted.png")
-        self.icon_in_progress = load("icon-in-progress.png")
-        self.icon_complete    = load("icon-complete.png")
-        self.icon_failed      = load("icon-failed.png")
-
-        iw = max(
-            self.icon_in_progress.GetWidth(),
-            self.icon_complete.GetWidth(),
-            self.icon_failed.GetWidth()
-        )
-        ih = max(
-            self.icon_in_progress.GetHeight(),
-            self.icon_complete.GetHeight(),
-            self.icon_failed.GetHeight()
-        )
-        self.iwh = (iw, ih)
 
     def CreatePages(self, wizard):
         self.page_welcome = WelcomePanel(wizard, self)
