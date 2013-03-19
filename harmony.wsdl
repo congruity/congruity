@@ -105,6 +105,7 @@
       <element name="ParentDeviceModel" type="xsd:string"/>
       <element name="PrivateAddType" type="xsd:string"/>
       <element name="RegionalCharset" type="xsd:string"/>
+      <element name="SetupState" type="xsd:string"/>
       <element name="State" type="xsd:string"/>
       <element name="SuggestedDisplay" type="xsd:string"/>
       <element name="Transport" type="xsd:string"/>
@@ -153,6 +154,7 @@
   <complexType name="GetProductResult">
     <sequence>
       <element name="CompilerArchitecture" type="ns:CompilerArchitecture"/>
+      <element name="DefaultMode" type="xsd:string"/>
       <element name="DisplayName" type="xsd:string"/>
       <element name="Displays" type="xsd:string"/>
       <element name="IsAlwaysConnected" type="xsd:boolean"/>

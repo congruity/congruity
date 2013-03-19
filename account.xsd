@@ -60,6 +60,7 @@
       <element name="FirstSyncDate" type="xsd:string"/>
       <element name="GlobalRemoteId" type="xsd:string"/>
       <element name="GlobalRemoteSkinId" type="xsd:string"/>
+      <element name="HubRemoteId" type="xsd:string" nillable="true"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsAcceptLicense" type="xsd:boolean"/>
       <element name="IsActiveRemote" type="xsd:boolean"/>
@@ -70,6 +71,7 @@
       <element name="LastSyncDate" type="xsd:string"/>
       <element name="LogitechProductId" type="xsd:string"/>
       <element name="LogitechSerial" type="xsd:string"/>
+      <element name="Mode" type="xsd:string"/>
       <element name="Pairings" type="xsd:string"/>
       <element name="RemoteProperties" type="ns6:RemoteProperties"/>
       <element name="SerialNumber" type="xsd:string"/>
