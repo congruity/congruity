@@ -30,6 +30,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 from tempfile import NamedTemporaryFile
+sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 
