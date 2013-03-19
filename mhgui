@@ -246,7 +246,7 @@ class RemoteSelectPanel(WizardPanelBase):
         wx.CallAfter(self.UpdateRemotes)
         wx.CallAfter(self.EndBusy)
 
-        self.parent.ReenableNext()
+        wx.CallAfter(self.parent.ReenableNext)
 
     def UpdateRemotes(self):
         self.remotes = mhMgr.GetRemotes()
