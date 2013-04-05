@@ -821,7 +821,6 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
         self.dg_widgets = []
 
     def _FinishWidgets(self):
-        #self.dg_set_time = DecoratedGauge(self.dc, "Set Time", self.vpos.next())
         if not self.resources.no_web:
             self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
         self.Layout()
@@ -844,10 +843,6 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
             self,
             0
         )
-
-        #self._DgStart(self.dg_set_time)
-        #libconcord.set_time(program_callback, None)
-        #self._DgEnd(self.dg_set_time)
 
         if not self.resources.no_web:
             self._DgStart(self.dg_notify_website)
