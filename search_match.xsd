@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns3="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="PublicDeviceSearchMatch">
+    <sequence>
+      <element name="DisplayText" type="xsd:string" nillable="true"/>
+      <element name="SelectedText" type="xsd:string" nillable="true"/>
+      <element name="DeviceModel" type="xsd:string"/>
+      <element name="GlobalDeviceSearchType" type="xsd:string"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="TypedDeviceModel" type="xsd:string"/>
+      <element name="TypedManufacturer" type="xsd:string"/>
+      <element name="Description" type="xsd:string" nillable="true"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsMultiCode" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+</schema>

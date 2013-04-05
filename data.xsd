@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <complexType name="Id">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </sequence>
+  </complexType>
+  <complexType name="deviceIds">
+    <sequence>
+      <element name="DeviceId" type="ns:Id" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+  <complexType name="remoteId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </sequence>
+  </complexType>
+  <complexType name="accountId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:long"/>
+    </sequence>
+  </complexType>
+  <complexType name="GlobalLanguageVersionId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:string"/>
+      <element name="Value" type="xsd:long"/>
+      <element name="VersionId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+</schema>

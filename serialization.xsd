@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.microsoft.com/2003/10/Serialization/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:mns="http://schemas.microsoft.com/2003/10/Serialization/"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+
+  <element name="guid" nillable="true" type="mns:guid"/>
+  <simpleType name="guid">
+    <restriction base="xsd:string">
+      <pattern value="[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}"/>
+    </restriction>
+  </simpleType>
+
+</schema>

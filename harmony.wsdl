@@ -1,0 +1,920 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="myharmony"
+ targetNamespace="http://tempuri.org/"
+ xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:ns="http://tempuri.org/"
+ xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+ xmlns:ns2="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery"
+ xmlns:ns3="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch"
+ xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
+ xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
+ xmlns:ns6="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
+ xmlns:ns7="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+ xmlns:ns8="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
+ xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
+ xmlns:ns10="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
+ xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery" location="discovery.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation" location="dm_operation.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account" location="account.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping" location="button_mapping.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data" location="ir_data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data" location="am_data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
+
+<types>
+ <schema targetNamespace="http://tempuri.org/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="http://tempuri.org/"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+
+  <complexType name="GetSoapServicesResult">
+    <sequence>
+      <element name="ServiceDescription" type="ns2:ServiceDescription" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="PrioritizedDeviceCapability">
+    <sequence>
+      <element name="DeviceCapability" type="xsd:string"/>
+      <element name="Priority" type="xsd:integer"/>
+    </sequence>
+  </complexType>
+  <complexType name="DeviceCapabilitiesWithPriority">
+    <complexContent>
+      <restriction base="soapenc:Array">
+	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:PrioritizedDeviceCapability[]"/>
+      </restriction>
+    </complexContent>    
+  </complexType>
+  <complexType name="GlobalDeviceVersionId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:string"/>
+      <element name="IsDefault" type="xsd:boolean"/>
+      <element name="VersionId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="Device">
+    <sequence>
+      <element name="DecodedEdid" type="xsd:string"/>
+      <element name="DefaultInterDeviceDelay" type="xsd:string"/>
+      <element name="DefaultInterKeyDelay" type="xsd:string"/>
+      <element name="DeviceOrder" type="xsd:string"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="EncodedEdid" type="xsd:string"/>
+      <element name="HoldInterDeviceDelay" type="xsd:string"/>
+      <element name="HoldInterKeyDelay" type="xsd:string"/>
+      <element name="HoldMinRepeats" type="xsd:string"/>
+      <element name="InterDeviceDelay" type="xsd:string"/>
+      <element name="InterKeyDelay" type="xsd:string"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="Model" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="PictureId" type="xsd:string"/>
+      <element name="PressMinRepeats" type="xsd:string"/>
+      <element name="ActivityIds" type="xsd:string"/>
+      <element name="AdditionalControlType" type="xsd:string"/>
+      <element name="Characterization" type="xsd:string"/>
+      <element name="ControlPort" type="xsd:string"/>
+      <element name="DeviceAddedDate" type="xsd:string"/>
+      <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
+      <element name="DeviceClassification" type="xsd:string"/>
+      <element name="DeviceProfileUri" type="xsd:string"/>
+      <element name="DeviceSearchType" type="xsd:string"/>
+      <element name="DeviceTypeDisplayName" type="xsd:string"/>
+      <element name="GlobalDeviceVersionId" type="ns:GlobalDeviceVersionId"/>
+      <element name="Icon" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
+      <element name="IsMultiCode" type="xsd:string"/>
+      <element name="IsScartCableSupported" type="xsd:boolean"/>
+      <element name="ParentDevice" type="ns1:Id"/>
+      <element name="ParentDeviceManufacturer" type="xsd:string"/>
+      <element name="ParentDeviceModel" type="xsd:string"/>
+      <element name="PrivateAddType" type="xsd:string"/>
+      <element name="RegionalCharset" type="xsd:string"/>
+      <element name="SetupState" type="xsd:string"/>
+      <element name="State" type="xsd:string"/>
+      <element name="SuggestedDisplay" type="xsd:string"/>
+      <element name="Transport" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  <complexType name="GetDevicesResult">
+    <sequence>
+      <element name="Device" type="ns:Device" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="StartCompileWithLocaleResult">
+    <sequence>
+      <element name="ApproximateSize" type="xsd:long"/>
+      <element name="DownloadUrl" type="xsd:string"/>
+      <element name="SimulationDownloadUrl" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="CompilerArchitecture">
+    <sequence>
+      <element name="Architecture" type="xsd:string"/>
+      <element name="CompilerArchitectureId" type="xsd:string"/>
+      <element name="DefaultSkinId" type="xsd:string"/>
+      <element name="Flash" type="xsd:string"/>
+      <element name="Protocol" type="xsd:string"/>
+      <element name="RegionID" type="xsd:string"/>
+      <element name="SoftwareType" type="xsd:string"/>
+      <element name="Type" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  
+  <complexType name="Manufacturer">
+    <sequence>
+      <element name="ManufacturerId" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  
+  <complexType name="SupportedCapabilities">
+    <sequence>
+      <element name="SupportedCapability" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetProductResult">
+    <sequence>
+      <element name="CompilerArchitecture" type="ns:CompilerArchitecture"/>
+      <element name="DefaultMode" type="xsd:string"/>
+      <element name="DisplayName" type="xsd:string"/>
+      <element name="Displays" type="xsd:string"/>
+      <element name="IsAlwaysConnected" type="xsd:boolean"/>
+      <element name="IsEnabled" type="xsd:boolean"/>
+      <element name="IsHosted" type="xsd:boolean"/>
+      <element name="IsStaticLocation" type="xsd:boolean"/>
+      <element name="Keyboards" type="xsd:string"/>
+      <element name="Manufacturer" type="ns:Manufacturer"/>
+      <element name="MaxActivities" type="xsd:string"/>
+      <element name="MaxDevicesPerAccount" type="xsd:integer"/>
+      <element name="MaxDevicesPerTimePeriod" type="xsd:integer"/>
+      <element name="MaxFavoriteChannels" type="xsd:integer"/>
+      <element name="MinutesPerTimePeriod" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="NumOfAddDevice" type="xsd:integer"/>
+      <element name="ProductId" type="xsd:string"/>
+      <element name="ProductSettings" type="xsd:string"/>
+      <element name="Region" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="SupportedCapabilities" type="ns:SupportedCapabilities"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="LoginUserResult">
+    <sequence>
+      <element name="AccountId" type="xsd:string"/>
+      <element name="AuthToken" type="xsd:string"/>
+      <element name="Email" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetMyHouseholdResult">
+    <sequence>
+      <element name="Accounts" type="ns6:Accounts"/>
+      <element name="DefaultLanguage" type="xsd:string"/>
+      <element name="DefaultUserProfileUri" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="Remotes" type="ns6:Remotes"/>
+      <element name="Rooms" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Matches">
+    <sequence>
+      <element name="PublicDeviceSearchMatch" type="ns3:PublicDeviceSearchMatch" minOccurs="0" maxOccurs="unbounded"/> 
+    </sequence>
+  </complexType>
+
+  <complexType name="SearchGlobalDevicesResult">
+    <sequence>
+      <element name="Matches" type="ns:Matches"/>
+      <element name="Status" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="KeyValueOfanyTypeAbstract">
+    <sequence>
+      <element name="Key" type="xsd:string"/>
+      <element name="Value" type="ns1:Id"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="operation">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
+  <complexType name="UpdateMyDataResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
+  <complexType name="HarmonyProduct">
+    <sequence>
+      <element name="DisplayName" type="xsd:string"/>
+      <element name="DisplayPriority" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="ProductId" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetHarmonyProductsResult">
+    <sequence>
+      <element name="HarmonyProduct" type="ns:HarmonyProduct" minOccurs="0" maxOccurs="unbounded"/> 
+    </sequence>
+  </complexType>
+
+  <complexType name="ButtonDefinition">
+    <sequence>
+      <element name="ButtonKey" type="xsd:string"/>
+      <element name="ButtonType" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Buttons">
+    <sequence>
+      <element name="ButtonDefinition" type="ns:ButtonDefinition" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="GetProductButtonListResult">
+    <sequence>
+      <element name="Buttons" type="ns:Buttons"/>
+    </sequence>
+  </complexType>
+
+  <!-- Contains a KeyValueOfDeviceIdArrayOfCommandXXXX where XXXX varies, not
+       sure how to deal with other than using an any.-->
+  <complexType name="GetCommandsResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
+  <!-- Contains a KeyValueOfDeviceIdButtonMapXXXX where XXXX varies, not sure
+       how to deal with other than using an any.-->
+  <complexType name="GetDeviceModeButtonMapsResult">
+    <sequence>
+      <any/>
+    </sequence>
+  </complexType>
+
+  <complexType name="UpdateMultipleResult">
+    <sequence>
+    </sequence>
+  </complexType>
+
+ </schema>
+</types>
+
+<message name="GetSoapServices">
+ <part name="clientTypeId" type="xsd:string"/>
+ <part name="clientId" type="xsd:string"/>
+</message>
+<message name="GetSoapServicesResponse">
+ <part name="GetSoapServicesResult" type="GetSoapServicesResult"/>
+</message>
+
+<!-- Deprecated?? Replaced by LoginUser -->
+<message name="Login">
+ <part name="username" type="xsd:string"/>
+ <part name="password" type="xsd:string"/>
+ <part name="customCredential" type="xsd:string"/>
+ <part name="isPersistent" type="xsd:boolean"/>
+</message>
+<message name="LoginResponse">
+ <part name="LoginResult" type="xsd:boolean"/>
+</message>
+
+<message name="GetDevices">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetDevicesResponse">
+  <part name="GetDevicesResult" type="GetDevicesResult"/>
+</message>
+
+<message name="StartCompileWithLocale">
+  <part name="remoteId" type="ns1:remoteId"/>
+  <part name="localeId" type="xsd:string"/>
+</message>
+<message name="StartCompileWithLocaleResponse">
+  <part name="StartCompileWithLocaleResult" type="StartCompileWithLocaleResult"/>
+</message>
+
+<message name="GetProduct">
+  <part name="skinId" type="xsd:string"/>
+</message>
+<message name="GetProductResponse">
+  <part name="GetProductResult" type="GetProductResult"/>
+</message>
+
+<message name="DeleteDevices">
+  <part name="accountId" type="ns1:accountId"/>
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="DeleteDevicesResponse">
+</message>
+
+<message name="LoginUser">
+  <part name="email" type="xsd:string"/>
+  <part name="password" type="xsd:string"/>
+  <part name="customCredential" type="xsd:string"/>
+  <part name="isPresistent" type="xsd:boolean"/> <!-- Yes, spelled wrong -->
+</message>
+<message name="LoginUserResponse">
+  <part name="LoginUserResult" type="LoginUserResult"/>
+</message>
+
+<message name="GetMyHousehold">
+</message>
+<message name="GetMyHouseholdResponse">
+  <part name="GetMyHouseholdResult" type="GetMyHouseholdResult"/>
+</message>
+
+<message name="SearchGlobalDevices">
+  <part name="manufacturer" type="xsd:string"/>
+  <part name="modelNumber" type="xsd:string"/>
+  <part name="deviceType" type="xsd:string"/>
+  <part name="searchType" type="xsd:string"/>
+  <part name="maxResults" type="xsd:string"/>
+</message>
+<message name="SearchGlobalDevicesResponse">
+  <part name="SearchGlobalDevicesResult" type="SearchGlobalDevicesResult"/>
+</message>
+
+<message name="UpdateMyData">
+  <part name="operation" type="operation"/>
+</message>
+<message name="UpdateMyDataResponse">
+  <part name="UpdateMyDataResult" type="UpdateMyDataResult"/>
+</message>
+
+<message name="AddRemoteToAccount">
+  <part name="remoteInfo" type="ns6:remoteInfo"/>
+</message>
+<message name="AddRemoteToAccountResponse">
+  <part name="AddRemoteToAccountResult" type="ns1:Id"/>
+</message>
+
+<message name="GetHarmonyProducts">
+</message>
+<message name="GetHarmonyProductsResponse">
+  <part name="GetHarmonyProductsResult" type="GetHarmonyProductsResult"/>
+</message>
+
+<message name="GetProductButtonList">
+  <part name="skinId" type="xsd:string"/>
+</message>
+<message name="GetProductButtonListResponse">
+  <part name="GetProductButtonListResult" type="GetProductButtonListResult"/>
+</message>
+
+<message name="GetCommands">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetCommandsResponse">
+  <part name="GetCommandsResult" type="GetCommandsResult"/>
+</message>
+
+<message name="GetDeviceModeButtonMaps">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+</message>
+<message name="GetDeviceModeButtonMapsResponse">
+  <part name="GetDeviceModeButtonMapsResult" type="GetDeviceModeButtonMapsResult"/>
+</message>
+
+<message name="UpdateDeviceModeButtonMaps">
+  <part name="buttonMaps" type="ns7:buttonMaps"/>
+</message>
+<message name="UpdateDeviceModeButtonMapsResponse">
+</message>
+
+<message name="AnalyzeInfrared">
+  <part name="deviceId" type="xsd:string" nillable="true"/>
+  <part name="rawSequence" type="xsd:string"/>
+</message>
+<message name="AnalyzeInfraredResponse">
+  <part name="AnalyzeInfraredResult" type="ns8:AnalyzeInfraredResult"/>
+</message>
+
+<message name="UpdateMultiple">
+  <part name="operation" type="ns4:OperationBag"/>
+</message>
+<message name="UpdateMultipleResponse">
+  <part name="UpdateMultipleResult" type="ns:UpdateMultipleResult"/>
+</message>
+
+<message name="DeleteTaughtDeviceModeCommandButtonMaps">
+  <part name="deviceIds" type="ns1:deviceIds"/>
+  <part name="taughtCommandIds" type="ns9:taughtCommandIds"/>
+</message>
+<message name="DeleteTaughtDeviceModeCommandButtonMapsResponse">
+</message>
+
+<message name="GetPasswordQuestion">
+  <part name="email" type="xsd:string"/>
+</message>
+<message name="GetPasswordQuestionResponse">
+  <part name="GetPasswordQuestionResult" type="ns10:GetPasswordQuestionResult"/>
+</message>
+
+<message name="SecureControllerHandshake">
+  <part name="nonce" type="xsd:string"/>
+</message>
+<message name="SecureControllerHandshakeResponse">
+  <part name="SecureControllerHandshakeResult" type="ns10:SecureControllerHandshakeResult"/>
+</message>
+
+<message name="UpdatePasswordByOldPassword">
+  <part name="email" type="xsd:string"/>
+  <part name="oldPassword" type="xsd:string"/>
+  <part name="newPassword" type="xsd:string"/>
+</message>
+<message name="UpdatePasswordByOldPasswordResponse">
+  <part name="UpdatePasswordByOldPasswordResult" type="xsd:string"/>
+</message>
+
+<message name="SecureUpdateAccountProperties">
+  <part name="accountId" type="ns1:Id"/>
+  <part name="accountProperties" type="ns6:Properties"/>
+  <part name="challenge" type="xsd:string"/>
+</message>
+<message name="SecureUpdateAccountPropertiesResponse">
+</message>
+
+<message name="UpdatePasswordQuestionAndAnswer">
+  <part name="password" type="xsd:string"/>
+  <part name="newPasswordQuestion" type="xsd:string"/>
+  <part name="newPasswordAnswer" type="xsd:string"/>
+</message>
+<message name="UpdatePasswordQuestionAndAnswerResponse">
+  <part name="UpdatePasswordQuestionAndAnswerResult" type="xsd:string"/>
+</message>
+
+<message name="CreateNewAccountInMyHousehold">
+</message>
+<message name="CreateNewAccountInMyHouseholdResponse">
+  <part name="CreateNewAccountInMyHouseholdResult" type="ns6:Account"/>
+</message>
+
+<portType name="DiscoveryPortType">
+ <operation name="GetSoapServices">
+  <input message="ns:GetSoapServices"/>
+  <output message="ns:GetSoapServicesResponse"/>
+ </operation>
+</portType>
+<portType name="AuthenticationServicePortType">
+ <operation name="Login">
+  <input message="ns:Login"/>
+  <output message="ns:LoginResponse"/>
+ </operation>
+</portType>
+<portType name="AccountManagerPortType">
+ <operation name="GetMyHousehold">
+   <input message="ns:GetMyHousehold"/>
+   <output message="ns:GetMyHouseholdResponse"/>
+ </operation>
+ <operation name="GetPasswordQuestion">
+   <input message="ns:GetPasswordQuestion"/>
+   <output message="ns:GetPasswordQuestionResponse"/>
+ </operation>
+ <operation name="SecureControllerHandshake">
+   <input message="ns:SecureControllerHandshake"/>
+   <output message="ns:SecureControllerHandshakeResponse"/>
+ </operation>
+ <operation name="UpdatePasswordByOldPassword">
+   <input message="ns:UpdatePasswordByOldPassword"/>
+   <output message="ns:UpdatePasswordByOldPasswordResponse"/>
+ </operation>
+ <operation name="SecureUpdateAccountProperties">
+   <input message="ns:SecureUpdateAccountProperties"/>
+   <output message="ns:SecureUpdateAccountPropertiesResponse"/>
+ </operation>
+ <operation name="UpdatePasswordQuestionAndAnswer">
+   <input message="ns:UpdatePasswordQuestionAndAnswer"/>
+   <output message="ns:UpdatePasswordQuestionAndAnswerResponse"/>
+ </operation>
+ <operation name="CreateNewAccountInMyHousehold">
+   <input message="ns:CreateNewAccountInMyHousehold"/>
+   <output message="ns:CreateNewAccountInMyHouseholdResponse"/>
+ </operation>
+</portType>
+<portType name="DeviceManagerPortType">
+ <operation name="GetDevices">
+  <input message="ns:GetDevices"/>
+  <output message="ns:GetDevicesResponse"/>
+ </operation>
+ <operation name="SearchGlobalDevices">
+   <input message="ns:SearchGlobalDevices"/>
+   <output message="ns:SearchGlobalDevicesResponse"/>
+ </operation>
+ <operation name="UpdateMyData">
+   <input message="ns:UpdateMyData"/>
+   <output message="ns:UpdateMyDataResponse"/>
+ </operation>
+ <operation name="GetCommands">
+   <input message="ns:GetCommands"/>
+   <output message="ns:GetCommandsResponse"/>
+ </operation>
+ <operation name="UpdateMultiple">
+   <input message="ns:UpdateMultiple"/>
+   <output message="ns:UpdateMultipleResponse"/>
+ </operation>
+</portType>
+<portType name="CompileManagerPortType">
+ <operation name="StartCompileWithLocale">
+  <input message="ns:StartCompileWithLocale"/>
+  <output message="ns:StartCompileWithLocaleResponse"/>
+ </operation>
+</portType>
+<portType name="ProductsManagerPortType">
+ <operation name="GetProduct">
+  <input message="ns:GetProduct"/>
+  <output message="ns:GetProductResponse"/>
+ </operation>
+ <operation name="GetHarmonyProducts">
+   <input message="ns:GetHarmonyProducts"/>
+   <output message="ns:GetHarmonyProductsResponse"/>
+ </operation>
+ <operation name="GetProductButtonList">
+   <input message="ns:GetProductButtonList"/>
+   <output message="ns:GetProductButtonListResponse"/>
+ </operation>
+</portType>
+<portType name="DeletionManagerPortType">
+ <operation name="DeleteDevices">
+  <input message="ns:DeleteDevices"/>
+  <output message="ns:DeleteDevicesResponse"/>
+ </operation>
+</portType>
+<portType name="SecurityPortType">
+ <operation name="LoginUser">
+   <input message="ns:LoginUser"/>
+   <output message="ns:LoginUserResponse"/>
+ </operation>
+</portType>
+<portType name="UserAccountDirectorPortType">
+ <operation name="AddRemoteToAccount">
+   <input message="ns:AddRemoteToAccount"/>
+   <output message="ns:AddRemoteToAccountResponse"/>
+ </operation>
+</portType>
+<portType name="UserButtonMappingManagerPortType">
+ <operation name="GetDeviceModeButtonMaps">
+   <input message="ns:GetDeviceModeButtonMaps"/>
+   <output message="ns:GetDeviceModeButtonMapsResponse"/>
+ </operation>
+ <operation name="UpdateDeviceModeButtonMaps">
+   <input message="ns:UpdateDeviceModeButtonMaps"/>
+   <output message="ns:UpdateDeviceModeButtonMapsResponse"/>
+ </operation>
+ <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
+   <input message="ns:DeleteTaughtDeviceModeCommandButtonMaps"/>
+   <output message="ns:DeleteTaughtDeviceModeCommandButtonMapsResponse"/>
+ </operation>
+</portType>
+<portType name="InfraredAnalysisManagerPortType">
+ <operation name="AnalyzeInfrared">
+   <input message="ns:AnalyzeInfrared"/>
+   <output message="ns:AnalyzeInfraredResponse"/>
+ </operation>
+</portType>
+
+<binding name="DiscoveryBinding" type="ns:DiscoveryPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetSoapServices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDiscovery/GetSoapServices"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="AuthenticationServiceBinding" type="ns:AuthenticationServicePortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="Login">
+  <SOAP:operation style="rpc" soapAction="http://asp.net/ApplicationServices/v200/AuthenticationService/Login"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://asp.net/ApplicationServices/v200"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://asp.net/ApplicationServices/v200"/>
+  </output>
+ </operation>
+</binding>
+<binding name="AccountManagerBinding" type="ns:AccountManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetMyHousehold">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetMyHousehold"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetPasswordQuestion">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/GetPasswordQuestion"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SecureControllerHandshake">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/SecureControllerHandshake"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdatePasswordByOldPassword">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/UpdatePasswordByOldPassword"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SecureUpdateAccountProperties">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/SecureUpdateAccountProperties"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdatePasswordQuestionAndAnswer">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/UpdatePasswordQuestionAndAnswer"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="CreateNewAccountInMyHousehold">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IAccountManager/CreateNewAccountInMyHousehold"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="DeviceManagerBinding" type="ns:DeviceManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetDevices"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SearchGlobalDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/SearchGlobalDevices"/>
+  <input>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="literal" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateMyData">
+   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/UpdateMyData"/>
+   <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+   </input>
+   <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+   </output>
+ </operation>
+ <operation name="GetCommands">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetCommands"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateMultiple">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/UpdateMultiple"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="CompileManagerBinding" type="ns:CompileManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="StartCompileWithLocale">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/ICompileManager/StartCompileWithLocale"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="ProductsManagerBinding" type="ns:ProductsManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetProduct">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetProduct"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetHarmonyProducts">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetHarmonyProducts"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetProductButtonList">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IProductManager/GetProductButtonList"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="DeletionManagerBinding" type="ns:DeletionManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="DeleteDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeletionManager/DeleteDevices"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="SecurityBinding" type="ns:SecurityPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="LoginUser">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/ISecurity/LoginUser"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="UserAccountDirectorBinding" type="ns:UserAccountDirectorPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="AddRemoteToAccount">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserAccountDirector/AddRemoteToAccount"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="UserButtonMappingManagerBinding" type="ns:UserButtonMappingManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetDeviceModeButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/GetDeviceModeButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="UpdateDeviceModeButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/UpdateDeviceModeButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/DeleteTaughtDeviceModeCommandButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+<binding name="InfraredAnalysisManagerBinding" type="ns:InfraredAnalysisManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="AnalyzeInfrared">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IInfraredAnalysisManager/AnalyzeInfrared"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
+
+<service name="Discovery">
+ <port name="DiscoveryPortType" binding="ns:DiscoveryBinding">
+  <SOAP:address location="https://svcs.myharmony.com/Discovery/Discovery.svc"/>
+ </port>
+</service>
+<service name="AuthenticationService">
+ <port name="AuthenticationServicePortType" binding="ns:AuthenticationServiceBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/AuthenticationService.svc"/>
+ </port>
+</service>
+<service name="AccountManager">
+ <port name="AccountManagerPortType" binding="ns:AccountManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/AccountManager.svc"/>
+ </port>
+</service>
+<service name="DeviceManager">
+ <port name="DeviceManagerPortType" binding="ns:DeviceManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/HarmonyPlatform/DeviceManager.svc"/>
+ </port>
+</service>
+<service name="CompileManager">
+ <port name="CompileManagerPortType" binding="ns:CompileManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/SyncPlatform/CompileManager.svc"/>
+ </port>
+</service>
+<service name="ProductsManager">
+ <port name="ProductsManagerPortType" binding="ns:ProductsManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/ProductsPlatform/ProductsManager.svc"/>
+ </port>
+</service>
+<service name="DeletionManager">
+ <port name="DeletionManagerPortType" binding="ns:DeletionManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/SyncPlatform/DeletionManager.svc"/>
+ </port>
+</service>
+<service name="Security">
+ <port name="SecurityPortType" binding="ns:SecurityBinding">
+  <SOAP:address location="https://svcs.myharmony.com/CompositeSecurityServices/Security.svc"/>
+ </port>
+</service>
+<service name="UserAccountDirector">
+ <port name="UserAccountDirectorPortType" binding="ns:UserAccountDirectorBinding">
+  <SOAP:address location="https://svcs.myharmony.com/UserAccountDirectorPlatform/UserAccountDirector.svc"/>
+ </port>
+</service>
+<service name="UserButtonMappingManager">
+ <port name="UserButtonMappingManagerPortType" binding="ns:UserButtonMappingManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/UserButtonMappingPlatform/UserButtonMappingManager.svc"/>
+ </port>
+</service>
+<service name="InfraredAnalysisManager">
+ <port name="InfraredAnalysisManagerPortType" binding="ns:InfraredAnalysisManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/InfraredAnalysisPlatform/InfraredAnalysisManager.svc"/>
+ </port>
+</service>
+
+</definitions>

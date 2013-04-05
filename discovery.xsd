@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Discovery"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <complexType name="ServiceDescription">
+    <sequence>
+      <element name="Address" type="xsd:string"/>
+      <element name="EnvironmentId" type="xsd:string"/>
+      <element name="Identifier" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+    </sequence>
+  </complexType>
+</schema>
