@@ -32,7 +32,7 @@ sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 
-version = "1.0"
+version = "16"
 
 mhMgr = MHManager()
 
