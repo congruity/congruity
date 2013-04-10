@@ -1,23 +1,26 @@
 Requirements
 ==============================================================================
 
-Python (tested with 2.5.1 on Fedora 9)
+Python (tested with 2.7.3 on Fedora 18)
   See http://www.python.org/
 
 Python ctypes library (included with Python 2.5, separate earlier)
   See http://sourceforge.net/projects/ctypes/
 
-wxPython (tested with wxGTK-2.8.7 on Fedora 9)
+wxPython (tested with wxGTK-2.8.12 on Fedora 18)
   See http://www.wxpython.org/
 
-libconcord (tested with post-0.20 CVS snapshot on Fedora 9)
+libconcord (version 1.0 is *required*; tested on Fedora 18)
   See http://www.phildev.net/concordance/
   Note that the python bindings are also required; see
   libconcord/bindings/python
 
-Python, ctypes, and wxPython are typically installed using your distribution's
-package management system. If this is not the case, installation instructions
-should be located in the documentation accompanying those packages.
+python-suds (tested with 0.4.1 on Fedora 18)
+  Suds is required for mhgui.
+
+Python, ctypes, wxPython, and Suds are typically installed using your
+distribution's package management system. If this is not the case, installation
+instructions should be located in the documentation accompanying those packages.
 
 libconcord may be available via your distribution's package management
 system. If so, please ensure that you install any sub-packages required to
@@ -145,3 +148,12 @@ If the automatic option is not selected, the dialog will appear for every file
 downloaded. Note that Firefox does remember the path to congruity for future
 downloads, even though it is not displayed.
 
+MHGUI
+==============================================================================
+
+MHGUI was developed as an alternative front-end to the myharmony.com website,
+which requires Silverlight and is thus unsupported on Linux and other platforms.
+Specifically, combined with congruity and libconcord, it enables users of the
+Harmony 200 and 300 (which are only supported through myharmony.com and not
+through members.harmonyremote.com) to configure and program their remotes under
+Linux.  Simply run 'mhgui' and follow the on-screen prompts.
