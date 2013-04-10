@@ -1,3 +1,12 @@
+* 2013-04-?? Scott Talbert <swt@techie.net>
+- congruity-16 is released
+- Port congruity to the new libconcord API which enables support for a
+  significant number of new remotes (200/300, 890/895, 900/1000/1100, One).
+- Add mhgui which provides an alternative front end to myharmony.com website,
+  enabling support for Harmony 200/300.
+- Fixed an issue with certain remotes (e.g., 525) where the remote is not
+  detected after a reset.
+
 * 2010-??-?? Stephen Warren <s-t-concordance@wwwdotorg.org>
 - Fixed messages to refer to a "finish" button instead of a "next" button.
   Related: Refer to "clicking" this button instead of "pressing" it.
