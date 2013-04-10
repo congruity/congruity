@@ -19,7 +19,11 @@ rm -rf ${name_ver}
 mkdir ${name_ver}
 cp -rp \
   congruity \
+  harmony.wsdl \
+  mhgui \
+  mhmanager.py \
   *.png \
+  *.xsd \
   Changelog \
   congruity.1 \
   congruity.desktop \
