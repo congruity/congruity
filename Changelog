@@ -1,4 +1,4 @@
-* 2013-04-?? Scott Talbert <swt@techie.net>
+* 2013-04-16 Scott Talbert <swt@techie.net>
 - congruity-16 is released
 - Port congruity to the new libconcord API which enables support for a
   significant number of new remotes (200/300, 890/895, 900/1000/1100, One).
