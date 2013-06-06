@@ -991,8 +991,6 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.deviceCommandsLabel = wx.StaticText(self, -1, "Device Commands:")
         self.rightSizer.Add(self.deviceCommandsLabel, 0, 0, 0)
         self.deviceCommandsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
-        self.deviceCommandsListBox.Bind(wx.EVT_LISTBOX,
-                                        self.OnDeviceCommandSelection)
         self.rightSizer.Add(self.deviceCommandsListBox, 0, 0, 0)
         self.hSizer.Add(self.rightSizer, 0, 0, 0)
         self.sizer.Add(self.hSizer, 0, 0, 0)
@@ -1082,9 +1080,6 @@ class ConfigureDevicePanel(WizardPanelBase):
                 except AttributeError:
                     pass
         self.deviceCommandsListBox.DeselectAll()
-
-    def OnDeviceCommandSelection(self, event):
-        self.remoteButtonsListBox.DeselectAll()
 
     def FindCommand(self, buttonKey):
         for button in self.buttonMap.Buttons.AbstractButton:
