@@ -55,6 +55,7 @@
 
   <complexType name="Remote">
     <sequence>
+      <element name="ComputedProductSerial" type="xsd:string"/>
       <element name="DateCreated" type="xsd:string"/>
       <element name="FirstConnectDate" type="xsd:string"/>
       <element name="FirstSyncDate" type="xsd:string"/>
@@ -112,6 +113,14 @@
     </sequence>
   </complexType>
 
+  <complexType name="SetupSession">
+    <sequence>
+      <element name="Client" type="xsd:string" nillable="true"/>
+      <element name="IsStale" type="xsd:string"/>
+      <element name="Type" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Account">
     <sequence>
       <element name="AccountTypeId" type="xsd:string"/>
@@ -124,6 +133,7 @@
       <element name="LastSetupRating" type="xsd:string"/>
       <element name="Properties" type="ns6:Properties"/>
       <element name="Remotes" type="ns6:Remotes"/>
+      <element name="SetupSession" type="ns6:SetupSession"/>
       <element name="Surfaces" type="ns6:Surfaces" nillable="true"/>
     </sequence>
   </complexType>
