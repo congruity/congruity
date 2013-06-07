@@ -34,7 +34,10 @@ from mhmanager import MHAccountDetails
 
 version = "16"
 
-mhMgr = MHManager()
+use_local_wsdl = False
+if '--use-local-wsdl' in sys.argv:
+    use_local_wsdl = True
+mhMgr = MHManager(use_local_wsdl)
 
 try:
     import libconcord

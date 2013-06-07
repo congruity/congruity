@@ -29,6 +29,7 @@ import os
 import sys
 import random
 from HTMLParser import HTMLParser
+from suds.cache import ObjectCache
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
@@ -95,19 +96,23 @@ class MHPlugin(MessagePlugin):
 #logging.getLogger('suds.mx.literal').setLevel(logging.DEBUG)
 
 class MHManager():
-    def __init__(self):
-        # Find the harmony.wsdl file.
-        appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
-        dirs = ['/usr/share/congruity', appdir, '.']
-        for dir in dirs:
-            fpath = os.path.join(dir, "harmony.wsdl")
-            if os.path.isfile(fpath):
-                self.wsdl_path = fpath
-                break
-        
-        url = 'file://' + self.wsdl_path
-        # TODO: Cache can probably be re-enabled for release version.
-        self.client = Client(url, cache=None, plugins=[MHPlugin()])
+    def __init__(self, use_local_wsdl=False):
+        if use_local_wsdl:
+            # Find the harmony.wsdl file.
+            appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
+            dirs = ['/usr/share/congruity', appdir, '.']
+            for dir in dirs:
+                fpath = os.path.join(dir, "harmony.wsdl")
+                if os.path.isfile(fpath):
+                    self.wsdl_path = fpath
+                    break
+
+            url = 'file://' + self.wsdl_path
+            cache = None
+        else:
+            url = 'http://congruity.sourceforge.net/congruity/harmony.wsdl'
+            cache = ObjectCache(hours=4)
+        self.client = Client(url, cache=cache, plugins=[MHPlugin()])
         self.logged_in = False
 
     # Log in to web service - Returns True if login succeeded, False otherwise.
