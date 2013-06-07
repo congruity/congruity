@@ -32,7 +32,7 @@ sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 
-version = "16"
+version = "17"
 
 use_local_wsdl = False
 if '--use-local-wsdl' in sys.argv:

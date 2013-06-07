@@ -1,3 +1,11 @@
+* 2013-06-?? Scott Talbert <swt@techie.net>
+- congruity-17 is released
+- mhgui: Update XSD to match Logitech changes.  (mhgui is broken otherwise)
+- mhgui: Fix bug where 'Update Button' functionality was broken.
+- mhgui: Fetch the WSDL/XSD files via http instead of locally (by default).
+  This will allow updating the WSDL/XSD in the future without having to
+  release a new version of congruity.
+
 * 2013-04-16 Scott Talbert <swt@techie.net>
 - congruity-16 is released
 - Port congruity to the new libconcord API which enables support for a
