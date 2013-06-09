@@ -87,6 +87,7 @@
       <element name="ActivityIds" type="xsd:string"/>
       <element name="AdditionalControlType" type="xsd:string"/>
       <element name="Characterization" type="xsd:string"/>
+      <element name="ContentProfileKey" type="xsd:string"/>
       <element name="ControlPort" type="xsd:string"/>
       <element name="DeviceAddedDate" type="xsd:string"/>
       <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
@@ -138,6 +139,23 @@
     </sequence>
   </complexType>
   
+  <complexType name="Display">
+    <sequence>
+      <element name="ColorDisplay" type="xsd:string"/>
+      <element name="DisplayId" type="xsd:string"/>
+      <element name="Height" type="xsd:string"/>
+      <element name="NumColumns" type="xsd:string"/>
+      <element name="NumRows" type="xsd:string"/>
+      <element name="Width" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Displays">
+    <sequence>
+      <element name="Display" type="ns:Display" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Manufacturer">
     <sequence>
       <element name="ManufacturerId" type="xsd:string"/>
@@ -156,7 +174,7 @@
       <element name="CompilerArchitecture" type="ns:CompilerArchitecture"/>
       <element name="DefaultMode" type="xsd:string"/>
       <element name="DisplayName" type="xsd:string"/>
-      <element name="Displays" type="xsd:string"/>
+      <element name="Displays" type="ns:Displays"/>
       <element name="IsAlwaysConnected" type="xsd:boolean"/>
       <element name="IsEnabled" type="xsd:boolean"/>
       <element name="IsHosted" type="xsd:boolean"/>
