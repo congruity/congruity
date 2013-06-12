@@ -1,4 +1,4 @@
-* 2013-06-?? Scott Talbert <swt@techie.net>
+* 2013-06-11 Scott Talbert <swt@techie.net>
 - congruity-17 is released
 - mhgui: Update XSD to match Logitech changes.  (mhgui is broken otherwise)
 - mhgui: Fix bug where 'Update Button' functionality was broken.
