@@ -304,6 +304,19 @@
     </sequence>
   </complexType>
 
+  <complexType name="GetGlobalRemoteResult">
+    <sequence>
+      <element name="DateCreated" type="xsd:string"/>
+      <element name="GlobalRemoteId" type="xsd:string"/>
+      <element name="IsBanished" type="xsd:string"/>
+      <element name="IsLocked" type="xsd:string"/>
+      <element name="ProductId" type="xsd:string"/>
+      <element name="SerialNumber" type="xsd:string"/>
+      <element name="SkinId" type="xsd:string"/>
+      <element name="VendorId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -504,6 +517,13 @@
   <part name="RemoveAccountFromHouseholdResult" type="xsd:string"/>
 </message>
 
+<message name="GetGlobalRemote">
+  <part name="serialNumber" type="xsd:string"/>
+</message>
+<message name="GetGlobalRemoteResponse">
+  <part name="GetGlobalRemoteResult" type="GetGlobalRemoteResult"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -628,6 +648,12 @@
  <operation name="AnalyzeInfrared">
    <input message="ns:AnalyzeInfrared"/>
    <output message="ns:AnalyzeInfraredResponse"/>
+ </operation>
+</portType>
+<portType name="RemoteManagerPortType">
+ <operation name="GetGlobalRemote">
+   <input message="ns:GetGlobalRemote"/>
+   <output message="ns:GetGlobalRemoteResponse"/>
  </operation>
 </portType>
 
@@ -898,6 +924,18 @@
   </output>
  </operation>
 </binding>
+<binding name="RemoteManagerBinding" type="ns:RemoteManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetGlobalRemote">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IRemoteManager/GetGlobalRemote"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
 
 <service name="Discovery">
  <port name="DiscoveryPortType" binding="ns:DiscoveryBinding">
@@ -952,6 +990,11 @@
 <service name="InfraredAnalysisManager">
  <port name="InfraredAnalysisManagerPortType" binding="ns:InfraredAnalysisManagerBinding">
   <SOAP:address location="https://svcs.myharmony.com/InfraredAnalysisPlatform/InfraredAnalysisManager.svc"/>
+ </port>
+</service>
+<service name="RemoteManager">
+ <port name="RemoteManagerPortType" binding="ns:RemoteManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/RemotePlatform/RemoteManager.svc"/>
  </port>
 </service>
 

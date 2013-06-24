@@ -464,6 +464,10 @@ class MHManager():
         remoteNames.sort()
         return remoteNames
 
+    def GetGlobalRemote(self, serialNumber):
+        return self.client.service['RemoteManager'].GetGlobalRemote(
+            serialNumber)
+
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
     def UpdateIRCommand(self, commandName, rawSequence, deviceId):
