@@ -227,6 +227,14 @@ class RemoteSelectPanel(WizardPanelBase):
         self.addButton.Bind(wx.EVT_BUTTON, self.OnAddRemote)
         self.sizer.Add(self.addButton)
         self.sizer.AddSpacer(10)
+        self.deleteButton = wx.Button(self, label="Delete Remote",
+                                      size=(127, 33))
+        self.deleteButton.Bind(wx.EVT_BUTTON, self.OnDeleteRemote)
+        self.deleteButton.SetToolTip(wx.ToolTip(
+                "Remove a Remote from your Account"
+        ))
+        self.sizer.Add(self.deleteButton)
+        self.sizer.AddSpacer(10)
         self.updateAccountButton = wx.Button(self, label="Update Account",
                                              size=(127,33))
         self.updateAccountButton.Bind(wx.EVT_BUTTON, self.OnUpdateAccount)
@@ -345,6 +353,24 @@ class RemoteSelectPanel(WizardPanelBase):
             wx.MessageBox('Remote addition failed.', 'Failure',
                           wx.OK, wx.ICON_WARNING)
             return
+
+    def OnDeleteRemote(self, event):
+        if self.remotesListBox.GetSelection() != -1:
+            dlg = wx.MessageDialog(self.parent,
+                                   'Are you sure you want to delete '
+                                   + self.remotesListBox.GetStringSelection()
+                                   + ' from your account?',
+                                   'Delete Confirmation',
+                                   wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal() == wx.ID_YES
+            dlg.Destroy()
+            if result:
+                remoteId = self.remotes[self.remotesListBox.GetSelection()].Id
+                mhMgr.DeleteRemote(remoteId)
+                self.UpdateRemotes()
+        else:
+            wx.MessageBox('Please make a selection.', 'No selection made.',
+                          wx.OK | wx.ICON_WARNING)
 
     def OnUpdateAccount(self, event):
         self.parent._SetPage(self.resources.page_create_account, True)

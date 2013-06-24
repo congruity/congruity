@@ -440,6 +440,12 @@ class MHManager():
         return self.client.service['UserAccountDirector'].AddRemoteToAccount(
             remoteInfo)
 
+    # Removes a remote from an account.
+    def DeleteRemote(self, remoteId):
+        account = self.GetAccountForRemote(remoteId)
+        self.client.service['AccountManager'].RemoveAccountFromHousehold(
+            account.Id)
+
     # Returns a set of the remote skins supported by this web interface.
     def GetSupportedRemoteSkinIds(self):
         products = self.client.service['ProductsManager'].GetHarmonyProducts()
