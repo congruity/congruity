@@ -91,7 +91,11 @@
     <sequence>
       <element name="AccountId" type="ns1:Id"/>
       <element name="KeyPadLayout" type="xsd:string"/>
+      <element name="Mode" type="xsd:string" nillable="true"/>
+      <element name="Name" type="xsd:string" nillable="true"/>
       <element name="ProductId" type="xsd:string" nillable="true"/>
+      <element name="RFEquadID" type="xsd:string" nillable="true"/>
+      <element name="RFID" type="xsd:string" nillable="true"/>
       <element name="SerialNumber" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
       <element name="UsbPid" type="xsd:string"/>
