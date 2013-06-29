@@ -287,9 +287,10 @@ class RemoteSelectPanel(WizardPanelBase):
             return            
         supportedRemotes = mhMgr.GetSupportedRemoteNames()
         msg = 'Please ensure your remote control is connected.'
-        msg += '\n\nSupported models are:'
+        msg += '\n\nThe web service advertises support for these models:'
         for name in supportedRemotes:
             msg += '\n' + name
+        msg += "\n\nNOTE: MHGUI has only been tested with Harmony 200 & 300."
         wx.MessageBox(msg, 'Connect Remote', wx.OK)
 
         try:
