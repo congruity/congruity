@@ -47,9 +47,9 @@
 
   <complexType name="RemoteProperties">
     <sequence>
-      <element name="IsActiveRemote" type="xsd:boolean"/>
-      <element name="IsLocked" type="xsd:boolean"/>
-      <element name="RemoteName" type="xsd:string"/>
+      <element name="IsActiveRemote" type="xsd:boolean" nillable="true"/>
+      <element name="IsLocked" type="xsd:boolean" nillable="true"/>
+      <element name="RemoteName" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
 

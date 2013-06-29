@@ -524,6 +524,14 @@
   <part name="GetGlobalRemoteResult" type="GetGlobalRemoteResult"/>
 </message>
 
+<message name="SaveRemoteProperties">
+  <part name="remoteId" type="ns1:remoteId"/>
+  <part name="remoteProperties" type="ns6:RemoteProperties"/>
+</message>
+<message name="SaveRemotePropertiesResponse">
+  <part name="SaveRemotePropertiesResult" type="xsd:string"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -654,6 +662,10 @@
  <operation name="GetGlobalRemote">
    <input message="ns:GetGlobalRemote"/>
    <output message="ns:GetGlobalRemoteResponse"/>
+ </operation>
+ <operation name="SaveRemoteProperties">
+   <input message="ns:SaveRemoteProperties"/>
+   <output message="ns:SaveRemotePropertiesResponse"/>
  </operation>
 </portType>
 
@@ -928,6 +940,15 @@
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
  <operation name="GetGlobalRemote">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IRemoteManager/GetGlobalRemote"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SaveRemoteProperties">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IRemoteManager/SaveRemoteProperties"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>

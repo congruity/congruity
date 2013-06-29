@@ -468,6 +468,21 @@ class MHManager():
         return self.client.service['RemoteManager'].GetGlobalRemote(
             serialNumber)
 
+    # Sets the "Remote Name" - used for Harmony Link to identify the room where
+    # the link is located
+    def SetRemoteName(self, remoteId, remoteName):
+        remoteProperties = self.client.factory.create('{' + ACCOUNT_NS
+                                                      + '}RemoteProperties')
+        remoteProperties.IsActiveRemote = True
+        remoteProperties.IsLocked = False
+        remoteProperties.RemoteName = remoteName
+        result = self.client.service['RemoteManager'].SaveRemoteProperties(
+            remoteId, remoteProperties)
+        if result == "Successful":
+            return True
+        else:
+            return False
+
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
     def UpdateIRCommand(self, commandName, rawSequence, deviceId):
