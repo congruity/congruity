@@ -402,7 +402,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
         WizardPanelBase.__init__(self, parent, resources)
 
-        buttonSize = (159, 33) # Size of largest button
+        self.buttonSize = (160, 33) # Size of largest button
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = wx.StaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
@@ -412,22 +412,23 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.leftButtonSizer = wx.BoxSizer(wx.VERTICAL)
-        self.addButton = wx.Button(self, label="Add Device", size=buttonSize)
+        self.addButton = wx.Button(self, label="Add Device",
+                                   size=self.buttonSize)
         self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
         self.addButton.SetToolTip(wx.ToolTip(
                 "Add a device (TV, cable box, etc) to this remote"
         ))
         self.leftButtonSizer.Add(self.addButton, 0, 0, 0)
         self.deleteButton = wx.Button(self, label="Delete Device",
-                                      size=buttonSize)
+                                      size=self.buttonSize)
         self.deleteButton.Bind(wx.EVT_BUTTON, self.OnDelete)
         self.leftButtonSizer.Add(self.deleteButton, 0, 0, 0)
         self.renameButton = wx.Button(self, label="Rename Device",
-                                      size=buttonSize)
+                                      size=self.buttonSize)
         self.renameButton.Bind(wx.EVT_BUTTON, self.OnRename)
         self.leftButtonSizer.Add(self.renameButton, 0, 0, 0)
         self.configureButton = wx.Button(self, label="Configure Device",
-                                         size=buttonSize)
+                                         size=self.buttonSize)
         self.configureButton.Bind(wx.EVT_BUTTON, self.OnConfigure)
         self.configureButton.SetToolTip(wx.ToolTip(
                 "Adjust/fix button functionality for a device"
@@ -436,31 +437,35 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.buttonSizer.Add(self.leftButtonSizer, 0, 0, 0)
 
         self.rightButtonSizer = wx.BoxSizer(wx.VERTICAL)
-        self.favoriteChannelsButton = wx.Button(self,
-                                                label="Edit Favorite Channels",
-                                                size=buttonSize)
-        self.favoriteChannelsButton.Bind(wx.EVT_BUTTON, self.OnFavoriteChannels)
-        self.rightButtonSizer.Add(self.favoriteChannelsButton, 0, 0, 0)
-        self.syncButton = wx.Button(self, label="Sync Remote",
-                                    size=buttonSize)
-        self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
-        self.syncButton.SetToolTip(wx.ToolTip(
-                "Update the configuration on your remote"
-        ))
-        self.rightButtonSizer.Add(self.syncButton, 0, 0, 0)
-        self.downloadConfigButton = wx.Button(self, label="Download Config",
-                                              size=buttonSize)
-        self.downloadConfigButton.Bind(wx.EVT_BUTTON, self.OnDownloadConfig)
-        self.downloadConfigButton.SetToolTip(wx.ToolTip(
-                "Download the config for your remote and save it to a file"
-        ))
-        self.rightButtonSizer.Add(self.downloadConfigButton, 0, 0, 0)
         self.buttonSizer.Add(self.rightButtonSizer, 0, 0, 0)
 
         self.sizer.Add(self.buttonSizer, 0, 0, 0)
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
+
+    def AddFavoriteChannelsButton(self):
+        self.favoriteChannelsButton = wx.Button(self,
+                                                label="Edit Favorite Channels",
+                                                size=self.buttonSize)
+        self.favoriteChannelsButton.Bind(wx.EVT_BUTTON, self.OnFavoriteChannels)
+        self.rightButtonSizer.Add(self.favoriteChannelsButton, 0, 0, 0)
+
+    def AddConfigButtons(self):
+        self.syncButton = wx.Button(self, label="Sync Remote",
+                                    size=self.buttonSize)
+        self.syncButton.Bind(wx.EVT_BUTTON, self.OnSync)
+        self.syncButton.SetToolTip(wx.ToolTip(
+                "Update the configuration on your remote"
+        ))
+        self.rightButtonSizer.Add(self.syncButton, 0, 0, 0)
+        self.downloadConfigButton = wx.Button(self, label="Download Config",
+                                              size=self.buttonSize)
+        self.downloadConfigButton.Bind(wx.EVT_BUTTON, self.OnDownloadConfig)
+        self.downloadConfigButton.SetToolTip(wx.ToolTip(
+                "Download the config for your remote and save it to a file"
+        ))
+        self.rightButtonSizer.Add(self.downloadConfigButton, 0, 0, 0)
 
     def SetRemote(self, remote):
         self.remote = remote
@@ -470,6 +475,16 @@ class RemoteConfigurationPanel(WizardPanelBase):
             + str(self.product.MaxDevicesPerAccount) + "):"
         self.textMessage.SetLabel(self._msg_welcome)
         self.PopulateDevicesList()
+
+        # Populate remote-specific buttons in rightButtonSizer
+        self.rightButtonSizer.Clear(deleteWindows=True)
+        capabilities = self.product.SupportedCapabilities.SupportedCapability
+        if "FavoriteChannels" in capabilities:
+            self.AddFavoriteChannelsButton()
+        if "CompiledRemoteButtonMapping" in capabilities or \
+                "ActivityCompiledRemoteButtonMapping" in capabilities:
+            self.AddConfigButtons()
+
         self.Layout()
 
     def PopulateDevicesList(self):
