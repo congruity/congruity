@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="DeviceWithCapabilities">
+    <sequence>
+      <element name="DeviceId" type="ns1:Id"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="PrioritizedCapabilities" type="ns1:DeviceCapabilitiesWithPriority"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="DevicesWithCapabilities">
+    <sequence>
+      <element name="DeviceWithCapabilities" type="ns11:DeviceWithCapabilities" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ActivityTypes">
+    <sequence>
+      <element name="ActivityType" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+</schema>

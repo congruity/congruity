@@ -14,6 +14,7 @@
  xmlns:ns8="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data"
  xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
  xmlns:ns10="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
+ xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -26,6 +27,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.InfraredAnalysisManager.Contracts.Data" location="ir_data.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data" location="am_data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -45,19 +47,6 @@
     </sequence>
   </complexType>
 
-  <complexType name="PrioritizedDeviceCapability">
-    <sequence>
-      <element name="DeviceCapability" type="xsd:string"/>
-      <element name="Priority" type="xsd:integer"/>
-    </sequence>
-  </complexType>
-  <complexType name="DeviceCapabilitiesWithPriority">
-    <complexContent>
-      <restriction base="soapenc:Array">
-	<attribute ref="soapenc:arrayType" wsdl:arrayType="ns:PrioritizedDeviceCapability[]"/>
-      </restriction>
-    </complexContent>    
-  </complexType>
   <complexType name="GlobalDeviceVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:boolean"/>
@@ -90,7 +79,7 @@
       <element name="ContentProfileKey" type="xsd:string"/>
       <element name="ControlPort" type="xsd:string"/>
       <element name="DeviceAddedDate" type="xsd:string"/>
-      <element name="DeviceCapabilitiesWithPriority" type="ns:DeviceCapabilitiesWithPriority"/>
+      <element name="DeviceCapabilitiesWithPriority" type="ns1:DeviceCapabilitiesWithPriority"/>
       <element name="DeviceClassification" type="xsd:string"/>
       <element name="DeviceProfileUri" type="xsd:string"/>
       <element name="DeviceSearchType" type="xsd:string"/>
@@ -532,6 +521,14 @@
   <part name="SaveRemotePropertiesResult" type="xsd:string"/>
 </message>
 
+<message name="GetRecommendedActivitiesFromDevices">
+  <part name="accountId" type="ns1:accountId"/>
+  <part name="devicesWithCapabilities" type="ns11:DevicesWithCapabilities"/>
+</message>
+<message name="GetRecommendedActivitiesFromDevicesResponse">
+  <part name="GetRecommendedActivitiesFromDevicesResult" type="ns11:ActivityTypes"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -666,6 +663,12 @@
  <operation name="SaveRemoteProperties">
    <input message="ns:SaveRemoteProperties"/>
    <output message="ns:SaveRemotePropertiesResponse"/>
+ </operation>
+</portType>
+<portType name="ActivityManagerPortType">
+ <operation name="GetRecommendedActivitiesFromDevices">
+   <input message="ns:GetRecommendedActivitiesFromDevices"/>
+   <output message="ns:GetRecommendedActivitiesFromDevicesResponse"/>
  </operation>
 </portType>
 
@@ -957,6 +960,18 @@
   </output>
  </operation>
 </binding>
+<binding name="ActivityManagerBinding" type="ns:ActivityManagerPortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetRecommendedActivitiesFromDevices">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IActivityManager/GetRecommendedActivitiesFromDevices"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+</binding>
 
 <service name="Discovery">
  <port name="DiscoveryPortType" binding="ns:DiscoveryBinding">
@@ -1016,6 +1031,11 @@
 <service name="RemoteManager">
  <port name="RemoteManagerPortType" binding="ns:RemoteManagerBinding">
   <SOAP:address location="https://svcs.myharmony.com/RemotePlatform/RemoteManager.svc"/>
+ </port>
+</service>
+<service name="ActivityManager">
+ <port name="ActivityManagerPortType" binding="ns:ActivityManagerBinding">
+  <SOAP:address location="https://svcs.myharmony.com/ActivityPlatform/ActivityManager.svc"/>
  </port>
 </service>
 

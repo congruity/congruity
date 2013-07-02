@@ -40,6 +40,7 @@ OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Service
 DM_OPERATION_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
 ACCOUNT_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Account"
 BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
+ACTIVITY_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
 ARRAYS_NS = "http://schemas.microsoft.com/2003/10/Serialization/Arrays"
 
 class MHPlugin(MessagePlugin):
@@ -482,6 +483,27 @@ class MHManager():
             return True
         else:
             return False
+
+    # Returns the recommended activities for a given remoteId.
+    def GetRecommendedActivities(self, remoteId):
+        account = self.GetAccountForRemote(remoteId)
+        devices = self.GetDevices(remoteId)
+        devicesWithCapabilities = \
+            self.client.factory.create('{' + ACTIVITY_NS
+                                       + '}DevicesWithCapabilities')
+        for device in devices:
+            deviceWithCapabilities = \
+                self.client.factory.create('{' + ACTIVITY_NS +
+                                           '}DeviceWithCapabilities')
+            deviceWithCapabilities.DeviceId = device.Id
+            deviceWithCapabilities.DeviceType = "Unknown"
+            deviceWithCapabilities.PrioritizedCapabilities = \
+                device.DeviceCapabilitiesWithPriority
+            devicesWithCapabilities.DeviceWithCapabilities.append(
+                deviceWithCapabilities)
+        return self.client.service['ActivityManager'].\
+            GetRecommendedActivitiesFromDevices(account.Id,
+                                                devicesWithCapabilities)[0]
 
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
