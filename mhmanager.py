@@ -505,6 +505,10 @@ class MHManager():
             GetRecommendedActivitiesFromDevices(account.Id,
                                                 devicesWithCapabilities)[0]
 
+    def GetActivityTypesAndRoles(self, accountId):
+        print self.client.service['ActivityManager'].\
+            GetActivityTypesAndRoles(accountId)
+
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
     def UpdateIRCommand(self, commandName, rawSequence, deviceId):
