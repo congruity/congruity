@@ -342,7 +342,7 @@
 </message>
 
 <message name="StartCompileWithLocale">
-  <part name="remoteId" type="ns1:remoteId"/>
+  <part name="remoteId" type="ns1:Id"/>
   <part name="localeId" type="xsd:string"/>
 </message>
 <message name="StartCompileWithLocaleResponse">
@@ -357,7 +357,7 @@
 </message>
 
 <message name="DeleteDevices">
-  <part name="accountId" type="ns1:accountId"/>
+  <part name="accountId" type="ns1:Id"/>
   <part name="deviceIds" type="ns1:deviceIds"/>
 </message>
 <message name="DeleteDevicesResponse">
@@ -520,7 +520,7 @@
 </message>
 
 <message name="SaveRemoteProperties">
-  <part name="remoteId" type="ns1:remoteId"/>
+  <part name="remoteId" type="ns1:Id"/>
   <part name="remoteProperties" type="ns6:RemoteProperties"/>
 </message>
 <message name="SaveRemotePropertiesResponse">
@@ -528,7 +528,7 @@
 </message>
 
 <message name="GetRecommendedActivitiesFromDevices">
-  <part name="accountId" type="ns1:accountId"/>
+  <part name="accountId" type="ns1:Id"/>
   <part name="devicesWithCapabilities" type="ns11:DevicesWithCapabilities"/>
 </message>
 <message name="GetRecommendedActivitiesFromDevicesResponse">

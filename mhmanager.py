@@ -208,7 +208,7 @@ class MHManager():
     # Get remote config file for the specified remote and write it to the
     # specified filename.
     def GetConfig(self, remote, filename):
-        remoteId = self.client.factory.create('{' + DATA_NS + '}remoteId')
+        remoteId = self.client.factory.create('{' + DATA_NS + '}Id')
         remoteId.IsPersisted = remote.Id.IsPersisted
         remoteId.Value = remote.Id.Value
 
