@@ -2,9 +2,11 @@
 <schema targetNamespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
+  xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
 
   <complexType name="taughtCommandIds">
     <sequence>
@@ -15,6 +17,13 @@
   <complexType name="LanguageElementIds">
     <sequence>
       <element name="long" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="KeyValueOfActivityTypeArrayOfAbstractActivityRole">
+    <sequence>
+      <element name="Key" type="xsd:string"/>
+      <element name="Value" type="ns11:Roles"/>
     </sequence>
   </complexType>
 

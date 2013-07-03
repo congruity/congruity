@@ -28,4 +28,130 @@
     </sequence>
   </complexType>
 
+  <complexType name="SelectedInput">
+    <sequence>
+      <element name="ChannelNumber" type="xsd:string" nillable="true"/>
+      <element name="Id" type="xsd:string" nillable="true"/>
+      <element name="Name" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="AbstractActivityRole" abstract="true">
+    <sequence>
+      <element name="DeviceId" type="ns1:Id"/>
+      <element name="Id" type="xsd:string" nillable="true"/>
+      <element name="PowerOffOrder" type="xsd:string" nillable="true"/>
+      <element name="PowerOnOrder" type="xsd:string" nillable="true"/>
+      <element name="SelectedInput" type="ns11:SelectedInput" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="AccessInternetActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ChannelChangingActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ControlsNetflixActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ControlsVideoCallActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="DisplayActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="PassThroughActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="PlayGameActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="PlayMediaActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="PlayMovieActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="RunLogitechGoogleTVActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="VolumeActivityRole">
+    <complexContent>
+      <extension base="ns11:AbstractActivityRole">
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="Roles">
+    <sequence>
+      <element name="AbstractActivityRole" type="ns11:AbstractActivityRole" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Activity">
+    <sequence>
+      <element name="AccountId" type="ns1:Id"/>
+      <element name="ActivityDisplayName" type="xsd:string" nillable="true"/>
+      <element name="ActivityGroup" type="xsd:string"/>
+      <element name="ActivityOrder" type="xsd:string"/>
+      <element name="BaseImageUri" type="xsd:string" nillable="true"/>
+      <element name="DateCreated" type="xsd:string"/>
+      <element name="DateModified" type="xsd:string"/>
+      <element name="EnterActions" type="xsd:string"/>
+      <element name="Icon" type="xsd:string" nillable="true"/>
+      <element name="Id" type="xsd:string"/>
+      <element name="ImageKey" type="xsd:string" nillable="true"/>
+      <element name="IsDefault" type="xsd:string"/>
+      <element name="IsTuningDefault" type="xsd:string"/>
+      <element name="LeaveActions" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="Roles" type="ns11:Roles"/>
+      <element name="StartScreen" type="xsd:string" nillable="true"/>
+      <element name="State" type="xsd:string"/>
+      <element name="SuggestedDisplay" type="xsd:string" nillable="true"/>
+      <element name="Type" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
 </schema>
