@@ -515,6 +515,10 @@ class MHManager():
         return self.client.service['UserAccountDirector'].SimpleGetActivities(
             accountId)
 
+    def GetUserFeatures(self, deviceIds):
+        return self.client.service['UserFeatureManager'].GetUserFeatures(
+            deviceIds)
+
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
     def UpdateIRCommand(self, commandName, rawSequence, deviceId):

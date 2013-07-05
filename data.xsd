@@ -19,6 +19,15 @@
     </sequence>
   </complexType>
 
+  <complexType name="GlobalDeviceVersionId">
+    <sequence>
+      <element name="IsPersisted" type="xsd:boolean"/>
+      <element name="Value" type="xsd:string"/>
+      <element name="IsDefault" type="xsd:boolean"/>
+      <element name="VersionId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
   <complexType name="GlobalLanguageVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:string"/>

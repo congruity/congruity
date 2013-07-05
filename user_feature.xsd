@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns12="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="AbstractIRAction" abstract="true">
+    <sequence>
+    </sequence>
+  </complexType>
+
+  <complexType name="IRPressAction">
+    <complexContent>
+      <extension base="ns12:AbstractIRAction">
+	<sequence>
+	  <element name="ActionId" type="xsd:string"/>
+	  <element name="Order" type="xsd:string"/>
+	  <element name="Duration" type="xsd:string" nillable="true"/>
+	  <element name="IRCommandName" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="Actions">
+    <sequence>
+      <element name="AbstractIRAction" type="ns12:AbstractIRAction" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Input">
+    <sequence>
+      <element name="ActionId" type="xsd:string"/>
+      <element name="ActionName" type="xsd:string" nillable="true"/>
+      <element name="ActionSetTypeId" type="xsd:string"/>
+      <element name="Actions" type="ns12:Actions"/>
+      <element name="DevActionType" type="xsd:string"/>
+      <element name="HasAdditionalActions" type="xsd:string"/>
+      <element name="Id" type="xsd:string"/>
+      <element name="InputName" type="xsd:string"/>
+      <element name="InputOrder" type="xsd:string"/>
+      <element name="IsActiveInput" type="xsd:string"/>
+      <element name="IsAutoSwitch" type="xsd:string" nillable="true"/>
+      <element name="PressDuration" type="xsd:string"/>
+      <element name="StateName" type="xsd:string" nillable="true"/>
+      <element name="StateValue" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Inputs">
+    <sequence>
+      <element name="Input" type="ns12:Input" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="DeviceFeature" abstract="true">
+    <sequence>
+      <element name="DateModified" type="xsd:string" nillable="true"/>
+      <element name="DeviceId" type="ns1:Id"/>
+      <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
+      <element name="State" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="InputFeature">
+    <complexContent>
+      <extension base="ns12:DeviceFeature">
+	<sequence>
+	  <element name="CanSkipInputs" type="xsd:string"/>
+	  <element name="DefaultInputDelay" type="xsd:string"/>
+	  <element name="FinishActions" type="xsd:string"/>
+	  <element name="HasAdditionalActions" type="xsd:string"/>
+	  <element name="Id" type="xsd:string"/>
+	  <element name="InputDelay" type="xsd:string"/>
+	  <element name="InputType" type="xsd:string"/>
+	  <element name="Inputs" type="ns12:Inputs"/>
+	  <element name="IsActiveInput" type="xsd:string" nillable="true"/>
+	  <element name="NextActions" type="xsd:string"/>
+	  <element name="PreviousActions" type="xsd:string"/>
+	  <element name="StartActions" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="PowerFeature">
+    <complexContent>
+      <extension base="ns12:DeviceFeature">
+	<sequence>
+	  <element name="DefaultPowerOnDelay" type="xsd:string"/>
+	  <element name="HasAdditionalActions" type="xsd:string"/>
+	  <element name="Id" type="xsd:string"/>
+	  <element name="IsPowerAlwaysOn" type="xsd:string"/>
+	  <element name="IsPoweredOnBetweenActivities" type="xsd:string"/>
+	  <element name="PowerOffActionId" type="xsd:string"/>
+	  <element name="PowerOffActions" type="ns12:Actions"/>
+	  <element name="PowerOnActionId" type="xsd:string"/>
+	  <element name="PowerOnActions" type="ns12:Actions"/>
+	  <element name="PowerOnDelay" type="xsd:string"/>
+	  <element name="PowerOnResetActions" type="ns12:Actions" nillable="true"/>
+	  <element name="PowerOnResetInputName" type="xsd:string" nillable="true"/>
+	  <element name="PowerToggleActionId" type="xsd:string"/>
+	  <element name="PowerToggleActions" type="ns12:Actions" nillable="true"/>
+	  <element name="PowerTypeId" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ChannelTuningFeature">
+    <complexContent>
+      <extension base="ns12:DeviceFeature">
+	<sequence>
+	  <element name="FinishActions" type="ns12:Actions" nillable="true"/>
+	  <element name="FixedDigits" type="xsd:string"/>
+	  <element name="GreaterHundredActions" type="ns12:Actions" nillable="true"/>
+	  <element name="GreaterTenActions" type="ns12:Actions" nillable="true"/>
+	  <element name="StartActions" type="ns12:Actions" nillable="true"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="DeviceFeatures">
+    <sequence>
+      <element name="DeviceFeature" type="ns12:DeviceFeature" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+</schema>
