@@ -509,6 +509,12 @@ class MHManager():
         print self.client.service['ActivityManager'].\
             GetActivityTypesAndRoles(accountId)
 
+    # Returns the configured activities (if any) for a given remoteId
+    def GetActivities(self, remoteId):
+        accountId = self.GetAccountForRemote(remoteId).Id
+        return self.client.service['UserAccountDirector'].SimpleGetActivities(
+            accountId)
+
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
     def UpdateIRCommand(self, commandName, rawSequence, deviceId):

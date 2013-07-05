@@ -312,6 +312,12 @@
     </sequence>
   </complexType>
 
+  <complexType name="SimpleGetActivitiesResult">
+    <sequence>
+      <element name="Activity" type="ns11:Activity" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -542,6 +548,13 @@
   <part name="GetActivityTypesAndRolesResult" type="GetActivityTypesAndRolesResult"/>
 </message>
 
+<message name="SimpleGetActivities">
+  <part name="accountId" type="ns1:Id"/>
+</message>
+<message name="SimpleGetActivitiesResponse">
+  <part name="SimpleGetActivitiesResult" type="SimpleGetActivitiesResult"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -646,6 +659,10 @@
  <operation name="AddRemoteToAccount">
    <input message="ns:AddRemoteToAccount"/>
    <output message="ns:AddRemoteToAccountResponse"/>
+ </operation>
+ <operation name="SimpleGetActivities">
+   <input message="ns:SimpleGetActivities"/>
+   <output message="ns:SimpleGetActivitiesResponse"/>
  </operation>
 </portType>
 <portType name="UserButtonMappingManagerPortType">
@@ -906,6 +923,15 @@
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
  <operation name="AddRemoteToAccount">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserAccountDirector/AddRemoteToAccount"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SimpleGetActivities">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserAccountDirector/SimpleGetActivities"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>
