@@ -42,29 +42,47 @@ ACCOUNT_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.
 BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.ButtonMapping"
 ACTIVITY_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
 ARRAYS_NS = "http://schemas.microsoft.com/2003/10/Serialization/Arrays"
+USER_FEATURE_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
+
+TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
+    (XSI_NS, "long"),
+    (MS_NS, "guid"),
+    (BUTTON_MAPPING_NS, "HardButton"),
+    (BUTTON_MAPPING_NS, "CommandButtonAssignment"),
+    (BUTTON_MAPPING_NS, "ChannelButtonAssignment"),
+    (OPERATION_NS, "OperationBag"),
+    (DM_OPERATION_NS, "Operation"),
+    (DM_OPERATION_NS, "AddDeviceBySearchResultOperation"),
+    (DM_OPERATION_NS, "UpdateDeviceNameOperation"),
+    (DM_OPERATION_NS, "AddCommandOperation"),
+    (DM_OPERATION_NS, "DeleteCommandOperation"),
+    (ACTIVITY_NS, "AccessInternetActivityRole"),
+    (ACTIVITY_NS, "ChannelChangingActivityRole"),
+    (ACTIVITY_NS, "ControlsNetflixActivityRole"),
+    (ACTIVITY_NS, "ControlsVideoCallActivityRole"),
+    (ACTIVITY_NS, "DisplayActivityRole"),
+    (ACTIVITY_NS, "PassThroughActivityRole"),
+    (ACTIVITY_NS, "PlayGameActivityRole"),
+    (ACTIVITY_NS, "PlayMediaActivityRole"),
+    (ACTIVITY_NS, "PlayMovieActivityRole"),
+    (ACTIVITY_NS, "RunLogitechGoogleTVActivityRole"),
+    (ACTIVITY_NS, "VolumeActivityRole"),
+    (USER_FEATURE_NS, "IRPressAction"),
+    (USER_FEATURE_NS, "InputFeature"),
+    (USER_FEATURE_NS, "PowerFeature"),
+    (USER_FEATURE_NS, "ChannelTuningFeature"),
+]
 
 class MHPlugin(MessagePlugin):
     def fix_elements(self, prefix, elements):
         for element in elements:
             # This is a bit odd, but the MH parser expects type="xxx" attributes
-            # only for a few certain types.  Currently type attributes are
-            # expected only for xsi:long, guid, and those in the DM_OPERATION_NS
+            # only for a few certain types.
             if (element.get('type') is not None) and (element.name is not None):
-                ns = element.resolvePrefix(element.get('type').split(':')[0])
-                if (ns[1] != XSI_NS) and (ns[1] != MS_NS) and (ns[1] != DM_OPERATION_NS) and (ns[1] != BUTTON_MAPPING_NS) and (ns[1] != OPERATION_NS):
-                    #print "PLUGIN: removing {0} from {1}".format(element.get('type'), element.name)
+                ns = element.resolvePrefix(element.get('type').split(':')[0])[1]
+                type = element.get('type').split(':')[1]
+                if (ns, type) not in TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING:
                     element.unset('type')
-                elif (ns[1] == XSI_NS):
-                    if (element.get('type').split(':')[1] != "long"):
-                        element.unset('type')
-                elif (ns[1] == BUTTON_MAPPING_NS):
-                    type = element.get('type').split(':')[1]
-                    if (type != "HardButton") and (type != "CommandButtonAssignment") and (type != "ChannelButtonAssignment"):
-                        element.unset('type')
-                elif (ns[1] == OPERATION_NS):
-                    type = element.get('type').split(':')[1]
-                    if (type != "OperationBag"):
-                        element.unset('type')
             # Set the namespace prefix where it is set on the parent but not
             # on the children.
             if (element.prefix is None) and (prefix is not None):
