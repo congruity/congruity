@@ -19,6 +19,12 @@
     </sequence>
   </complexType>
 
+  <complexType name="activityIds">
+    <sequence>
+      <element name="ActivityId" type="ns1:Id" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="GlobalDeviceVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:boolean"/>

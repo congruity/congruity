@@ -154,4 +154,10 @@
     </sequence>
   </complexType>
 
+  <complexType name="Activities">
+    <sequence>
+      <element name="Activity" type="ns11:Activity" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
 </schema>
