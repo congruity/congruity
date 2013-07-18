@@ -403,7 +403,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
         WizardPanelBase.__init__(self, parent, resources)
 
-        self.buttonSize = (160, 33) # Size of largest button
+        self.buttonSize = (170, 33) # Size of largest button
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = wx.StaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
@@ -468,6 +468,15 @@ class RemoteConfigurationPanel(WizardPanelBase):
         ))
         self.rightButtonSizer.Add(self.downloadConfigButton, 0, 0, 0)
 
+    def AddSetupWatchTVButton(self):
+        self.setupWatchTVButton = wx.Button(self, label="Setup Watch TV Button",
+                                            size=self.buttonSize)
+        self.setupWatchTVButton.Bind(wx.EVT_BUTTON, self.OnSetupWatchTV)
+        self.setupWatchTVButton.SetToolTip(wx.ToolTip(
+                "Configure what happens when you press your Watch TV button"
+        ))
+        self.rightButtonSizer.Add(self.setupWatchTVButton, 0, 0, 0)
+
     def SetRemote(self, remote):
         self.remote = remote
         self.product = mhMgr.GetProduct(remote.SkinId)
@@ -485,6 +494,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if "CompiledRemoteButtonMapping" in capabilities or \
                 "ActivityCompiledRemoteButtonMapping" in capabilities:
             self.AddConfigButtons()
+        if "PartiallySetupActivities" in capabilities:
+            self.AddSetupWatchTVButton()
 
         self.Layout()
 
@@ -597,6 +608,12 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.EndBusy()
             wx.MessageBox('Config file saved to ' + filename,
                           'Download complete.', wx.OK)
+
+    def OnSetupWatchTV(self, event):
+        self.StartBusy()
+        self.resources.page_setup_watch_tv.SetRemote(self.remote)
+        self.EndBusy()
+        self.parent._SetPage(self.resources.page_setup_watch_tv, None)
 
     def OnActivated(self, prev_page, data):
         self.parent.ReenableBack()
@@ -1382,6 +1399,216 @@ class FavoriteChannelsPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_remote_configuration, None)
 
+class SetupWatchTVPanel(WizardPanelBase):
+    _msg_welcome = (
+        "Please select the devices to be turned on when you press the\n" +
+        "Watch TV button.  Then, select the proper input for each device, if " +
+        "applicable.  Re-order the devices to change the power-on order.\n"
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
+        self.listBoxLabel = wx.StaticText(self, -1, "Selected Devices:" +
+                                          "\t\t\t  Unselected Devices:")
+        self.sizer.Add(self.listBoxLabel)
+
+        self.buttonSize = (40, 40)
+        self.listBoxSize = (160, 160)
+        self.deviceSelectionSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.selectedDevicesListBox = wx.ListBox(self, style=wx.LB_SINGLE,
+                                                 size=self.listBoxSize)
+        self.deviceSelectionSizer.Add(self.selectedDevicesListBox)
+        self.deviceSelectionButtonSizer = wx.BoxSizer(wx.VERTICAL)
+        self.selectDeviceButton = wx.Button(self, label=u'\u2190',
+                                            size=self.buttonSize)
+        self.selectDeviceButton.SetToolTip(wx.ToolTip(
+                "Add device to Watch TV configuration"
+        ))
+        self.selectDeviceButton.Bind(wx.EVT_BUTTON, self.OnSelect)
+        self.deviceSelectionButtonSizer.Add(self.selectDeviceButton)
+        self.removeDeviceButton = wx.Button(self, label=u'\u2192',
+                                            size=self.buttonSize)
+        self.removeDeviceButton.SetToolTip(wx.ToolTip(
+                "Remove device from Watch TV configuration"
+        ))
+        self.removeDeviceButton.Bind(wx.EVT_BUTTON, self.OnRemove)
+        self.deviceSelectionButtonSizer.Add(self.removeDeviceButton)
+        self.raiseDeviceButton = wx.Button(self, label=u'\u2191',
+                                           size=self.buttonSize)
+        self.raiseDeviceButton.SetToolTip(wx.ToolTip(
+                "Move device earlier in power-on order"
+        ))
+        self.raiseDeviceButton.Bind(wx.EVT_BUTTON, self.OnRaise)
+        self.deviceSelectionButtonSizer.Add(self.raiseDeviceButton)
+        self.lowerDeviceButton = wx.Button(self, label=u'\u2193',
+                                           size=self.buttonSize)
+        self.lowerDeviceButton.SetToolTip(wx.ToolTip(
+                "Move device later in power-on order"
+        ))
+        self.lowerDeviceButton.Bind(wx.EVT_BUTTON, self.OnLower)
+        self.deviceSelectionButtonSizer.Add(self.lowerDeviceButton)
+        self.deviceSelectionSizer.Add(self.deviceSelectionButtonSizer)
+        self.unselectedDevicesListBox = wx.ListBox(self, style=wx.LB_SINGLE,
+                                                   size=self.listBoxSize)
+        self.deviceSelectionSizer.Add(self.unselectedDevicesListBox)
+        self.sizer.Add(self.deviceSelectionSizer)
+
+        # Placeholder sizer for input selection widgets
+        self.inputSelectionSizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.inputSelectionSizer)
+
+        self.saveChangesButton = wx.Button(self, label="Save Changes")
+        self.saveChangesButton.Bind(wx.EVT_BUTTON, self.OnSave)
+        self.sizer.Add(self.saveChangesButton)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def FindRole(self, device, activity):
+        if activity:
+            for role in activity.Roles.AbstractActivityRole:
+                if role.DeviceId.Value == device.Id.Value and \
+                        role.DeviceId.IsPersisted == device.Id.IsPersisted:
+                    return role
+        return None
+
+    def GetDevice(self, role):
+        for device in self.devices:
+            if device.Id.Value == role.DeviceId.Value:
+                return (device.Name, device.Id)
+
+    def SetRemote(self, remote):
+        self.selectedDevicesListBox.Clear()
+        self.unselectedDevicesListBox.Clear()
+        self.inputSelectionSizer.Clear(deleteWindows=True)
+        self.inputSelectionWidgets = {}
+        self.remote = remote
+        self.devices = mhMgr.GetDevices(self.remote.Id)
+        self.activity = mhMgr.GetActivity(self.remote.Id, "WatchTV")
+
+        # Add devices from the roles first since they need to be added in role
+        # order
+        if self.activity:
+            for role in self.activity.Roles.AbstractActivityRole:
+                deviceName, deviceId = self.GetDevice(role)
+                self.selectedDevicesListBox.Append(deviceName, deviceId)
+
+        # Now add the other devices.
+        for device in self.devices:
+            role = self.FindRole(device, self.activity)
+            if not role:
+                self.unselectedDevicesListBox.Append(device.Name, device.Id)
+            inputNames = mhMgr.GetDeviceInputNames(device.Id)
+            if inputNames:
+                label = wx.StaticText(self, -1, "Input for " + device.Name
+                                      + ":")
+                choice = wx.Choice(self, -1, choices=inputNames)
+                try:
+                    choice.SetSelection(choice.FindString(
+                            role.SelectedInput.Name))
+                except:
+                    pass
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                sizer.Add(label, flag=wx.ALIGN_CENTER_VERTICAL)
+                sizer.Add(choice)
+                self.inputSelectionSizer.Add(sizer)
+                self.inputSelectionWidgets[device.Id] = choice
+        self.Layout()
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def OnSelect(self, event):
+        selection = self.unselectedDevicesListBox.GetSelection()
+        if selection != wx.NOT_FOUND:
+            self.selectedDevicesListBox.Append(
+                self.unselectedDevicesListBox.GetStringSelection(),
+                self.unselectedDevicesListBox.GetClientData(selection))
+            self.unselectedDevicesListBox.Delete(selection)
+
+    def OnRemove(self, event):
+        selection = self.selectedDevicesListBox.GetSelection()
+        if selection != wx.NOT_FOUND:
+            self.unselectedDevicesListBox.Append(
+                self.selectedDevicesListBox.GetStringSelection(),
+                self.selectedDevicesListBox.GetClientData(selection))
+            self.selectedDevicesListBox.Delete(selection)
+
+    def OnRaise(self, event):
+        selection = self.selectedDevicesListBox.GetSelection()
+        if selection != wx.NOT_FOUND and selection != 0:
+            selectionString = self.selectedDevicesListBox.GetStringSelection()
+            clientData = self.selectedDevicesListBox.GetClientData(selection)
+            self.selectedDevicesListBox.Delete(selection)
+            self.selectedDevicesListBox.Insert(selectionString, selection - 1,
+                                               clientData)
+            self.selectedDevicesListBox.SetSelection(selection - 1)
+
+    def OnLower(self, event):
+        selection = self.selectedDevicesListBox.GetSelection()
+        lastItem = self.selectedDevicesListBox.GetCount() - 1
+        if selection != wx.NOT_FOUND and selection != lastItem:
+            selectionString = self.selectedDevicesListBox.GetStringSelection()
+            clientData = self.selectedDevicesListBox.GetClientData(selection)
+            self.selectedDevicesListBox.Delete(selection)
+            self.selectedDevicesListBox.Insert(selectionString, selection + 1,
+                                               clientData)
+            self.selectedDevicesListBox.SetSelection(selection + 1)
+
+    def OnSave(self, event):
+        if self.selectedDevicesListBox.GetCount() == 0:
+            if self.activity is not None:
+                self.StartBusy()
+                mhMgr.DeleteActivity(self.activity)
+                self.SetRemote(self.remote)
+                self.EndBusy()
+        else:
+            self.StartBusy()
+            deviceInfo = []
+            for index in range(self.selectedDevicesListBox.GetCount()):
+                deviceId = self.selectedDevicesListBox.GetClientData(index)
+                try:
+                    inputName = self.inputSelectionWidgets[deviceId].\
+                        GetStringSelection()
+                except KeyError:
+                    inputName = None
+                deviceInfo.append((deviceId, inputName))
+            mhMgr.SaveWatchTVActivity(self.remote.Id, deviceInfo, self.activity)
+            self.SetRemote(self.remote)
+            self.EndBusy()
+
+    def GetTitle(self):
+        return "Setup Watch TV Button"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        pass
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -1583,6 +1810,7 @@ class Resources(object):
         self.page_create_account = CreateAccountPanel(wizard, self)
         self.page_configure_device = ConfigureDevicePanel(wizard, self)
         self.page_favorite_channels = FavoriteChannelsPanel(wizard, self)
+        self.page_setup_watch_tv = SetupWatchTVPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -1591,6 +1819,7 @@ class Resources(object):
             self.page_create_account,
             self.page_configure_device,
             self.page_favorite_channels,
+            self.page_setup_watch_tv,
         ]
 
 class Finalizer(object):

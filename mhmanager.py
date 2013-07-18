@@ -28,6 +28,7 @@ import time
 import os
 import sys
 import random
+import datetime
 from HTMLParser import HTMLParser
 from suds.cache import ObjectCache
 from suds.client import Client
@@ -530,12 +531,105 @@ class MHManager():
     # Returns the configured activities (if any) for a given remoteId
     def GetActivities(self, remoteId):
         accountId = self.GetAccountForRemote(remoteId).Id
-        return self.client.service['UserAccountDirector'].SimpleGetActivities(
+        result = self.client.service['UserAccountDirector'].SimpleGetActivities(
             accountId)
+        if result:
+            return result.Activity
+        return None
 
-    def GetUserFeatures(self, deviceIds):
-        return self.client.service['UserFeatureManager'].GetUserFeatures(
+    # Returns the activity with the supplied name if it exists, None otherwise
+    def GetActivity(self, remoteId, activityName):
+        activities = self.GetActivities(remoteId)
+        if activities is not None:
+            for activity in activities:
+                if activity.Name == activityName:
+                    return activity
+        return None
+
+    # Creates a 'Roles' structure and returns it
+    # deviceInfo is a list of (deviceId, selectedInputName)
+    def CreateRoles(self, deviceInfo):
+        roles = self.client.factory.create('{' + ACTIVITY_NS + '}Roles')
+        deviceNum = 1
+        for device in deviceInfo:
+            deviceId, inputName = device
+            role = self.client.factory.create(
+                '{' + ACTIVITY_NS + '}PassThroughActivityRole')
+            role.DeviceId = deviceId
+            role.Id = None
+            role.PowerOffOrder = deviceNum
+            role.PowerOnOrder = deviceNum
+            if inputName:
+                role.SelectedInput = self.client.factory.create(
+                    '{' + ACTIVITY_NS + '}SelectedInput')
+                role.SelectedInput.Id = None
+                role.SelectedInput.Name = inputName
+            else:
+                role.SelectedInput = None
+            roles.AbstractActivityRole.append(role)
+            deviceNum = deviceNum + 1
+        return roles
+
+    # Creates a WatchTV activity for 200/300 remotes
+    # deviceInfo is a list of (deviceId, selectedInputName)
+    def SaveWatchTVActivity(self, remoteId, deviceInfo, activity=None):
+        accountId = self.GetAccountForRemote(remoteId).Id
+        if not activity:
+            activity = self.client.factory.create(
+                '{' + ACTIVITY_NS + '}Activity')
+            activity.AccountId = accountId
+            activity.ActivityGroup = "VirtualGeneric"
+            activity.ActivityOrder = "0"
+            activity.DateCreated = datetime.datetime.min
+            activity.DateModified = datetime.datetime.min
+            activity.Id = None
+            activity.IsDefault = False
+            activity.IsTuningDefault = False
+            activity.Name = "WatchTV"
+            activity.State = "Setup"
+            activity.Type = "WatchTV"
+        activity.Roles = self.CreateRoles(deviceInfo)
+        return self.SaveActivity(remoteId, activity)
+
+    # Saves the specified activity
+    def SaveActivity(self, remoteId, activity):
+        accountId = self.GetAccountForRemote(remoteId).Id
+        activities = self.client.factory.create('{' + ACTIVITY_NS
+                                                + '}Activities')
+        activities.Activity.append(activity)
+        return self.client.service['ActivityManager'].SaveActivities(
+            accountId, activities)
+
+    # Deletes the specified activity
+    def DeleteActivity(self, activity):
+        activityIds = self.client.factory.create('{' + DATA_NS + '}activityIds')
+        activityIds.ActivityId.append(activity.Id)
+        return self.client.service['ActivityManager'].DeleteActivities(
+            activity.AccountId, activityIds)
+
+    def GetDeviceInputNames(self, deviceId):
+        features = self.GetUserFeatures(deviceId)
+        if features:
+            for feature in features.DeviceFeature:
+                try:
+                    if feature.InputType == "Discrete":
+                        inputNames = []
+                        for input in feature.Inputs.Input:
+                            inputNames.append(input.InputName)
+                        return inputNames
+                except:
+                    continue
+        return None
+
+    def GetUserFeatures(self, deviceId):
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
+        deviceIds.DeviceId.append(deviceId)
+        result = self.client.service['UserFeatureManager'].GetUserFeatures(
             deviceIds)
+        if result:
+            return result.KeyValueOfDeviceIdArrayOfDeviceFeatureeiEyJu8p[0].\
+                Value
+        return None
 
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.

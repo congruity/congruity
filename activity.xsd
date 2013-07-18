@@ -136,15 +136,15 @@
       <element name="ActivityGroup" type="xsd:string"/>
       <element name="ActivityOrder" type="xsd:string"/>
       <element name="BaseImageUri" type="xsd:string" nillable="true"/>
-      <element name="DateCreated" type="xsd:string"/>
-      <element name="DateModified" type="xsd:string"/>
-      <element name="EnterActions" type="xsd:string"/>
+      <element name="DateCreated" type="xsd:dateTime"/>
+      <element name="DateModified" type="xsd:dateTime"/>
+      <element name="EnterActions" type="xsd:string" nillable="true"/>
       <element name="Icon" type="xsd:string" nillable="true"/>
-      <element name="Id" type="ns1:Id"/>
+      <element name="Id" type="ns1:Id" nillable="true"/>
       <element name="ImageKey" type="xsd:string" nillable="true"/>
-      <element name="IsDefault" type="xsd:string"/>
-      <element name="IsTuningDefault" type="xsd:string"/>
-      <element name="LeaveActions" type="xsd:string"/>
+      <element name="IsDefault" type="xsd:boolean"/>
+      <element name="IsTuningDefault" type="xsd:boolean"/>
+      <element name="LeaveActions" type="xsd:string" nillable="true"/>
       <element name="Name" type="xsd:string"/>
       <element name="Roles" type="ns11:Roles"/>
       <element name="StartScreen" type="xsd:string" nillable="true"/>
