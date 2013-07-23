@@ -37,7 +37,7 @@
       <element name="ActionId" type="xsd:string"/>
       <element name="ActionName" type="xsd:string" nillable="true"/>
       <element name="ActionSetTypeId" type="xsd:string"/>
-      <element name="Actions" type="ns12:Actions"/>
+      <element name="Actions" type="ns12:Actions" nillable="true"/>
       <element name="DevActionType" type="xsd:string"/>
       <element name="HasAdditionalActions" type="xsd:string"/>
       <element name="Id" type="xsd:string"/>
@@ -72,16 +72,16 @@
 	<sequence>
 	  <element name="CanSkipInputs" type="xsd:string"/>
 	  <element name="DefaultInputDelay" type="xsd:string"/>
-	  <element name="FinishActions" type="xsd:string"/>
-	  <element name="HasAdditionalActions" type="xsd:string"/>
+	  <element name="FinishActions" type="ns12:Actions" nillable="true"/>
+	  <element name="HasAdditionalActions" type="xsd:boolean"/>
 	  <element name="Id" type="xsd:string"/>
 	  <element name="InputDelay" type="xsd:string"/>
 	  <element name="InputType" type="xsd:string"/>
 	  <element name="Inputs" type="ns12:Inputs"/>
-	  <element name="IsActiveInput" type="xsd:string" nillable="true"/>
-	  <element name="NextActions" type="xsd:string"/>
-	  <element name="PreviousActions" type="xsd:string"/>
-	  <element name="StartActions" type="xsd:string"/>
+	  <element name="IsActiveInput" type="xsd:boolean" nillable="true"/>
+	  <element name="NextActions" type="ns12:Actions" nillable="true"/>
+	  <element name="PreviousActions" type="ns12:Actions" nillable="true"/>
+	  <element name="StartActions" type="ns12:Actions" nillable="true"/>
 	</sequence>
       </extension>
     </complexContent>
@@ -92,14 +92,14 @@
       <extension base="ns12:DeviceFeature">
 	<sequence>
 	  <element name="DefaultPowerOnDelay" type="xsd:string"/>
-	  <element name="HasAdditionalActions" type="xsd:string"/>
+	  <element name="HasAdditionalActions" type="xsd:boolean"/>
 	  <element name="Id" type="xsd:string"/>
-	  <element name="IsPowerAlwaysOn" type="xsd:string"/>
-	  <element name="IsPoweredOnBetweenActivities" type="xsd:string"/>
+	  <element name="IsPowerAlwaysOn" type="xsd:boolean"/>
+	  <element name="IsPoweredOnBetweenActivities" type="xsd:boolean"/>
 	  <element name="PowerOffActionId" type="xsd:string"/>
-	  <element name="PowerOffActions" type="ns12:Actions"/>
+	  <element name="PowerOffActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerOnActionId" type="xsd:string"/>
-	  <element name="PowerOnActions" type="ns12:Actions"/>
+	  <element name="PowerOnActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerOnDelay" type="xsd:string"/>
 	  <element name="PowerOnResetActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerOnResetInputName" type="xsd:string" nillable="true"/>
