@@ -26,6 +26,18 @@
     </complexContent>
   </complexType>
 
+  <complexType name="IRDelayAction">
+    <complexContent>
+      <extension base="ns12:AbstractIRAction">
+	<sequence>
+	  <element name="ActionId" type="xsd:string"/>
+	  <element name="Order" type="xsd:string"/>
+	  <element name="Delay" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
   <complexType name="Actions">
     <sequence>
       <element name="AbstractIRAction" type="ns12:AbstractIRAction" minOccurs="0" maxOccurs="unbounded"/>
