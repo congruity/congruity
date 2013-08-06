@@ -140,6 +140,7 @@ class MHManager():
         self.logged_in = self.client.service['Security'].LoginUser(
             email=email, password=password, customCredential='',
             isPresistent=False)
+        self.email = email
         self.password = password
         return self.logged_in is not None
 
@@ -487,6 +488,15 @@ class MHManager():
     def GetGlobalRemote(self, serialNumber):
         return self.client.service['RemoteManager'].GetGlobalRemote(
             serialNumber)
+
+    # Gets the "Remote Name" for a given remoteId - used mainly for Harmony
+    # Link to identity the room.
+    def GetRemoteName(self, remoteId):
+        remotes = self.GetRemotes()
+        for remote in remotes:
+            if remote.Id.Value == remoteId.Value:
+                return remote.RemoteProperties.RemoteName
+        return None
 
     # Sets the "Remote Name" - used for Harmony Link to identify the room where
     # the link is located

@@ -22,6 +22,7 @@ import os
 import os.path
 import sys
 import thread
+import time
 import traceback
 
 import wxversion
@@ -33,6 +34,8 @@ from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 
 version = "17"
+
+HARMONY_LINK_SKIN_ID = 82
 
 use_local_wsdl = False
 if '--use-local-wsdl' in sys.argv:
@@ -64,6 +67,7 @@ ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
 
 def dummy_callback_imp(stage_id, count, current, total, type, context, stages):
     pass
+dummy_cb = libconcord.callback_type(dummy_callback_imp)
 
 class WrappedStaticText(wx.StaticText):
     def __init__(self, parent):
@@ -346,8 +350,14 @@ class RemoteSelectPanel(WizardPanelBase):
         # Actually add the remote!
         result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
         if result is not None:
-            wx.MessageBox('Remote successfully added.', 'Success',
-                          wx.OK)
+            if skinId == HARMONY_LINK_SKIN_ID:
+                wx.MessageBox('Remote successfully added.  Make sure to select'
+                              + ' your Harmony Link, select "Forward", and'
+                              + ' then select "Configure Harmony Link" to'
+                              + ' complete setup.', 'Success', wx.OK)
+            else:
+                wx.MessageBox('Remote successfully added.', 'Success',
+                              wx.OK)
             self.UpdateRemotes()
             return
         else:
@@ -477,6 +487,16 @@ class RemoteConfigurationPanel(WizardPanelBase):
         ))
         self.rightButtonSizer.Add(self.setupWatchTVButton, 0, 0, 0)
 
+    def AddConfigureHarmonyLinkButton(self):
+        self.configureHarmonyLinkButton = wx.Button(
+            self, label="Configure Harmony Link", size=self.buttonSize)
+        self.configureHarmonyLinkButton.Bind(wx.EVT_BUTTON,
+                                             self.OnConfigureHarmonyLink)
+        self.configureHarmonyLinkButton.SetToolTip(wx.ToolTip(
+                "Configure Harmony Link Settings (Room Name, Wifi, etc.)"
+        ))
+        self.rightButtonSizer.Add(self.configureHarmonyLinkButton, 0, 0, 0)
+
     def SetRemote(self, remote):
         self.remote = remote
         self.product = mhMgr.GetProduct(remote.SkinId)
@@ -496,6 +516,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.AddConfigButtons()
         if "PartiallySetupActivities" in capabilities:
             self.AddSetupWatchTVButton()
+        if "Wifi" in capabilities:
+            self.AddConfigureHarmonyLinkButton()
 
         self.Layout()
 
@@ -614,6 +636,13 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.resources.page_setup_watch_tv.SetRemote(self.remote)
         self.EndBusy()
         self.parent._SetPage(self.resources.page_setup_watch_tv, None)
+
+    def OnConfigureHarmonyLink(self, event):
+        self.StartBusy()
+        result = self.resources.page_harmony_link.LoadData(self.remote)
+        self.EndBusy()
+        if result:
+            self.parent._SetPage(self.resources.page_harmony_link, None)
 
     def OnActivated(self, prev_page, data):
         self.parent.ReenableBack()
@@ -1609,6 +1638,253 @@ class SetupWatchTVPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_remote_configuration, None)
 
+class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
+    _msg_welcome = (
+        "On this page, you can configure the Room and WiFi settings for\n" +
+        "your Harmony Link.\n"
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        self.roomNames = [ "", "Basement", "Bedroom", "Den", "Dorm",
+                           "Family Room", "Hallway", "Kitchen", "Living Room",
+                           "Media Room", "Office", "Rec Room" ]
+        self.serviceLink = "https://svcs.myharmony.com/Discovery"
+        self.encryptionTypes = [ "OPEN", "WEP", "WPA-PSK", "WPA2-PSK" ]
+        self.labelSize = (133, 21)
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
+        self.roomNameSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.roomNameLabel = wx.StaticText(self, -1, "Room Name:")
+        self.roomNameLabel.SetMinSize(self.labelSize)
+        self.roomNameSizer.Add(self.roomNameLabel,
+                               flag=wx.ALIGN_CENTER_VERTICAL)
+        self.roomNameChoice = wx.Choice(self, -1, choices=self.roomNames)
+        self.roomNameSizer.Add(self.roomNameChoice)
+        self.sizer.Add(self.roomNameSizer)
+
+        self.sizer.AddSpacer(25)
+
+        self.wifiNetworksSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.wifiNetworksLabel = wx.StaticText(self, -1, "Available Networks:")
+        self.wifiNetworksSizer.Add(self.wifiNetworksLabel,
+                                   flag=wx.ALIGN_CENTER_VERTICAL)
+        self.wifiNetworksListBox = wx.ListBox(self, style=wx.LB_SINGLE,
+                                         size=(200, 62))
+        self.wifiNetworksListBox.Bind(wx.EVT_LISTBOX, self.OnSelectNetwork)
+        self.wifiNetworksSizer.Add(self.wifiNetworksListBox)
+        self.sizer.Add(self.wifiNetworksSizer)
+
+        self.ssidSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.ssidLabel = wx.StaticText(self, -1, "SSID:")
+        self.ssidLabel.SetMinSize(self.labelSize)
+        self.ssidSizer.Add(self.ssidLabel, flag=wx.ALIGN_CENTER_VERTICAL)
+        self.ssidCtrl = wx.TextCtrl(self, -1, "")
+        self.ssidCtrl.SetMinSize((200, 31))
+        self.ssidSizer.Add(self.ssidCtrl)
+        self.sizer.Add(self.ssidSizer)
+
+        self.passwordSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.passwordLabel = wx.StaticText(self, -1, "Password:")
+        self.passwordLabel.SetMinSize(self.labelSize)
+        self.passwordSizer.Add(self.passwordLabel,
+                               flag=wx.ALIGN_CENTER_VERTICAL)
+        self.passwordCtrl = wx.TextCtrl(self, -1, "")
+        self.passwordCtrl.SetMinSize((200, 31))
+        self.passwordSizer.Add(self.passwordCtrl)
+        self.sizer.Add(self.passwordSizer)
+
+        self.encryptionSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.encryptionLabel = wx.StaticText(self, -1, "Encryption:")
+        self.encryptionLabel.SetMinSize(self.labelSize)
+        self.encryptionSizer.Add(self.encryptionLabel,
+                                 flag=wx.ALIGN_CENTER_VERTICAL)
+        self.encryptionChoice = wx.Choice(self, -1,
+                                          choices=self.encryptionTypes)
+        self.encryptionSizer.Add(self.encryptionChoice)
+        self.sizer.Add(self.encryptionSizer)
+
+        self.wifiStatusSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.wifiStatusLabel = wx.StaticText(self, -1, "WiFi Status:")
+        self.wifiStatusLabel.SetMinSize(self.labelSize)
+        self.wifiStatusSizer.Add(self.wifiStatusLabel,
+                                 flag = wx.ALIGN_CENTER_VERTICAL)
+        self.wifiStatusCtrl = wx.TextCtrl(self, -1, "")
+        self.wifiStatusCtrl.SetEditable(False)
+        self.wifiStatusCtrl.SetMinSize((300, 31))
+        self.wifiStatusSizer.Add(self.wifiStatusCtrl)
+        self.sizer.Add(self.wifiStatusSizer)
+
+        self.sizer.AddSpacer(25)
+
+        self.saveChangesButton = wx.Button(self, label="Save Changes")
+        self.saveChangesButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
+        self.sizer.Add(self.saveChangesButton)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def LoadData(self, remote):
+        self.remote = remote
+        try:
+            libconcord.init_concord()
+        except:
+            msg = '%s\n    (libconcord function %s error %d)\n\n' % (
+                sys.exc_value.result_str,
+                sys.exc_value.func,
+                sys.exc_value.result
+            )
+            wx.MessageBox('Could not detect remote: ' + msg, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return False
+
+        # We don't really care about the identity, but for the Harmony Link,
+        # this seems to be the more reliable way of starting off a conversation
+        # with it.
+        try:
+            libconcord.get_identity(dummy_cb, None)
+        except:
+            # If get_identity fails, try again.  The Harmony Link seems to have
+            # a weird bug where it will fail once, but if you try again, it
+            # will succeed.
+            libconcord.get_identity(dummy_cb, None)
+
+        self.LoadConfigProperties()
+        self.LoadWifiConfig()
+        self.LoadWifiNetworks()
+        return True
+
+    def LoadConfigProperties(self):
+        self.remoteName = mhMgr.GetRemoteName(self.remote.Id)
+        self.cfg_prop = libconcord.mh_cfg_properties()
+        libconcord.mh_get_cfg_properties(byref(self.cfg_prop))
+        if self.remoteName is None:
+            choiceItem = wx.NOT_FOUND
+        else:
+            choiceItem = self.roomNameChoice.FindString(self.remoteName)
+        if choiceItem != wx.NOT_FOUND:
+            self.roomNameChoice.SetSelection(choiceItem)
+        else:
+            self.roomNameChoice.SetSelection(0)
+
+    def LoadWifiConfig(self):
+        self.wifi_cfg = libconcord.mh_wifi_config()
+        libconcord.mh_get_wifi_config(byref(self.wifi_cfg))
+        self.ssidCtrl.SetValue(self.wifi_cfg.ssid)
+        self.passwordCtrl.SetValue(self.wifi_cfg.password)
+        encNum = self.encryptionChoice.FindString(self.wifi_cfg.encryption)
+        if encNum != wx.NOT_FOUND:
+            self.encryptionChoice.SetSelection(encNum)
+        else:
+            self.encryptionChoice.SetSelection(0)
+        if self.wifi_cfg.connect_status == "connected":
+            self.wifiStatusCtrl.SetValue("connected")
+        else:
+            self.wifiStatusCtrl.SetValue(self.wifi_cfg.connect_status + ": " +
+                                         self.wifi_cfg.error_code)
+
+    def LoadWifiNetworks(self):
+        wifi_networks = libconcord.mh_wifi_networks()
+        libconcord.mh_get_wifi_networks(byref(wifi_networks))
+        self.wifiNetworksListBox.DeselectAll()
+        self.wifiNetworksListBox.Clear()
+        for network in wifi_networks.network:
+            if network.ssid == "":
+                break
+            self.wifiNetworksListBox.Append(network.ssid, network.encryption)
+
+    def OnSelectNetwork(self, event):
+        self.ssidCtrl.SetValue(self.wifiNetworksListBox.GetStringSelection())
+        self.passwordCtrl.Clear()
+        self.encryptionChoice.SetSelection(
+            self.encryptionChoice.FindString(
+                self.wifiNetworksListBox.GetClientData(
+                    self.wifiNetworksListBox.GetSelection()
+                    )
+                )
+            )
+
+    def OnSaveChanges(self, event):
+        # Validate Selections
+        if self.roomNameChoice.GetSelection() == 0:
+            wx.MessageBox('Please select a room name', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return
+        if self.ssidCtrl.IsEmpty():
+            wx.MessageBox('Please enter an SSID', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return
+
+        # Determine which item(s) needs to be saved
+        saveCfgProp = False
+        roomName = self.roomNameChoice.GetStringSelection()
+        if self.cfg_prop.host_name != roomName or self.cfg_prop.email != \
+                mhMgr.email or self.remoteName != roomName:
+            saveCfgProp = True
+        saveWifi = False
+        ssid = self.ssidCtrl.GetValue()
+        password = self.passwordCtrl.GetValue()
+        encryption = self.encryptionChoice.GetStringSelection()
+        if encryption == "OPEN":
+            encryption = ""
+        if self.wifi_cfg.ssid != ssid or self.wifi_cfg.password != password or \
+                self.wifi_cfg.encryption != encryption:
+            saveWifi = True
+
+        # Save what needs to be saved
+        self.StartBusy()
+        if saveWifi:
+            self.wifi_cfg.ssid = ssid
+            self.wifi_cfg.encryption = encryption
+            self.wifi_cfg.password = password
+            libconcord.mh_set_wifi_config(byref(self.wifi_cfg))
+            self.LoadWifiConfig()
+        if saveCfgProp:
+            mhMgr.SetRemoteName(self.remote.Id, roomName)
+            self.cfg_prop.host_name = roomName
+            self.cfg_prop.email = mhMgr.email
+            self.cfg_prop.service_link = self.serviceLink
+            libconcord.mh_set_cfg_properties(byref(self.cfg_prop))
+            time.sleep(10)
+            # Do not self.LoadConfigProperties() here.  The Link doesn't
+            # respond very well if you do.  Just assume everything worked.
+        self.EndBusy()
+
+    def GetTitle(self):
+        return "Configure Harmony Link Settings"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def OnNext(self):
+        pass
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        libconcord.deinit_concord()
+        return (self.resources.page_remote_configuration, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -1811,6 +2087,7 @@ class Resources(object):
         self.page_configure_device = ConfigureDevicePanel(wizard, self)
         self.page_favorite_channels = FavoriteChannelsPanel(wizard, self)
         self.page_setup_watch_tv = SetupWatchTVPanel(wizard, self)
+        self.page_harmony_link = ConfigureHarmonyLinkSettingsPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -1820,6 +2097,7 @@ class Resources(object):
             self.page_configure_device,
             self.page_favorite_channels,
             self.page_setup_watch_tv,
+            self.page_harmony_link,
         ]
 
 class Finalizer(object):
