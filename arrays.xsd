@@ -38,4 +38,18 @@
     </sequence>
   </complexType>
 
+  <complexType name="KeyValueOfActivityTypeRoleToDeviceMapping">
+    <sequence>
+      <element name="Key" type="xsd:string"/>
+      <element name="Value" type="ns11:RoleToDeviceMapping"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="KeyValueOfAbstractActivityRoleArrayOfDeviceId">
+    <sequence>
+      <element name="Key" type="ns11:AbstractActivityRole"/>
+      <element name="Value" type="ns1:deviceIds"/>
+    </sequence>
+  </complexType>
+
 </schema>

@@ -2,11 +2,13 @@
 <schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
   xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
 
   <complexType name="DeviceWithCapabilities">
     <sequence>
@@ -157,6 +159,18 @@
   <complexType name="Activities">
     <sequence>
       <element name="Activity" type="ns11:Activity" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Mapping">
+    <sequence>
+      <element name="KeyValueOfAbstractActivityRoleArrayOfDeviceIdGQ_S527jd" type="ns9:KeyValueOfAbstractActivityRoleArrayOfDeviceId" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="RoleToDeviceMapping">
+    <sequence>
+      <element name="Mapping" type="ns11:Mapping"/>
     </sequence>
   </complexType>
 

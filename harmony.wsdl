@@ -318,6 +318,12 @@
     </sequence>
   </complexType>
 
+  <complexType name="GetActivityRolesResult">
+    <sequence>
+      <element name="KeyValueOfActivityTypeRoleToDeviceMapping_SFvkcgrh" type="ns9:KeyValueOfActivityTypeRoleToDeviceMapping" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
  </schema>
 </types>
 
@@ -576,6 +582,15 @@
 <message name="DeleteActivitiesResponse">
 </message>
 
+<message name="GetActivityRoles">
+  <part name="accountId" type="ns1:Id"/>
+  <part name="activityTypes" type="ns11:ActivityTypes"/>
+  <part name="devicesWithCapabilities" type="ns11:DevicesWithCapabilities"/>
+</message>
+<message name="GetActivityRolesResponse">
+  <part name="GetActivityRolesResult" type="GetActivityRolesResult"/>
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -732,6 +747,10 @@
  <operation name="DeleteActivities">
    <input message="ns:DeleteActivities"/>
    <output message="ns:DeleteActivitiesResponse"/>
+ </operation>
+ <operation name="GetActivityRoles">
+   <input message="ns:GetActivityRoles"/>
+   <output message="ns:GetActivityRolesResponse"/>
  </operation>
 </portType>
 <portType name="UserFeatureManagerPortType">
@@ -1069,6 +1088,15 @@
  </operation>
  <operation name="DeleteActivities">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IActivityManager/DeleteActivities"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetActivityRoles">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IActivityManager/GetActivityRoles"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>

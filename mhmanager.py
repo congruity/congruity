@@ -538,6 +538,29 @@ class MHManager():
         print self.client.service['ActivityManager'].\
             GetActivityTypesAndRoles(accountId)
 
+    def GetActivityRoles(self, remoteId, activityType):
+        account = self.GetAccountForRemote(remoteId)
+        activityTypes = \
+            self.client.factory.create('{' + ACTIVITY_NS + '}ActivityTypes')
+        activityTypes.ActivityType.append(activityType)
+        devices = self.GetDevices(remoteId)
+        devicesWithCapabilities = \
+            self.client.factory.create('{' + ACTIVITY_NS
+                                       + '}DevicesWithCapabilities')
+        for device in devices:
+            deviceWithCapabilities = \
+                self.client.factory.create('{' + ACTIVITY_NS +
+                                           '}DeviceWithCapabilities')
+            deviceWithCapabilities.DeviceId = device.Id
+            deviceWithCapabilities.DeviceType = "Unknown"
+            deviceWithCapabilities.PrioritizedCapabilities = \
+                device.DeviceCapabilitiesWithPriority
+            devicesWithCapabilities.DeviceWithCapabilities.append(
+                deviceWithCapabilities)        
+        return self.client.service['ActivityManager'].GetActivityRoles(
+            account.Id, activityTypes, devicesWithCapabilities).\
+            KeyValueOfActivityTypeRoleToDeviceMapping_SFvkcgrh[0]
+
     # Returns the configured activities (if any) for a given remoteId
     def GetActivities(self, remoteId):
         accountId = self.GetAccountForRemote(remoteId).Id
