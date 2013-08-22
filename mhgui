@@ -32,6 +32,7 @@ from tempfile import NamedTemporaryFile
 sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
+from mhmanager import SaveActivityTemplate
 
 version = "17"
 
@@ -497,6 +498,15 @@ class RemoteConfigurationPanel(WizardPanelBase):
         ))
         self.rightButtonSizer.Add(self.configureHarmonyLinkButton, 0, 0, 0)
 
+    def AddSetupActivitiesButton(self):
+        self.setupActivitiesButton = wx.Button(self, label="Setup Activities",
+                                               size=self.buttonSize)
+        self.setupActivitiesButton.Bind(wx.EVT_BUTTON, self.OnSetupActivities)
+        self.setupActivitiesButton.SetToolTip(wx.ToolTip(
+                "Configure one-button activities (e.g., Watch TV)"
+        ))
+        self.rightButtonSizer.Add(self.setupActivitiesButton, 0, 0, 0)
+
     def SetRemote(self, remote):
         self.remote = remote
         self.product = mhMgr.GetProduct(remote.SkinId)
@@ -518,6 +528,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.AddSetupWatchTVButton()
         if "Wifi" in capabilities:
             self.AddConfigureHarmonyLinkButton()
+        if "Activities" in capabilities:
+            self.AddSetupActivitiesButton()
 
         self.Layout()
 
@@ -643,6 +655,12 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.EndBusy()
         if result:
             self.parent._SetPage(self.resources.page_harmony_link, None)
+
+    def OnSetupActivities(self, event):
+        self.StartBusy()
+        self.resources.page_setup_activities.LoadData(self.remote)
+        self.EndBusy()
+        self.parent._SetPage(self.resources.page_setup_activities, None)
 
     def OnActivated(self, prev_page, data):
         self.parent.ReenableBack()
@@ -1885,6 +1903,257 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
         libconcord.deinit_concord()
         return (self.resources.page_remote_configuration, None)
 
+class SetupActivitiesPanel(WizardPanelBase):
+    _msg_welcome = (
+        "Existing Activities:"
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.buttonSize = (127, 33)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+        self.activitiesListBox = wx.ListBox(self, style=wx.LB_SINGLE,
+                                            size=(200, 100))
+        self.sizer.Add(self.activitiesListBox)
+        self.sizer.AddSpacer(20)
+        self.addButton = wx.Button(self, label="Add Activity",
+                                   size=self.buttonSize)
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAddActivity)
+        self.sizer.Add(self.addButton)
+        self.sizer.AddSpacer(10)
+        self.editButton = wx.Button(self, label="Edit Activity",
+                                    size=self.buttonSize)
+        self.editButton.Bind(wx.EVT_BUTTON, self.OnEditActivity)
+        self.sizer.Add(self.editButton)
+        self.sizer.AddSpacer(10)
+        self.deleteButton = wx.Button(self, label="Delete Activity",
+                                      size=self.buttonSize)
+        self.deleteButton.Bind(wx.EVT_BUTTON, self.OnDeleteActivity)
+        self.sizer.Add(self.deleteButton)
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def LoadData(self, remote):
+        self.remote = remote
+        self.LoadActivities()
+        self.recommendedActivities = mhMgr.GetRecommendedActivities(
+            self.remote.Id)
+
+    def LoadActivities(self):
+        self.activitiesListBox.Clear()
+        self.activities = mhMgr.GetActivities(self.remote.Id)
+        if self.activities:
+            for activity in self.activities:
+                self.activitiesListBox.Append(activity.Name, activity)
+
+    def OnAddActivity(self, event):
+        activityTypeStrings = []
+        for activity in self.recommendedActivities:
+            activityTypeStrings.append(mhMgr.GetActivityTypeString(activity))
+        dlg = wx.SingleChoiceDialog(
+            self.parent,
+            "Please select an activity type to add:",
+            "Activity Selection",
+            activityTypeStrings
+        )
+        if dlg.ShowModal() != wx.ID_OK:
+            return
+        activityType = self.recommendedActivities[dlg.GetSelection()]
+        self.StartBusy()
+        self.resources.page_edit_activity.LoadData(self.remote, activityType)
+        self.EndBusy()
+        self.parent._SetPage(self.resources.page_edit_activity, None)
+
+    def OnEditActivity(self, event):
+        activity = self.GetSelectedActivity()
+        if not activity:
+            return
+        self.StartBusy()
+        self.resources.page_edit_activity.LoadData(self.remote, activity.Type,
+                                                   activity)
+        self.EndBusy()
+        self.parent._SetPage(self.resources.page_edit_activity, None)
+
+    def OnDeleteActivity(self, event):
+        activity = self.GetSelectedActivity()
+        if not activity:
+            return
+        mhMgr.DeleteActivity(activity)
+        self.LoadActivities()
+
+    def GetSelectedActivity(self):
+        activityNum = self.activitiesListBox.GetSelection()
+        if activityNum == wx.NOT_FOUND:
+            wx.MessageBox('Please select an activity', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return None
+        return self.activitiesListBox.GetClientData(activityNum)
+
+    def GetTitle(self):
+        return "Activity Setup"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
+class EditActivityPanel(WizardPanelBase):
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def OnActivated(self, prev_page, data):
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def LoadData(self, remote, activityType, activity=None):
+        self.parent.ReenableBack()
+        self.remote = remote
+        self.activityType = activityType
+        self.activity = activity
+        if self.activity:
+            self.activityNameDefault = self.activity.Name
+        else:
+            self.activityNameDefault = mhMgr.GetActivityTypeString(
+                self.activityType)
+        self.activityTemplate = mhMgr.GetActivityTemplate(self.remote.Id,
+                                                          self.activityType)
+        self.CreateWidgets()
+
+    def CreateWidgets(self):
+        self.sizer.Clear(deleteWindows=True)
+
+        self.activityNameSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.activityNameLabel = wx.StaticText(self, -1, "Activity Name:")
+        self.activityNameSizer.Add(self.activityNameLabel,
+                                   flag=wx.ALIGN_CENTER_VERTICAL)
+        self.activityNameCtrl = wx.TextCtrl(self, -1, self.activityNameDefault)
+        self.activityNameCtrl.SetMinSize((150, 31))
+        self.activityNameSizer.Add(self.activityNameCtrl)
+        self.sizer.Add(self.activityNameSizer)
+        self.sizer.AddSpacer(10)
+
+        self.roles = []
+        self.roleChoices = {}
+        for role in self.activityTemplate.roles:
+            roleType, devices = role
+            self.roles.append(roleType)
+            if roleType == "DisplayActivityRole": # Don't add widget for Display
+                self.displayDeviceId = devices[0][1]
+                continue
+            roleString = mhMgr.GetRoleString(roleType)
+            label = "What device do you use to " + roleString + "?"
+            labelText = wx.StaticText(self, -1, label)
+            self.sizer.Add(labelText)
+            choice = wx.Choice(self, -1)
+            self.sizer.Add(choice)
+            self.sizer.AddSpacer(10)
+            self.roleChoices[roleType] = choice
+            for deviceName, deviceId in devices:
+                choice.Append(deviceName, deviceId)
+            choice.SetSelection(0)
+            if self.activity:
+                device = mhMgr.GetRoleDeviceId(self.activity, roleType)
+                for i in range(choice.GetCount()):
+                    if choice.GetClientData(i).Value == device.Value:
+                        choice.SetSelection(i)
+
+        self.inputSelectionChoices = {}
+        for deviceName, deviceId, inputs in \
+            self.activityTemplate.devicesWithInputs:
+            label = "What input should " + deviceName + " be set to?"
+            inputSelectionLabel = wx.StaticText(self, -1, label)
+            self.sizer.Add(inputSelectionLabel)
+            inputSelectionChoice = wx.Choice(self, -1, choices=inputs)
+            self.sizer.Add(inputSelectionChoice)
+            self.inputSelectionChoices[deviceId.Value] = inputSelectionChoice
+            self.sizer.AddSpacer(10)
+            if self.activity:
+                input = mhMgr.GetDeviceInput(self.activity, deviceId)
+                if input:
+                    inputNum = inputSelectionChoice.FindString(input)
+                    inputSelectionChoice.SetSelection(inputNum)
+
+        self.sizer.AddSpacer(20)
+        self.saveChangesButton = wx.Button(self, label="Save Changes")
+        self.saveChangesButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
+        self.sizer.Add(self.saveChangesButton)
+        self.Layout()
+
+    def OnSaveChanges(self, event):
+        if self.activityNameCtrl.IsEmpty():
+            wx.MessageBox('Please enter an activity name', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            return
+
+        template = SaveActivityTemplate()
+        template.activityName = self.activityNameCtrl.GetValue()
+        template.activityType = self.activityType
+        template.roles = []
+
+        for role in self.roles:
+            if role == "DisplayActivityRole":
+                deviceId = self.displayDeviceId
+            else:
+                deviceNum = self.roleChoices[role].GetSelection()
+                deviceId = self.roleChoices[role].GetClientData(deviceNum)
+            try:
+                inputChoice = self.inputSelectionChoices[deviceId.Value]
+                inputName = inputChoice.GetStringSelection()
+            except KeyError:
+                inputName = None
+            template.roles.append((role, deviceId, inputName))
+
+        mhMgr.SaveActivityByTemplate(self.remote.Id, template, self.activity)
+
+        # After saving, go back to the main activity setup page.
+        self.StartBusy()
+        self.resources.page_setup_activities.LoadData(self.remote)
+        self.EndBusy()
+        self.parent._SetPage(self.resources.page_setup_activities, None)
+
+    def GetTitle(self):
+        return "Edit Activity"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_setup_activities, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -2088,6 +2357,8 @@ class Resources(object):
         self.page_favorite_channels = FavoriteChannelsPanel(wizard, self)
         self.page_setup_watch_tv = SetupWatchTVPanel(wizard, self)
         self.page_harmony_link = ConfigureHarmonyLinkSettingsPanel(wizard, self)
+        self.page_setup_activities = SetupActivitiesPanel(wizard, self)
+        self.page_edit_activity = EditActivityPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -2098,6 +2369,8 @@ class Resources(object):
             self.page_favorite_channels,
             self.page_setup_watch_tv,
             self.page_harmony_link,
+            self.page_setup_activities,
+            self.page_edit_activity,
         ]
 
 class Finalizer(object):

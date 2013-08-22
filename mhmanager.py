@@ -74,6 +74,31 @@ TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (USER_FEATURE_NS, "ChannelTuningFeature"),
 ]
 
+# This is a mapping between ActivityTypes and a friendly string
+ACTIVITY_TYPE_STRINGS = {
+    "Custom"        : "Custom",
+    "ListenToMusic" : "Listen to Music",
+    "MakeVideoCall" : "Make a Video Call",
+    "PlayGame"      : "Play a Game",
+    "SurfWeb"       : "Surf the Web",
+    "WatchDvd"      : "Watch a Movie",
+    "WatchNetflix"  : "Watch Netflix",
+    "WatchTV"       : "Watch TV",
+}
+
+# This is a mapping between Roles and a friendly string
+ROLE_STRINGS = {
+    "AccessInternetActivityRole"      : "access the Internet",
+    "ChannelChangingActivityRole"     : "change channels",
+    "ControlsNetflixActivityRole"     : "watch Netflix",
+    "ControlsVideoCallActivityRole"   : "make a video call",
+    "PlayGameActivityRole"            : "play video games",
+    "PlayMediaActivityRole"           : "play music",
+    "PlayMovieActivityRole"           : "watch a movie",
+    "RunLogitechGoogleTVActivityRole" : "watch Google TV",
+    "VolumeActivityRole"              : "control volume",
+}
+
 class MHPlugin(MessagePlugin):
     def fix_elements(self, prefix, elements):
         for element in elements:
@@ -534,11 +559,23 @@ class MHManager():
             GetRecommendedActivitiesFromDevices(account.Id,
                                                 devicesWithCapabilities)[0]
 
+    def GetActivityTypeString(self, activityType):
+        try:
+            return ACTIVITY_TYPE_STRINGS[activityType]
+        except:
+            return activityType
+
+    def GetRoleString(self, role):
+        try:
+            return ROLE_STRINGS[role]
+        except:
+            return role
+
     def GetActivityTypesAndRoles(self, accountId):
         print self.client.service['ActivityManager'].\
             GetActivityTypesAndRoles(accountId)
 
-    def GetActivityRoles(self, remoteId, activityType):
+    def GetActivityRolesAndDevices(self, remoteId, activityType):
         account = self.GetAccountForRemote(remoteId)
         activityTypes = \
             self.client.factory.create('{' + ACTIVITY_NS + '}ActivityTypes')
@@ -557,9 +594,34 @@ class MHManager():
                 device.DeviceCapabilitiesWithPriority
             devicesWithCapabilities.DeviceWithCapabilities.append(
                 deviceWithCapabilities)        
-        return self.client.service['ActivityManager'].GetActivityRoles(
+        return (self.client.service['ActivityManager'].GetActivityRoles(
             account.Id, activityTypes, devicesWithCapabilities).\
-            KeyValueOfActivityTypeRoleToDeviceMapping_SFvkcgrh[0]
+                KeyValueOfActivityTypeRoleToDeviceMapping_SFvkcgrh[0].Value.\
+                Mapping.KeyValueOfAbstractActivityRoleArrayOfDeviceIdGQ_S527jd,
+                devices)
+
+    def GetActivityTemplate(self, remoteId, activityType):
+        roles, devices = self.GetActivityRolesAndDevices(remoteId, activityType)
+        activityTemplate = ActivityTemplate()
+        deviceNames = {}
+        activityTemplate.devices = []
+        activityTemplate.devicesWithInputs = []
+        activityTemplate.roles = []
+        for device in devices:
+            deviceNames[device.Id.Value] = device.Name
+            activityTemplate.devices.append((device.Name, device.Id))
+            inputNames = self.GetDeviceInputNames(device.Id)
+            if inputNames:
+                activityTemplate.devicesWithInputs.append(
+                    (device.Name, device.Id, inputNames))
+        for role in roles:
+            roleType = role.Key.__class__.__name__
+            if roleType != "PassThroughActivityRole":
+                roleDevices = []
+                for deviceId in role.Value.DeviceId:
+                    roleDevices.append((deviceNames[deviceId.Value], deviceId))
+                activityTemplate.roles.append((roleType, roleDevices))
+        return activityTemplate
 
     # Returns the configured activities (if any) for a given remoteId
     def GetActivities(self, remoteId):
@@ -603,6 +665,21 @@ class MHManager():
             deviceNum = deviceNum + 1
         return roles
 
+    def CreateRolesByTemplate(self, saveActivityTemplate):
+        roles = self.client.factory.create('{' + ACTIVITY_NS + '}Roles')
+        for roleType, deviceId, inputName in saveActivityTemplate.roles:
+            role = self.client.factory.create('{' + ACTIVITY_NS + '}' +
+                                              roleType)
+            role.DeviceId = deviceId
+            role.Id = None
+            if inputName:
+                role.SelectedInput.Id = None
+                role.SelectedInput.Name = inputName
+            else:
+                role.SelectedInput = None
+            roles.AbstractActivityRole.append(role)
+        return roles
+
     # Creates a WatchTV activity for 200/300 remotes
     # deviceInfo is a list of (deviceId, selectedInputName)
     def SaveWatchTVActivity(self, remoteId, deviceInfo, activity=None):
@@ -624,6 +701,25 @@ class MHManager():
         activity.Roles = self.CreateRoles(deviceInfo)
         return self.SaveActivity(remoteId, activity)
 
+    def SaveActivityByTemplate(self, remoteId, saveActivityTemplate, activity):
+        accountId = self.GetAccountForRemote(remoteId).Id
+        if not activity:
+            activity = self.client.factory.create(
+                '{' + ACTIVITY_NS + '}Activity')
+            activity.AccountId = accountId
+            activity.ActivityGroup = "VirtualGeneric"
+            activity.ActivityOrder = "0"
+            activity.DateCreated = datetime.datetime.min
+            activity.DateModified = datetime.datetime.min
+            activity.Id = None
+            activity.IsDefault = False
+            activity.IsTuningDefault = False
+            activity.State = "Setup"
+            activity.Type = saveActivityTemplate.activityType
+        activity.Name = saveActivityTemplate.activityName
+        activity.Roles = self.CreateRolesByTemplate(saveActivityTemplate)
+        return self.SaveActivity(remoteId, activity)        
+
     # Saves the specified activity
     def SaveActivity(self, remoteId, activity):
         accountId = self.GetAccountForRemote(remoteId).Id
@@ -639,6 +735,18 @@ class MHManager():
         activityIds.ActivityId.append(activity.Id)
         return self.client.service['ActivityManager'].DeleteActivities(
             activity.AccountId, activityIds)
+
+    def GetRoleDeviceId(self, activity, roleType):
+        for role in activity.Roles.AbstractActivityRole:
+            if role.__class__.__name__ == roleType:
+                return role.DeviceId
+        return None
+
+    def GetDeviceInput(self, activity, deviceId):
+        for role in activity.Roles.AbstractActivityRole:
+            if role.DeviceId.Value == deviceId.Value:
+                return role.SelectedInput.Name
+        return None
 
     def GetDeviceInputNames(self, deviceId):
         features = self.GetUserFeatures(deviceId)
@@ -716,6 +824,18 @@ class MHManager():
         if result is None:
             return "UpdateMultiple failed"
         return None
+
+class ActivityTemplate:
+    def __init__(self):
+        self.devices = None # List of (Device Name, DeviceId)
+        self.roles = None # List of (Role Name, [(Device Name, DeviceId), .. ]
+        self.devicesWithInputs = None # [(Device Name, DeviceId, [Inputs])]
+
+class SaveActivityTemplate:
+    def __init__(self):
+        self.activityName = None               # Activity Name (String)
+        self.activityType = None               # ActivityType
+        self.roles = None                      # [(Role Name, DeviceId, Input)]
 
 class MHAccountDetails:
     def __init__(self):
