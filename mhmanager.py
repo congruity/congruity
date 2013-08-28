@@ -359,8 +359,8 @@ class MHManager():
     # Returns 'None' on success.  Otherwise returns a string with an error msg.
     # Parameter is an instance of MHAccountDetails.
     def CreateAccount(self, details):
-        host = "www.myharmony.com"
-        url = "http://www.myharmony.com/MartiniWeb/Account/Register"
+        host = "setup.myharmony.com"
+        url = "http://setup.myharmony.com/MartiniWeb/Account/Register"
         params = urllib.urlencode(
             {'FirstName': details.firstName, 'LastName': details.lastName,
              'ctl00$MainContent$selectCountry': '- Select Country -',
@@ -455,8 +455,8 @@ class MHManager():
         return True
 
     def GetCountryLists(self):
-        conn = httplib.HTTPConnection("www.myharmony.com")
-        conn.request("GET", "http://www.myharmony.com/Account/Register")
+        conn = httplib.HTTPConnection("setup.myharmony.com")
+        conn.request("GET", "http://setup.myharmony.com/Account/Register")
         response = conn.getresponse()
         data = unicode(response.read(), 'utf-8')
         parser = CountryListHTMLParser()
