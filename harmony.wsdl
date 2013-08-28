@@ -172,6 +172,7 @@
       <element name="Name" type="xsd:string"/>
       <element name="NumOfAddDevice" type="xsd:integer"/>
       <element name="ProductId" type="xsd:string"/>
+      <element name="ProductIdentifier" type="xsd:string"/>
       <element name="ProductSettings" type="xsd:string"/>
       <element name="Region" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
@@ -237,6 +238,7 @@
       <element name="DisplayPriority" type="xsd:string"/>
       <element name="Name" type="xsd:string"/>
       <element name="ProductId" type="xsd:string"/>
+      <element name="ProductIdentifier" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
     </sequence>
   </complexType>

@@ -74,6 +74,8 @@
       <element name="LogitechSerial" type="xsd:string"/>
       <element name="Mode" type="xsd:string"/>
       <element name="Pairings" type="xsd:string"/>
+      <element name="RFEquadID" type="xsd:string" nillable="true"/>
+      <element name="RFID" type="xsd:string" nillable="true"/>
       <element name="RemoteProperties" type="ns6:RemoteProperties"/>
       <element name="SerialNumber" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
@@ -135,6 +137,7 @@
       <element name="Id" type="ns1:Id"/>
       <element name="IsRemoved" type="xsd:string"/>
       <element name="LastSetupRating" type="xsd:string"/>
+      <element name="ProductIdentifier" type="xsd:string"/>
       <element name="Properties" type="ns6:Properties"/>
       <element name="Remotes" type="ns6:Remotes"/>
       <element name="SetupSession" type="ns6:SetupSession"/>
