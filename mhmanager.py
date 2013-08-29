@@ -263,7 +263,7 @@ class MHManager():
         match = re.search('CompilationId=(.+)', compile.DownloadUrl)
         compilationId = match.group(1)
         compilationIdString = '<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">' + compilationId + '</string>'
-        maxAttempts = 2
+        maxAttempts = 3
         count = 0
         while (count < maxAttempts):
             newUrl = "http://" + url.netloc + url.path + "?" + str(uuid.uuid4())
@@ -281,6 +281,7 @@ class MHManager():
                 file = rawfile[status.end():]
                 outputFile = open(filename, 'wb')
                 outputFile.write(file)
+                outputFile.close()
                 break
             else:
                 # Give server time to respond.

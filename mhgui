@@ -625,7 +625,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         mhMgr.GetConfig(self.remote, tempFile.name)
         self.EndBusy()
         self.Hide()
-        os.system("./congruity --no-web " + tempFile.name)
+        myDir = os.path.abspath(self.resources.appdir)
+        congruityPath = os.path.join(myDir, "congruity")
+        os.system(congruityPath + " --no-web " + tempFile.name)
         os.unlink(tempFile.name)
         self.Show()
 
