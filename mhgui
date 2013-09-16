@@ -593,6 +593,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.StartBusy()
             self.resources.page_configure_device.SetDevice(
                 self.remote.SkinId,
+                self.product,
                 self.devices[deviceToConfigure[0]].Id,
                 self.devices[deviceToConfigure[0]].Name
             )
@@ -1149,16 +1150,23 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.parent.ReenableBack()
         return (None, None)
 
-    def SetDevice(self, skinId, deviceId, deviceName):
+    def SetDevice(self, skinId, product, deviceId, deviceName):
         self.skinId = skinId
+        self.product = product
         self.deviceId = deviceId
         self.deviceName = deviceName
         self.title = self.deviceName
         self.PopulateCommandsLists()
 
     def PopulateCommandsLists(self):
-        self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+        # Only populate the buttons list if this remote has buttons; if the
+        # 'remote' is a Harmony Link, it has no ProductButtonList.
+        self.remoteButtons = None
+        capabilities = self.product.SupportedCapabilities.SupportedCapability
+        if "CompiledRemoteButtonMapping" in capabilities:
+            self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
         self.remoteButtonsList = []
+        self.remoteButtonsListBox.Clear()
         if self.remoteButtons is not None:
             for button in self.remoteButtons:
                 self.remoteButtonsList.append(button.ButtonKey)
@@ -1166,6 +1174,7 @@ class ConfigureDevicePanel(WizardPanelBase):
             
         self.deviceCommands = mhMgr.GetCommands(self.deviceId)
         self.deviceCommandsList = []
+        self.deviceCommandsListBox.Clear()
         if self.deviceCommands is not None:
             for command in self.deviceCommands:
                 name = command.Name
