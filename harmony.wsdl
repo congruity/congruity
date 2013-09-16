@@ -139,6 +139,28 @@
     </sequence>
   </complexType>
 
+  <complexType name="Keyboard">
+    <sequence>
+      <element name="KeyboardId" type="xsd:string"/>
+      <element name="KeyboardLayout">
+	<complexType>
+	  <sequence>
+	    <element name="KeyboardLayoutId" type="xsd:string"/>
+	    <element name="Name" type="xsd:string"/>
+	  </sequence>
+	</complexType>
+      </element>
+      <element name="KeyboardLayoutId" type="xsd:string"/>
+      <element name="ProductId" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Keyboards">
+    <sequence>
+      <element name="Keyboard" type="ns:Keyboard" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Manufacturer">
     <sequence>
       <element name="ManufacturerId" type="xsd:string"/>
@@ -162,7 +184,7 @@
       <element name="IsEnabled" type="xsd:boolean"/>
       <element name="IsHosted" type="xsd:boolean"/>
       <element name="IsStaticLocation" type="xsd:boolean"/>
-      <element name="Keyboards" type="xsd:string"/>
+      <element name="Keyboards" type="ns:Keyboards"/>
       <element name="Manufacturer" type="ns:Manufacturer"/>
       <element name="MaxActivities" type="xsd:string"/>
       <element name="MaxDevicesPerAccount" type="xsd:integer"/>
