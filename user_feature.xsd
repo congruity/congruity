@@ -10,6 +10,8 @@
 
   <complexType name="AbstractIRAction" abstract="true">
     <sequence>
+      <element name="ActionId" type="xsd:string"/>
+      <element name="Order" type="xsd:string"/>
     </sequence>
   </complexType>
 
@@ -17,8 +19,6 @@
     <complexContent>
       <extension base="ns12:AbstractIRAction">
 	<sequence>
-	  <element name="ActionId" type="xsd:string"/>
-	  <element name="Order" type="xsd:string"/>
 	  <element name="Duration" type="xsd:string" nillable="true"/>
 	  <element name="IRCommandName" type="xsd:string"/>
 	</sequence>
@@ -30,9 +30,19 @@
     <complexContent>
       <extension base="ns12:AbstractIRAction">
 	<sequence>
-	  <element name="ActionId" type="xsd:string"/>
-	  <element name="Order" type="xsd:string"/>
 	  <element name="Delay" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="IRDevAction">
+    <complexContent>
+      <extension base="ns12:AbstractIRAction">
+	<sequence>
+	  <element name="DevActionType" type="xsd:string"/>
+	  <element name="StateName" type="xsd:string"/>
+	  <element name="StateValue" type="xsd:string"/>
 	</sequence>
       </extension>
     </complexContent>
@@ -66,6 +76,22 @@
   <complexType name="Inputs">
     <sequence>
       <element name="Input" type="ns12:Input" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="StateValue">
+    <sequence>
+      <element name="ActionSetType" type="xsd:string"/>
+      <element name="Actions" type="ns12:Actions" nillable="true"/>
+      <element name="IsAutoSwitch" type="xsd:string" nillable="true"/>
+      <element name="Order" type="xsd:string"/>
+      <element name="StateValueName" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="StateValues">
+    <sequence>
+      <element name="StateValue" type="ns12:StateValue" minOccurs="0" maxOccurs="unbounded"/>      
     </sequence>
   </complexType>
 
@@ -128,10 +154,27 @@
       <extension base="ns12:DeviceFeature">
 	<sequence>
 	  <element name="FinishActions" type="ns12:Actions" nillable="true"/>
-	  <element name="FixedDigits" type="xsd:string"/>
+	  <element name="FixedDigits" type="xsd:string" nillable="true"/>
 	  <element name="GreaterHundredActions" type="ns12:Actions" nillable="true"/>
 	  <element name="GreaterTenActions" type="ns12:Actions" nillable="true"/>
 	  <element name="StartActions" type="ns12:Actions" nillable="true"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="InternalStateFeature">
+    <complexContent>
+      <extension base="ns12:DeviceFeature">
+	<sequence>
+	  <element name="FinishActions" type="ns12:Actions" nillable="true"/>
+	  <element name="NextActions" type="ns12:Actions" nillable="true"/>
+	  <element name="PreviousActions" type="ns12:Actions" nillable="true"/>
+	  <element name="ResetActions" type="ns12:Actions" nillable="true"/>
+	  <element name="StartActions" type="ns12:Actions" nillable="true"/>
+	  <element name="StateName" type="xsd:string"/>
+	  <element name="StateValues" type="ns12:StateValues"/>
+	  <element name="ValueDelay" type="xsd:string" nillable="true"/>
 	</sequence>
       </extension>
     </complexContent>
