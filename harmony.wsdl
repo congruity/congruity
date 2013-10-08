@@ -79,6 +79,7 @@
       <element name="DeviceSearchType" type="xsd:string"/>
       <element name="DeviceTypeDisplayName" type="xsd:string"/>
       <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
+      <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
       <element name="Icon" type="xsd:string"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>

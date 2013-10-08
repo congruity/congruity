@@ -130,6 +130,7 @@
   <complexType name="Account">
     <sequence>
       <element name="AccountTypeId" type="xsd:string"/>
+      <element name="AccountUri" type="xsd:string"/>
       <element name="Activities" type="xsd:string" nillable="true"/>
       <element name="CreateDate" type="xsd:string"/>
       <element name="Devices" type="ns:Devices"/>
