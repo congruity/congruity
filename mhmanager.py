@@ -130,18 +130,8 @@ class MHPlugin(MessagePlugin):
         operation.prefix = None
         self.fix_elements(None, operation.getChildren())
 
-
-#logging.basicConfig(level=logging.INFO)
-#logging.getLogger('suds.client').setLevel(logging.DEBUG)
-#logging.getLogger('suds.transport').setLevel(logging.DEBUG)
-#logging.getLogger('suds.xsd.schema').setLevel(logging.DEBUG)
-#logging.getLogger('suds.wsdl').setLevel(logging.DEBUG)
-#logging.getLogger('suds.xsd.query').setLevel(logging.DEBUG)
-#logging.getLogger('suds.xsd.sxbasic').setLevel(logging.DEBUG)
-#logging.getLogger('suds.mx.literal').setLevel(logging.DEBUG)
-
 class MHManager():
-    def __init__(self, use_local_wsdl=False):
+    def __init__(self, use_local_wsdl=False, suds_debug=False):
         if use_local_wsdl:
             # Find the harmony.wsdl file.
             appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -157,6 +147,9 @@ class MHManager():
         else:
             url = 'http://congruity.sourceforge.net/congruity/harmony.wsdl'
             cache = ObjectCache(hours=4)
+        if suds_debug:
+            logging.basicConfig(level=logging.INFO)
+            logging.getLogger('suds.transport').setLevel(logging.DEBUG)
         self.client = Client(url, cache=cache, plugins=[MHPlugin()])
         self.logged_in = False
 

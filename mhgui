@@ -41,7 +41,10 @@ HARMONY_LINK_SKIN_ID = 82
 use_local_wsdl = False
 if '--use-local-wsdl' in sys.argv:
     use_local_wsdl = True
-mhMgr = MHManager(use_local_wsdl)
+suds_debug = False
+if '--suds-debug' in sys.argv:
+    suds_debug = True
+mhMgr = MHManager(use_local_wsdl, suds_debug)
 
 try:
     import libconcord
