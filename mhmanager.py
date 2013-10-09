@@ -747,7 +747,8 @@ class MHManager():
         if features:
             for feature in features.DeviceFeature:
                 try:
-                    if feature.InputType == "Discrete":
+                    if feature.InputType == "Discrete" or \
+                       feature.InputType == "MultiMethod":
                         inputNames = []
                         for input in feature.Inputs.Input:
                             inputNames.append(input.InputName)
