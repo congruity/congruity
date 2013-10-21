@@ -28,6 +28,7 @@ import traceback
 import wxversion
 wxversion.ensureMinimal('2.8')
 import wx
+import wx.grid
 from tempfile import NamedTemporaryFile
 sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
@@ -450,6 +451,14 @@ class RemoteConfigurationPanel(WizardPanelBase):
                 "Adjust/fix button functionality for a device"
         ))
         self.leftButtonSizer.Add(self.configureButton, 0, 0, 0)
+        self.adjustPowerSettingsButton = wx.Button(
+            self, label="Adjust Power Settings", size=self.buttonSize)
+        self.adjustPowerSettingsButton.Bind(wx.EVT_BUTTON,
+                                            self.OnAdjustPowerSettings)
+        self.adjustPowerSettingsButton.SetToolTip(wx.ToolTip(
+                "Adjust power on/off settings for a device"
+        ))
+        self.leftButtonSizer.Add(self.adjustPowerSettingsButton)
         self.buttonSizer.Add(self.leftButtonSizer, 0, 0, 0)
 
         self.rightButtonSizer = wx.BoxSizer(wx.VERTICAL)
@@ -668,6 +677,20 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.resources.page_setup_activities.LoadData(self.remote)
         self.EndBusy()
         self.parent._SetPage(self.resources.page_setup_activities, None)
+
+    def OnAdjustPowerSettings(self, event):
+        deviceToConfigure = self.devicesListBox.GetSelections()
+        if deviceToConfigure != ():
+            self.StartBusy()
+            self.resources.page_adjust_power_settings.LoadData(
+                self.devices[deviceToConfigure[0]]
+            )
+            self.EndBusy()
+            self.parent._SetPage(self.resources.page_adjust_power_settings,
+                                 None)
+        else:
+            wx.MessageBox('Please select a device to adjust.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
 
     def OnActivated(self, prev_page, data):
         self.parent.ReenableBack()
@@ -2173,6 +2196,229 @@ class EditActivityPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_setup_activities, None)
 
+class AdjustPowerSettingsPanel(WizardPanelBase):
+    _msg_welcome = (
+        "On this page, you can adjust the commands that are sent when your " +
+        "device\nis powered on and off."
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.buttonSize = (127, 33)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
+        self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.addCommandButton = wx.Button(self, label="Add Command",
+                                          size=self.buttonSize)
+        self.addCommandButton.Bind(wx.EVT_BUTTON, self.OnAddCommand)
+        self.buttonSizer.Add(self.addCommandButton)
+        self.addDelayButton = wx.Button(self, label="Add Delay",
+                                        size=self.buttonSize)
+        self.addDelayButton.Bind(wx.EVT_BUTTON, self.OnAddDelay)
+        self.buttonSizer.Add(self.addDelayButton)
+        self.editCommandButton = wx.Button(self, label="Edit Command",
+                                           size=self.buttonSize)
+        self.editCommandButton.Bind(wx.EVT_BUTTON, self.OnEditCommand)
+        self.buttonSizer.Add(self.editCommandButton)
+        self.deleteCommandButton = wx.Button(self, label="Delete Command",
+                                             size=self.buttonSize)
+        self.deleteCommandButton.Bind(wx.EVT_BUTTON, self.OnDeleteCommand)
+        self.buttonSizer.Add(self.deleteCommandButton)
+        self.sizer.Add(self.buttonSizer)
+        self.sizer.AddSpacer(10)
+
+        self.commandGrid = wx.grid.Grid(self)
+        self.commandGrid.CreateGrid(1, 2)
+        self.commandGrid.EnableEditing(False)
+        self.commandGrid.SetColLabelValue(0, "Command")
+        self.commandGrid.SetColLabelValue(1, "Duration")
+        self.commandGrid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
+        self.commandGrid.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
+        self.sizer.Add(self.commandGrid)
+
+        self.sizer.AddSpacer(10)
+        self.saveButton = wx.Button(self, label="Save Changes",
+                                    size=self.buttonSize)
+        self.saveButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
+        self.sizer.Add(self.saveButton)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def _WorkerFunction(self):
+        wx.CallAfter(
+            self.textMessage.UpdateText,
+            self._msg_welcome
+        )
+
+    def OnActivated(self, prev_page, data):
+        thread.start_new_thread(self._WorkerFunction, ())
+        self.parent.ReenableBack()
+        return (None, None)
+
+    def LoadData(self, device):
+        self.device = device
+        self.powerFeature = mhMgr.GetPowerFeature(device.Id)
+        self.deviceCommands = mhMgr.GetCommands(device.Id)
+        self.deviceCommandsList = []
+        if self.deviceCommands:
+            for command in self.deviceCommands:
+                self.deviceCommandsList.append(command.Name)
+        if self.commandGrid.GetNumberRows() > 0:
+            self.commandGrid.DeleteRows(0, self.commandGrid.GetNumberRows())
+
+        self.actions = mhMgr.GetPowerFeatureActions(
+            self.powerFeature.PowerToggleActions)
+        if self.actions is None:
+            self.actions = mhMgr.GetPowerFeatureActions(
+                self.powerFeature.PowerOnActions)
+            if self.actions is not None:
+                self.actionType = "PowerOn"
+        else:
+            self.actionType = "PowerToggle"
+
+        if self.actions:
+            for action in self.actions:
+                if action[0] == "IRPressAction":
+                    rowNum = self.AddRow()
+                    self.commandGrid.SetCellValue(rowNum, 0, action[1])
+                    self.commandGrid.SetCellValue(rowNum, 1, action[2])
+                elif action[0] == "IRDelayAction":
+                    rowNum = self.AddRow()
+                    self.commandGrid.SetCellValue(rowNum, 0, "Delay")
+                    self.commandGrid.SetCellValue(rowNum, 1, action[2])
+            self.commandGrid.AutoSize()
+            self.commandGrid.ClearSelection()
+        else:
+            self.actions = []
+
+    def AddRow(self):
+        self.commandGrid.AppendRows(1)
+        return self.commandGrid.GetNumberRows() - 1
+
+    def EditCommandRow(self, commandName, duration, rowNum=None):
+        if rowNum is None:
+            rowNum = self.AddRow()
+            self.actions.append(("IRPressAction", commandName, duration))
+        else:
+            self.actions[rowNum] = ("IRPressAction", commandName, duration)
+        self.commandGrid.SetCellValue(rowNum, 0, commandName)
+        self.commandGrid.SetCellValue(rowNum, 1, duration)
+
+    def EditDelayRow(self, delayAmount, rowNum=None):
+        if rowNum is None:
+            rowNum = self.AddRow()
+            self.actions.append(("IRDelayAction", None, delayAmount))
+        else:
+            self.actions[rowNum] = ("IRDelayAction", None, delayAmount)
+        self.commandGrid.SetCellValue(rowNum, 0, "Delay")
+        self.commandGrid.SetCellValue(rowNum, 1, delayAmount)
+
+    def ResizeGrid(self):
+        self.commandGrid.AutoSize()
+        self.Layout()
+
+    def GetSelectedRow(self):
+        try:
+            return self.commandGrid.GetSelectedRows()[0]
+        except:
+            return None
+
+    def DoEditCommand(self, rowNum=None):
+        if rowNum is not None:
+            commandName = self.commandGrid.GetCellValue(rowNum, 0)
+            duration = int(self.commandGrid.GetCellValue(rowNum, 1))
+        else:
+            commandName = None
+            duration = 0
+        dlg = wx.SingleChoiceDialog(self.parent,
+                                    'Select command:',
+                                    'Command Selection',
+                                    self.deviceCommandsList)
+        if commandName:
+            dlg.SetSelection(self.deviceCommandsList.index(commandName))
+        if dlg.ShowModal() == wx.ID_OK:
+            commandName = dlg.GetStringSelection()
+            dlg.Destroy()
+            dlg = wx.NumberEntryDialog(self.parent,
+                                       'Enter duration in seconds:',
+                                       '(0-60 s)', 'Duration Entry',
+                                       value=duration, min=0, max=60)
+            if dlg.ShowModal() == wx.ID_OK:
+                self.EditCommandRow(commandName, str(dlg.GetValue()), rowNum)
+                self.ResizeGrid()
+        dlg.Destroy()
+
+    def DoEditDelay(self, rowNum=None):
+        if rowNum is not None:
+            delayAmount = int(self.commandGrid.GetCellValue(rowNum, 1))
+        else:
+            delayAmount = 0
+        dlg = wx.NumberEntryDialog(self.parent,
+                                   'Enter delay amount in milliseconds:',
+                                   '(0-20000 ms)', 'Delay Entry',
+                                   value=delayAmount, min=0, max=20000)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.EditDelayRow(str(dlg.GetValue()), rowNum)
+            self.ResizeGrid()
+        dlg.Destroy()
+
+    def OnSelectCell(self, event):
+        self.commandGrid.SelectRow(event.GetRow())
+        event.Skip()
+
+    def OnAddCommand(self, event):
+        self.DoEditCommand()
+
+    def OnAddDelay(self, event):
+        self.DoEditDelay()
+
+    def OnEditCommand(self, event):
+        rowNum = self.GetSelectedRow()
+        if rowNum is None:
+            wx.MessageBox('Please select a command', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+        else:
+            if self.actions[rowNum][0] == "IRDelayAction":
+                self.DoEditDelay(rowNum)
+            else:
+                self.DoEditCommand(rowNum)
+
+    def OnDeleteCommand(self, event):
+        rowNum = self.GetSelectedRow()
+        if rowNum is None:
+            wx.MessageBox('Please select a command', 'Error',
+                          wx.OK | wx.ICON_WARNING)
+        else:
+            self.commandGrid.DeleteRows(rowNum, 1)
+            self.ResizeGrid()
+            del self.actions[rowNum]
+
+    def OnSaveChanges(self, event):
+        self.StartBusy()
+        mhMgr.SavePowerFeature(self.powerFeature, self.actions, self.actionType)
+        self.EndBusy()
+
+    def GetTitle(self):
+        return "Power Setting Adjustment"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -2378,6 +2624,7 @@ class Resources(object):
         self.page_harmony_link = ConfigureHarmonyLinkSettingsPanel(wizard, self)
         self.page_setup_activities = SetupActivitiesPanel(wizard, self)
         self.page_edit_activity = EditActivityPanel(wizard, self)
+        self.page_adjust_power_settings = AdjustPowerSettingsPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -2390,6 +2637,7 @@ class Resources(object):
             self.page_harmony_link,
             self.page_setup_activities,
             self.page_edit_activity,
+            self.page_adjust_power_settings,
         ]
 
 class Finalizer(object):

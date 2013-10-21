@@ -97,7 +97,7 @@
 
   <complexType name="DeviceFeature" abstract="true">
     <sequence>
-      <element name="DateModified" type="xsd:string" nillable="true"/>
+      <element name="DateModified" type="xsd:dateTime" nillable="true"/>
       <element name="DeviceId" type="ns1:Id"/>
       <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
       <element name="State" type="xsd:string"/>

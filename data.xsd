@@ -28,7 +28,7 @@
   <complexType name="GlobalDeviceVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:boolean"/>
-      <element name="Value" type="xsd:string"/>
+      <element name="Value" type="xsd:long"/>
       <element name="IsDefault" type="xsd:boolean"/>
       <element name="VersionId" type="xsd:string"/>
     </sequence>

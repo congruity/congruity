@@ -68,6 +68,8 @@ TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (ACTIVITY_NS, "PlayMovieActivityRole"),
     (ACTIVITY_NS, "RunLogitechGoogleTVActivityRole"),
     (ACTIVITY_NS, "VolumeActivityRole"),
+    (USER_FEATURE_NS, "IRDelayAction"),
+    (USER_FEATURE_NS, "IRDevAction"),
     (USER_FEATURE_NS, "IRPressAction"),
     (USER_FEATURE_NS, "InputFeature"),
     (USER_FEATURE_NS, "PowerFeature"),
@@ -766,6 +768,69 @@ class MHManager():
             return result.KeyValueOfDeviceIdArrayOfDeviceFeatureeiEyJu8p[0].\
                 Value
         return None
+
+    def GetPowerFeature(self, deviceId):
+        features = self.GetUserFeatures(deviceId)
+        if features:
+            for feature in features.DeviceFeature:
+                if feature.__class__.__name__ == "PowerFeature":
+                    return feature
+        return None
+
+    # This returns an array of tuples of (IRPressAction/IRDelayAction, Command,
+    # Duration) for the given Power Feature Type (ie, pass in
+    # powerFeature.PowerToggleActions)
+    def GetPowerFeatureActions(self, powerFeatureType):
+        if powerFeatureType and powerFeatureType.AbstractIRAction:
+            actions = []
+            for action in powerFeatureType.AbstractIRAction:
+                if action.__class__.__name__ == "IRPressAction":
+                    if action.Duration is None:
+                        duration = "0"
+                    else:
+                        duration = action.Duration
+                    actions.append(("IRPressAction", action.IRCommandName, 
+                                    duration))
+                elif action.__class__.__name__ == "IRDelayAction":
+                    actions.append(("IRDelayAction", None, action.Delay))
+            return actions
+        else:
+            return None
+
+    # powerFeatureActions is an array of (IRPressAction/IRDelayAction, Command,
+    # Duration); actionType is "PowerToggle", "PowerOn", etc.
+    def SavePowerFeature(self, powerFeature, powerFeatureActions, actionType):
+        ufActions = self.client.factory.create('{' + USER_FEATURE_NS +
+                                             '}Actions')
+        actionNum = 1
+        for pfAction in powerFeatureActions:
+            ufAction = None
+            if pfAction[0] == "IRPressAction":
+                ufAction = self.client.factory.create('{' + USER_FEATURE_NS +
+                                                      '}IRPressAction')
+                ufAction.ActionId = 0
+                ufAction.Order = actionNum
+                ufAction.Duration = pfAction[2]
+                ufAction.IRCommandName = pfAction[1]
+            elif pfAction[0] == "IRDelayAction":
+                ufAction = self.client.factory.create('{' + USER_FEATURE_NS +
+                                                      '}IRDelayAction')
+                ufAction.ActionId = 3
+                ufAction.Order = actionNum
+                ufAction.Delay = pfAction[2]
+            if ufAction is not None:
+                ufActions.AbstractIRAction.append(ufAction)
+                actionNum += 1
+
+        if actionType == "PowerToggle":
+            powerFeature.PowerToggleActions = ufActions
+        elif actionType == "PowerOn":
+            powerFeature.PowerOnActions = ufActions
+        deviceFeatures = self.client.factory.create('{' + USER_FEATURE_NS
+                                                    + '}DeviceFeatures')
+        deviceFeatures.DeviceFeature.append(powerFeature)
+        return self.client.service['UserFeatureManager'].SaveUserFeatures(
+            deviceFeatures)
 
     # Adds a learned IR command (if the command name does not already exist) or
     # updates the IR command for the specified command name and device.
