@@ -1,0 +1,46 @@
+.TH MHGUI "1" "October 2013" "mhgui" "User Commands"
+.SH NAME
+mhgui \- A GUI to access the myharmony.com web service
+.SH SYNOPSIS
+.B mhgui
+[OPTIONS]
+.SH DESCRIPTION
+.B mhgui
+is intended to access the web service behind the myharmony.com web site, to
+enable programming of Logitech Harmony remote controls that are only supported
+through this web site (which normally requires the use of Microsoft
+Silverlight).
+.SH OPTIONS
+.PP
+\-\-use\-local\-wsdl
+.RS 4
+Normally, mhgui will download its WSDL files from Sourceforge.  This
+option will force mhgui to use WSDL files from the local filesystem.
+This could be used for example, if Sourceforge was down for some reason.
+.RE
+.PP
+\-\-suds\-debug
+.RS 4
+This option will cause mhgui to log debug information related to its
+communications with the web service.  This is mainly useful for
+troubleshooting problems, and these logs may be requested by the developers.
+.SH AUTHOR
+Written by Scott Talbert.
+.SH "REPORTING BUGS"
+Report bugs to <concordance-devel@lists.sourceforge.net>.
+.PP
+.B mhgui
+utilizes
+.B libconcord.
+Until
+.B mhgui
+grows its own sourceforge project, it piggy-backs off the
+.B concordance/libconcord
+mailing list.
+.SH COPYRIGHT
+Copyright \(co 2012-2013 Scott Talbert.
+.br
+This is free software.  You may redistribute copies of it under the terms of
+the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.
+There is NO WARRANTY, to the extent permitted by law.
+
