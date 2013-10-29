@@ -33,8 +33,10 @@ install:
 	rm -f mhmanager.py.patched
 	mkdir -p --mode=755 $(DESTDIR)$(MAN1DIR)
 	$(INSTALL) --mode=644 congruity.1 $(DESTDIR)$(MAN1DIR)
+	$(INSTALL) --mode=644 mhgui.1 $(DESTDIR)$(MAN1DIR)
 	mkdir -p --mode=755 $(DESTDIR)$(DESKTOPDIR)
 	$(INSTALL) --mode=644 congruity.desktop $(DESTDIR)$(DESKTOPDIR)
+	$(INSTALL) --mode=644 mhgui.desktop $(DESTDIR)$(DESKTOPDIR)
 ifeq ($(RUN_UPDATE_DESKTOP_DB),1)
 	$(UPDATE_DESKTOP_DB) > /dev/null 2>&1 || :
 endif
@@ -44,7 +46,9 @@ uninstall:
 	/bin/rm -f $(DESTDIR)$(BINDIR)/mhgui
 	/bin/rm -rf $(DESTDIR)$(APPSHAREDIR)
 	/bin/rm -f $(DESTDIR)$(MAN1DIR)/congruity.1
+	/bin/rm -f $(DESTDIR)$(MAN1DIR)/mhgui.1
 	/bin/rm -f $(DESTDIR)$(DESKTOPDIR)/congruity.desktop
+	/bin/rm -f $(DESTDIR)$(DESKTOPDIR)/mhgui.desktop
 ifeq ($(RUN_UPDATE_DESKTOP_DB),1)
 	$(UPDATE_DESKTOP_DB) > /dev/null 2>&1 || :
 endif
