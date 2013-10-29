@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=MHGUI
+Exec=mhgui
+Type=Application
+Comment=GUI for accessing MyHarmony.com web service
+Categories=Utility;
