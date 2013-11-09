@@ -258,7 +258,7 @@ class MHManager():
         match = re.search('CompilationId=(.+)', compile.DownloadUrl)
         compilationId = match.group(1)
         compilationIdString = '<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">' + compilationId + '</string>'
-        maxAttempts = 3
+        maxAttempts = 15
         count = 0
         while (count < maxAttempts):
             newUrl = "http://" + url.netloc + url.path + "?" + str(uuid.uuid4())
@@ -282,6 +282,8 @@ class MHManager():
                 # Give server time to respond.
                 time.sleep(4)
                 count += 1
+        if count == maxAttempts:
+            raise Exception("Failed to download config file")
 
     def GetAccountForRemote(self, remoteId):
         for account in self.household.Accounts.Account:
