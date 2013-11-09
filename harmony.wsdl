@@ -318,6 +318,8 @@
       <element name="GlobalRemoteId" type="xsd:string"/>
       <element name="IsBanished" type="xsd:string"/>
       <element name="IsLocked" type="xsd:string"/>
+      <element name="LastProductIdentifier" type="xsd:string"/>
+      <element name="OriginalProductIdentifier" type="xsd:string"/>
       <element name="ProductId" type="xsd:string"/>
       <element name="SerialNumber" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
