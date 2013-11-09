@@ -942,19 +942,19 @@ class CreateAccountPanel(WizardPanelBase):
 
         self.lineSevenSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.termsCheckBox = wx.CheckBox(self,
-            label="I agree to Terms of Use and Privacy Policy")
+            label="I agree to the Logitech Terms of Use and Privacy Policy")
         self.sizer.Add(self.termsCheckBox)
         self.contactCheckBox = wx.CheckBox(self,
-            label="I agree to receive a survey from Logitech")
+            label="Keep me informed about Logitech offers and products.")
         self.sizer.Add(self.contactCheckBox)
 
         self.lineEightSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.termsOfUseLink = wx.HyperlinkCtrl(self, -1, "Terms of Use",
-            "http://files.myharmony.com/Assets/legal/en/termsofuse.html")
+            "https://files.myharmony.com/Assets/legal/en/termsofuse.html")
         self.lineEightSizer.Add(self.termsOfUseLink)
         self.lineEightSizer.AddSpacer(10)
         self.privacyPolicyLink = wx.HyperlinkCtrl(self, -1, "Privacy Policy",
-            "http://files.myharmony.com/Assets/legal/en/privacypolicy.html")
+            "https://files.myharmony.com/Assets/legal/en/privacypolicy.html")
         self.lineEightSizer.Add(self.privacyPolicyLink)
         self.sizer.Add(self.lineEightSizer)
 
