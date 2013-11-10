@@ -38,6 +38,7 @@ from mhmanager import SaveActivityTemplate
 version = "17"
 
 HARMONY_LINK_SKIN_ID = 82
+WATCH_TV_BUTTON_SKIN_IDS = [78, 79, 80, 81]
 
 use_local_wsdl = False
 if '--use-local-wsdl' in sys.argv:
@@ -537,7 +538,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if "CompiledRemoteButtonMapping" in capabilities or \
                 "ActivityCompiledRemoteButtonMapping" in capabilities:
             self.AddConfigButtons()
-        if "PartiallySetupActivities" in capabilities:
+        if int(remote.SkinId) in WATCH_TV_BUTTON_SKIN_IDS:
             self.AddSetupWatchTVButton()
         if "Wifi" in capabilities:
             self.AddConfigureHarmonyLinkButton()
