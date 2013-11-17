@@ -301,7 +301,7 @@ class RemoteSelectPanel(WizardPanelBase):
         for name in supportedRemotes:
             msg += '\n' + name
         msg += "\n\nNOTE: MHGUI has only been tested with Harmony 200, 300,"
-        msg += "\nand Link."
+        msg += "\n650, and Link."
         wx.MessageBox(msg, 'Connect Remote', wx.OK)
 
         try:
