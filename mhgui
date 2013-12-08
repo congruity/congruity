@@ -28,6 +28,7 @@ import traceback
 import wxversion
 wxversion.ensureMinimal('2.8')
 import wx
+import wx.animate
 import wx.grid
 from tempfile import NamedTemporaryFile
 sys.path.append('/usr/share/congruity')
@@ -74,6 +75,61 @@ ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
 def dummy_callback_imp(stage_id, count, current, total, type, context, stages):
     pass
 dummy_cb = libconcord.callback_type(dummy_callback_imp)
+
+class ThrobberDialog(wx.Dialog):
+    TITLE_REMOTE = "Please wait, contacting remote..."
+    TITLE_WEBSITE = "Please wait, contacting website..."
+    def __init__(self, title):
+        if title is None:
+            self.title = self.TITLE_WEBSITE
+        else:
+            self.title = title
+        wx.Dialog.__init__(self, None, -1, size=(256, 256), title=self.title)
+        self.SetBackgroundColour("white")
+        self.gif = wx.animate.GIFAnimationCtrl(self, -1,
+                                               self.FindGif("throbber.gif"))
+        self.gif.GetPlayer().UseBackgroundColour(True)
+	self.gif.Play()
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.AddSpacer(64)
+        self.sizer.Add(self.gif, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        self.SetSizer(self.sizer)
+    def FindGif(self, filename):
+        appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
+        dirs = ['/usr/share/congruity', appdir, '.']
+        for dir in dirs:
+            fpath = os.path.join(dir, filename)
+            if not os.path.isfile(fpath):
+                continue
+            return fpath
+        raise Exception("Can't load " + filename)
+
+class BackgroundTask:
+    def __init__(self, backgroundFunctionSpec, onDoneFunctionSpec,
+                 modalThrobber = True, throbberTitle = None):
+        self.backgroundFunction = backgroundFunctionSpec[0]
+        self.backgroundFunctionArgs = backgroundFunctionSpec[1:]
+        self.onDoneFunction = onDoneFunctionSpec[0]
+        self.onDoneFunctionArgs = onDoneFunctionSpec[1:]
+        thread.start_new_thread(self.ThreadFunction, ())
+        self.throbber = None
+        if modalThrobber is not None:
+            self.throbber = ThrobberDialog(throbberTitle)
+            if modalThrobber is True:
+                self.throbber.ShowModal()
+                self.throbber.Destroy()
+            else:
+                self.throbber.Show()
+    def ThreadFunction(self):
+        result = self.backgroundFunction(*self.backgroundFunctionArgs)
+        wx.CallAfter(self.ThreadDoneFunction, result)
+    def ThreadDoneFunction(self, bgFuncResult):
+        if self.throbber is not None:
+            if self.throbber.IsModal():
+                self.throbber.EndModal(0)
+            else:
+                self.throbber.Destroy()
+        self.onDoneFunction(bgFuncResult, *self.onDoneFunctionArgs)
 
 class WrappedStaticText(wx.StaticText):
     def __init__(self, parent):
@@ -126,16 +182,6 @@ class WizardPanelBase(wx.Panel):
 
     def GetNext(self):
         return (None, None)
-
-    def StartBusy(self):
-        self.parent.Hide()
-        self.busy = wx.BusyInfo("Please wait...")
-        wx.MilliSleep(100)
-        wx.Yield()
-
-    def EndBusy(self):
-        self.busy = None
-        self.parent.Show()
 
 class WelcomePanel(WizardPanelBase):
     _msg_welcome = (
@@ -197,21 +243,28 @@ class WelcomePanel(WizardPanelBase):
         return False
 
     def OnNext(self):
-        if mhMgr.Login(self.usernameCtrl.GetValue(),
-                       self.passwordCtrl.GetValue()) is True:
-            return True
+        username = self.usernameCtrl.GetValue()
+        password = self.passwordCtrl.GetValue()
+        BackgroundTask((self.DoLogin, username, password), (self.FinishLogin,))
+        return False
+
+    def DoLogin(self, username, password):
+        return mhMgr.Login(username, password)
+
+    def FinishLogin(self, loginResult):
+        if loginResult is True:
+            self.parent._SetPage(self.next, True, True)
         else:
             wx.MessageBox('Login failed.', 'Login failed.', wx.OK |
                           wx.ICON_WARNING)
             self.usernameCtrl.Clear()
             self.passwordCtrl.Clear()
-            return False
 
     def GetNext(self):
-        return (self.next, None)
+        return (self.next, True, True)
 
     def OnCreateAccount(self, event):
-        self.parent._SetPage(self.resources.page_create_account, None)
+        self.parent._SetPage(self.resources.page_create_account, None, True)
 
 class RemoteSelectPanel(WizardPanelBase):
     _msg_welcome = (
@@ -256,31 +309,38 @@ class RemoteSelectPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
-        # Get list of remotes for this account from the web service
-        wx.CallAfter(self.StartBusy)
-        wx.CallAfter(self.UpdateRemotes)
-        wx.CallAfter(self.EndBusy)
-
-        wx.CallAfter(self.parent.ReenableNext)
-
-    def UpdateRemotes(self):
+    def LoadData(self):
         self.remotes = mhMgr.GetRemotes()
         self.remoteDisplayNames = []
         for remote in self.remotes:
             product = mhMgr.GetProduct(remote.SkinId)
             self.remoteDisplayNames.append(product.DisplayName)
+
+    def AddRemote(self, serialNumber, skinId, usbPid, usbVid):
+        result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
+        if result is not None:
+            self.LoadData()
+        return result
+
+    def DeleteRemote(self, remoteId):
+        mhMgr.DeleteRemote(remoteId)
+        self.LoadData()
+
+    def LoadAddRemoteData(self):
+        self.supportedRemotes = mhMgr.GetSupportedRemoteNames()
+        self.supportedSkins = mhMgr.GetSupportedRemoteSkinIds()
+
+    def LoadDataUI(self, loadDataResult):
         self.remotesListBox.Clear()
         self.remotesListBox.Set(self.remoteDisplayNames)
         self.Layout()
+        self.parent.Show()
 
-    def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+    def OnActivated(self, prev_page, loadData):
+        self.textMessage.UpdateText(self._msg_welcome)
+        self.parent.ReenableNext()
+        if loadData:
+            BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
     def GetTitle(self):
@@ -290,15 +350,17 @@ class RemoteSelectPanel(WizardPanelBase):
         return False
 
     def OnAddRemote(self, event):
+        BackgroundTask((self.LoadAddRemoteData,), (self.DoAddRemote,))
+
+    def DoAddRemote(self, loadResult):
         if len(self.remotes) >= 6:
             wx.MessageBox('Each account can support up to 6 remotes.',
                           'Maximum Number of Remotes Reached',
                           wx.OK | wx.ICON_WARNING)
             return            
-        supportedRemotes = mhMgr.GetSupportedRemoteNames()
         msg = 'Please ensure your remote control is connected.'
         msg += '\n\nThe web service advertises support for these models:'
-        for name in supportedRemotes:
+        for name in self.supportedRemotes:
             msg += '\n' + name
         msg += "\n\nNOTE: MHGUI has only been tested with Harmony 200, 300,"
         msg += "\n650, and Link."
@@ -340,8 +402,7 @@ class RemoteSelectPanel(WizardPanelBase):
         model = libconcord.get_mfg() + ' ' + libconcord.get_model()
         libconcord.deinit_concord()
         # Check whether this is a supported remote.
-        supportedSkins = mhMgr.GetSupportedRemoteSkinIds()
-        if skinId not in supportedSkins:
+        if skinId not in self.supportedSkins:
             wx.MessageBox('Sorry, this remote model (' + model + ') is '
                           + 'not supported by this software.  Please '
                           + 'use members.harmonyremote.com.',
@@ -355,7 +416,10 @@ class RemoteSelectPanel(WizardPanelBase):
                               wx.OK | wx.ICON_WARNING)
                 return
         # Actually add the remote!
-        result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
+        BackgroundTask((self.AddRemote, serialNumber, skinId, usbPid, usbVid),
+                       (self.FinishAddRemote, skinId))
+
+    def FinishAddRemote(self, result, skinId):
         if result is not None:
             if skinId == HARMONY_LINK_SKIN_ID:
                 wx.MessageBox('Remote successfully added.  Make sure to select'
@@ -365,7 +429,7 @@ class RemoteSelectPanel(WizardPanelBase):
             else:
                 wx.MessageBox('Remote successfully added.', 'Success',
                               wx.OK)
-            self.UpdateRemotes()
+            self.LoadDataUI(None)
             return
         else:
             wx.MessageBox('Remote addition failed.', 'Failure',
@@ -384,22 +448,18 @@ class RemoteSelectPanel(WizardPanelBase):
             dlg.Destroy()
             if result:
                 remoteId = self.remotes[self.remotesListBox.GetSelection()].Id
-                mhMgr.DeleteRemote(remoteId)
-                self.UpdateRemotes()
+                BackgroundTask((self.DeleteRemote, remoteId),
+                               (self.LoadDataUI,))
         else:
             wx.MessageBox('Please make a selection.', 'No selection made.',
                           wx.OK | wx.ICON_WARNING)
 
     def OnUpdateAccount(self, event):
-        self.parent._SetPage(self.resources.page_create_account, True)
+        self.parent._SetPage(self.resources.page_create_account, True, True)
 
     def OnNext(self):
         if self.remotesListBox.GetSelection() != -1:
             self.next = self.resources.page_remote_configuration
-            self.StartBusy()
-            self.resources.page_remote_configuration.SetRemote(
-                self.remotes[self.remotesListBox.GetSelection()])
-            self.EndBusy()
             return True
         else:
             wx.MessageBox('Please make a selection.', 'No selection made.',
@@ -407,7 +467,8 @@ class RemoteSelectPanel(WizardPanelBase):
             return False
 
     def GetNext(self):
-        return (self.next, None)
+        return (self.next, self.remotes[self.remotesListBox.GetSelection()],
+                True)
 
 class RemoteConfigurationPanel(WizardPanelBase):
     _msg_welcome = (
@@ -521,9 +582,11 @@ class RemoteConfigurationPanel(WizardPanelBase):
         ))
         self.rightButtonSizer.Add(self.setupActivitiesButton, 0, 0, 0)
 
-    def SetRemote(self, remote):
-        self.remote = remote
-        self.product = mhMgr.GetProduct(remote.SkinId)
+    def LoadData(self):
+        self.product = mhMgr.GetProduct(self.remote.SkinId)
+        self.devices = mhMgr.GetDevices(self.remote.Id)
+
+    def LoadDataUI(self, loadDataResult):
         self._msg_welcome = "Remote Configuration for " \
             + self.product.DisplayName + "\n\nDevices (maximum of " \
             + str(self.product.MaxDevicesPerAccount) + "):"
@@ -538,7 +601,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if "CompiledRemoteButtonMapping" in capabilities or \
                 "ActivityCompiledRemoteButtonMapping" in capabilities:
             self.AddConfigButtons()
-        if int(remote.SkinId) in WATCH_TV_BUTTON_SKIN_IDS:
+        if int(self.remote.SkinId) in WATCH_TV_BUTTON_SKIN_IDS:
             self.AddSetupWatchTVButton()
         if "Wifi" in capabilities:
             self.AddConfigureHarmonyLinkButton()
@@ -546,9 +609,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.AddSetupActivitiesButton()
 
         self.Layout()
+        self.parent.Show()
 
     def PopulateDevicesList(self):
-        self.devices = mhMgr.GetDevices(self.remote.Id)
         self.devicesList = []
         if self.devices is not None:
             for device in self.devices:
@@ -575,12 +638,19 @@ class RemoteConfigurationPanel(WizardPanelBase):
             result = dlg.ShowModal() == wx.ID_YES
             dlg.Destroy()
             if result:
-                mhMgr.DeleteDevice(self.devices[deviceToDelete[0]].Id)
-                self.PopulateDevicesList()
-                self.Layout()
+                BackgroundTask((self.DoDelete, deviceToDelete),
+                               (self.FinishDelete,))
         else:
             wx.MessageBox('Please select a device to delete.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def DoDelete(self, deviceToDelete):
+        mhMgr.DeleteDevice(self.devices[deviceToDelete[0]].Id)
+        self.devices = mhMgr.GetDevices(self.remote.Id)
+
+    def FinishDelete(self, result):
+        self.PopulateDevicesList()
+        self.Layout()
 
     def OnRename(self, event):
         deviceToRename = self.devicesListBox.GetSelections()
@@ -593,25 +663,31 @@ class RemoteConfigurationPanel(WizardPanelBase):
             newName = dlg.GetValue()
             dlg.Destroy()
             if result:
-                mhMgr.RenameDevice(self.devices[deviceToRename[0]].Id, newName)
-                self.PopulateDevicesList()
-                self.Layout()
+                BackgroundTask((self.DoRename, deviceToRename, newName),
+                               (self.FinishRename,))
         else:
             wx.MessageBox('Please select a device to rename.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
 
+    def DoRename(self, deviceToRename, newName):
+        mhMgr.RenameDevice(self.devices[deviceToRename[0]].Id, newName)
+        self.devices = mhMgr.GetDevices(self.remote.Id)
+
+    def FinishRename(self, result):
+        self.PopulateDevicesList()
+        self.Layout()
+
     def OnConfigure(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
         if deviceToConfigure != ():
-            self.StartBusy()
-            self.resources.page_configure_device.SetDevice(
+            params = (
                 self.remote.SkinId,
                 self.product,
                 self.devices[deviceToConfigure[0]].Id,
                 self.devices[deviceToConfigure[0]].Name
             )
-            self.EndBusy()
-            self.parent._SetPage(self.resources.page_configure_device, None)
+            self.parent._SetPage(self.resources.page_configure_device, params,
+                                 True)
         else:
             wx.MessageBox('Please select a device to configure.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
@@ -619,14 +695,13 @@ class RemoteConfigurationPanel(WizardPanelBase):
     def OnFavoriteChannels(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
         if deviceToConfigure != ():
-            self.StartBusy()
-            self.resources.page_favorite_channels.SetDevice(
+            params = (
                 self.remote.SkinId,
                 self.devices[deviceToConfigure[0]].Id,
                 self.devices[deviceToConfigure[0]].Name
             )
-            self.EndBusy()
-            self.parent._SetPage(self.resources.page_favorite_channels, None)
+            self.parent._SetPage(self.resources.page_favorite_channels, params,
+                                 True)
         else:
             wx.MessageBox('Please select a device for which to configure the '
                           + "favorite channels.", 'No selection made.',
@@ -635,15 +710,22 @@ class RemoteConfigurationPanel(WizardPanelBase):
     def OnSync(self, event):
         tempFile = NamedTemporaryFile(delete=False)
         tempFile.close()
-        self.StartBusy()
-        mhMgr.GetConfig(self.remote, tempFile.name)
-        self.EndBusy()
-        self.Hide()
+        BackgroundTask((mhMgr.GetConfig, self.remote, tempFile.name),
+                       (self.FinishSync, tempFile.name))
+
+    def FinishSync(self, getConfigResult, tempFileName):
+        self.parent.Hide()
+        BackgroundTask((self.DoCongruity, tempFileName),
+                       (self.FinishCongruity,), None)
+
+    def DoCongruity(self, tempFileName):
         myDir = os.path.abspath(self.resources.appdir)
         congruityPath = os.path.join(myDir, "congruity")
-        os.system(congruityPath + " --no-web " + tempFile.name)
-        os.unlink(tempFile.name)
-        self.Show()
+        os.system(congruityPath + " --no-web " + tempFileName)
+        os.unlink(tempFileName)
+
+    def FinishCongruity(self, result):
+        self.parent.Show()
 
     def OnDownloadConfig(self, event):
         dialog = wx.FileDialog(
@@ -654,47 +736,41 @@ class RemoteConfigurationPanel(WizardPanelBase):
         )
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
-            self.StartBusy()
-            mhMgr.GetConfig(self.remote, filename)
-            self.EndBusy()
-            wx.MessageBox('Config file saved to ' + filename,
-                          'Download complete.', wx.OK)
+            dialog.Destroy()
+            BackgroundTask((mhMgr.GetConfig, self.remote, filename),
+                           (self.FinishDownloadConfig, filename))
+        else:
+            dialog.Destroy()
+
+    def FinishDownloadConfig(self, getConfigResult, filename):
+        wx.MessageBox('Config file saved to ' + filename,
+                      'Download complete.', wx.OK)
 
     def OnSetupWatchTV(self, event):
-        self.StartBusy()
-        self.resources.page_setup_watch_tv.SetRemote(self.remote)
-        self.EndBusy()
-        self.parent._SetPage(self.resources.page_setup_watch_tv, None)
+        self.parent._SetPage(self.resources.page_setup_watch_tv, self.remote,
+                             True)
 
     def OnConfigureHarmonyLink(self, event):
-        self.StartBusy()
-        result = self.resources.page_harmony_link.LoadData(self.remote)
-        self.EndBusy()
-        if result:
-            self.parent._SetPage(self.resources.page_harmony_link, None)
+        self.parent._SetPage(self.resources.page_harmony_link, self.remote)
 
     def OnSetupActivities(self, event):
-        self.StartBusy()
-        self.resources.page_setup_activities.LoadData(self.remote)
-        self.EndBusy()
-        self.parent._SetPage(self.resources.page_setup_activities, None)
+        self.parent._SetPage(self.resources.page_setup_activities, self.remote,
+                             True)
 
     def OnAdjustPowerSettings(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
         if deviceToConfigure != ():
-            self.StartBusy()
-            self.resources.page_adjust_power_settings.LoadData(
-                self.devices[deviceToConfigure[0]]
-            )
-            self.EndBusy()
             self.parent._SetPage(self.resources.page_adjust_power_settings,
-                                 None)
+                                 self.devices[deviceToConfigure[0]], True)
         else:
             wx.MessageBox('Please select a device to adjust.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
 
-    def OnActivated(self, prev_page, data):
+    def OnActivated(self, prev_page, remote):
         self.parent.ReenableBack()
+        if remote is not None:
+            self.remote = remote
+            BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
     def GetTitle(self):
@@ -710,7 +786,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         return (self.next, None)
 
     def GetBack(self):
-        return (self.resources.page_remote_select, None)
+        return (self.resources.page_remote_select, False)
 
 class AddDevicePanel(WizardPanelBase):
     _msg_welcome = (
@@ -760,21 +836,16 @@ class AddDevicePanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
+        self.textMessage.UpdateText(self._msg_welcome)
+        self.parent.ReenableBack()
         self.remote = data
         self.ClearPage()
-        self.parent.ReenableBack()
-        thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
     def OnSearch(self, event):
         self.searchResultsList = []
+        self.searchResultsListBox.Set(self.searchResultsList)
         if self.manufacturerCtrl.IsEmpty():
             wx.MessageBox('Please enter a manufacturer.',
                           'No manufacturer entered.', wx.OK | wx.ICON_WARNING)
@@ -782,38 +853,43 @@ class AddDevicePanel(WizardPanelBase):
             wx.MessageBox('Please enter a model number.',
                           'No model number entered.', wx.OK | wx.ICON_WARNING)
         else:
-            searchResults = mhMgr.SearchDevices(
-                self.manufacturerCtrl.GetValue(),
-                self.modelNumberCtrl.GetValue(),
-                5)
-            if searchResults.Status == "NoMatchFound":
-                wx.MessageBox('Sorry, no devices were found.',
-                              'No devices found.', wx.OK | wx.ICON_WARNING)
-            else:
-                self.matches = searchResults.Matches.PublicDeviceSearchMatch
-                for match in self.matches:
-                    self.searchResultsList.append(match.Manufacturer + " "
-                                                  + match.DeviceModel)
-        self.searchResultsListBox.Set(self.searchResultsList)
+            manufacturer = self.manufacturerCtrl.GetValue()
+            modelNumber = self.modelNumberCtrl.GetValue()
+            BackgroundTask((self.DoSearch, manufacturer, modelNumber),
+                           (self.FinishSearch,))
+
+    def DoSearch(self, manufacturer, modelNumber):
+        return mhMgr.SearchDevices(manufacturer, modelNumber, 5)
+
+    def FinishSearch(self, searchResults):
+        if searchResults.Status == "NoMatchFound":
+            wx.MessageBox('Sorry, no devices were found.',
+                          'No devices found.', wx.OK | wx.ICON_WARNING)
+        else:
+            self.matches = searchResults.Matches.PublicDeviceSearchMatch
+            for match in self.matches:
+                self.searchResultsList.append(match.Manufacturer + " "
+                                              + match.DeviceModel)
+            self.searchResultsListBox.Set(self.searchResultsList)
 
     def OnAdd(self, event):
         deviceToAdd = self.searchResultsListBox.GetSelections()
         if deviceToAdd != ():
-            self.StartBusy()
-            result = mhMgr.AddDevice(self.matches[deviceToAdd[0]],
-                                     self.remote.Id)
-            if result is None:
-                self.EndBusy()
-                wx.MessageBox('Device addition failed!',
-                              'Failure', wx.OK | wx.ICON_WARNING)
-            else:
-                self.resources.page_remote_configuration.PopulateDevicesList()
-                self.EndBusy()
-                self.parent._SetPage(self.resources.page_remote_configuration,
-                                     None)
+            BackgroundTask((self.DoAdd, deviceToAdd), (self.FinishAdd,))
         else:
             wx.MessageBox('Please select a device to add.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def DoAdd(self, deviceToAdd):
+        return mhMgr.AddDevice(self.matches[deviceToAdd[0]], self.remote.Id)
+
+    def FinishAdd(self, result):
+        if result is None:
+            wx.MessageBox('Device addition failed!',
+                          'Failure', wx.OK | wx.ICON_WARNING)
+        else:
+            self.parent._SetPage(self.resources.page_remote_configuration,
+                                 self.remote, True)
 
     def ClearPage(self):
         self.manufacturerCtrl.Clear()
@@ -862,12 +938,6 @@ class CreateAccountPanel(WizardPanelBase):
             "QuestionFirstPet",
             "QuestionMovieCharacter" ]
 
-        # Probably should do this in a thread or something as this makes a call
-        # to the website.
-        self.countryLists = mhMgr.GetCountryLists()
-        self.countryCodes = self.countryLists[0]
-        self.countries = self.countryLists[1]
-
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = WrappedStaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
@@ -890,7 +960,7 @@ class CreateAccountPanel(WizardPanelBase):
         self.lineTwoSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.countryLabel = wx.StaticText(self, -1, "Country:")
         self.lineTwoSizer.Add(self.countryLabel, 0, ALIGN_LCA)
-        self.countryChoice = wx.Choice(self, -1, choices=self.countries)
+        self.countryChoice = wx.Choice(self, -1)
         self.lineTwoSizer.Add(self.countryChoice)
         self.sizer.Add(self.lineTwoSizer)
         self.sizer.AddSpacer(12)
@@ -963,29 +1033,36 @@ class CreateAccountPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
+    def OnActivated(self, prev_page, data):
         self.parent.ReenableNext()
         self.parent.ReenableBack()
-
-    def OnActivated(self, prev_page, data):
         if data is not None:
             self.isUpdate = True
             self.parent.title.SetLabel("Account Update")
             self._msg_welcome = self._msg_welcome_update
-            self.PopulateData()
         else:
             self.isUpdate = False
             self._msg_welcome = self._msg_welcome_create
             self.ClearData()
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
+    def LoadData(self):
+        self.countryLists = mhMgr.GetCountryLists()
+        self.countryCodes = self.countryLists[0]
+        self.countries = self.countryLists[1]
+        if self.isUpdate:
+            self.details = mhMgr.GetAccountDetails()
+
+    def LoadDataUI(self, loadDataResult):
+        self.countryChoice.SetItems(self.countries)
+        if self.isUpdate:
+            self.PopulateData()
+        self.parent.Show()
+
     def PopulateData(self):
-        details = mhMgr.GetAccountDetails()
+        details = self.details
         self.firstNameCtrl.SetValue(details.firstName)
         self.lastNameCtrl.SetValue(details.lastName)
         self.countryChoice.SetSelection(
@@ -1071,31 +1148,39 @@ class CreateAccountPanel(WizardPanelBase):
             mhAccount.keepMeInformed = "false"
 
         if not self.isUpdate:
-            result = mhMgr.CreateAccount(mhAccount)
-            if result is None:
-                wx.MessageBox('Account created successfully.',
-                              'Success', wx.OK)
-                self.parent._SetPage(self.resources.page_welcome, None)
-            else:
-                wx.MessageBox(result, 'Error', wx.OK | wx.ICON_WARNING)
-                return
+            BackgroundTask((self.DoCreateAccount, mhAccount),
+                           (self.FinishCreateAccount,))
         else:
-            result = mhMgr.UpdateAccountDetails(mhAccount)
-            if result:
-                wx.MessageBox('Account updated successfully.', 'Success',
-                              wx.OK)
-                self.parent._SetPage(self.resources.page_remote_select, None)
-            else:
-                wx.MessageBox('Account update failed.', 'Failure',
-                              wx.OK | wx.ICON_WARNING)
-                return
+            BackgroundTask((self.DoUpdateAccount, mhAccount),
+                           (self.FinishUpdateAccount,))
+
+    def DoCreateAccount(self, mhAccount):
+        return mhMgr.CreateAccount(mhAccount)
+
+    def FinishCreateAccount(self, result):
+        if result is None:
+            wx.MessageBox('Account created successfully.', 'Success', wx.OK)
+            self.parent._SetPage(self.resources.page_welcome, None)
+        else:
+            wx.MessageBox(result, 'Error', wx.OK | wx.ICON_WARNING)
+
+    def DoUpdateAccount(self, mhAccount):
+        return mhMgr.UpdateAccountDetails(mhAccount)
+
+    def FinishUpdateAccount(self, result):
+        if result:
+            wx.MessageBox('Account updated successfully.', 'Success', wx.OK)
+            self.parent._SetPage(self.resources.page_remote_select, False)
+        else:
+            wx.MessageBox('Account update failed.', 'Failure',
+                          wx.OK | wx.ICON_WARNING)
 
     def GetNext(self):
         return (self.next, None)
 
     def GetBack(self):
         if self.isUpdate:
-            return (self.resources.page_remote_select, None)
+            return (self.resources.page_remote_select, False)
         else:
             return (self.resources.page_welcome, None)
 
@@ -1166,32 +1251,25 @@ class ConfigureDevicePanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        self.skinId, self.product, self.deviceId, self.deviceName = data
+        self.parent.title.SetLabel(self.deviceName)
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
-    def SetDevice(self, skinId, product, deviceId, deviceName):
-        self.skinId = skinId
-        self.product = product
-        self.deviceId = deviceId
-        self.deviceName = deviceName
-        self.title = self.deviceName
-        self.PopulateCommandsLists()
-
-    def PopulateCommandsLists(self):
+    def LoadData(self):
         # Only populate the buttons list if this remote has buttons; if the
         # 'remote' is a Harmony Link, it has no ProductButtonList.
         self.remoteButtons = None
         capabilities = self.product.SupportedCapabilities.SupportedCapability
         if "CompiledRemoteButtonMapping" in capabilities:
             self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+        self.deviceCommands = mhMgr.GetCommands(self.deviceId)
+        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+
+    def LoadDataUI(self, loadDataResult):
         self.remoteButtonsList = []
         self.remoteButtonsListBox.Clear()
         if self.remoteButtons is not None:
@@ -1199,7 +1277,6 @@ class ConfigureDevicePanel(WizardPanelBase):
                 self.remoteButtonsList.append(button.ButtonKey)
             self.remoteButtonsListBox.Set(self.remoteButtonsList)
             
-        self.deviceCommands = mhMgr.GetCommands(self.deviceId)
         self.deviceCommandsList = []
         self.deviceCommandsListBox.Clear()
         if self.deviceCommands is not None:
@@ -1209,8 +1286,7 @@ class ConfigureDevicePanel(WizardPanelBase):
                     name += "*"
                 self.deviceCommandsList.append(name)
             self.deviceCommandsListBox.Set(self.deviceCommandsList)
-
-        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+        self.parent.Show()
 
     def OnRemoteButtonSelection(self, event):
         key = self.remoteButtons[self.remoteButtonsListBox.GetSelection()] \
@@ -1242,12 +1318,13 @@ class ConfigureDevicePanel(WizardPanelBase):
             wx.MessageBox('Please select a button and command to assign.',
                           'No selection(s) made.', wx.OK | wx.ICON_WARNING)
             return
-        self.StartBusy()
         button = self.remoteButtons[buttonSelection]
         command = self.deviceCommands[commandSelection]
+        BackgroundTask((self.DoUpdate, button, command), (self.LoadDataUI,))
+
+    def DoUpdate(self, button, command):
         mhMgr.UpdateButtonMap(self.buttonMap, button, command)
-        self.PopulateCommandsLists()
-        self.EndBusy()
+        self.LoadData()
 
     def OnOverride(self, event):
         commandSelection = self.deviceCommandsListBox.GetSelection()
@@ -1277,11 +1354,18 @@ class ConfigureDevicePanel(WizardPanelBase):
             wx.MessageBox('Selected command is not a learned command.',
                           'Error', wx.OK | wx.ICON_WARNING)
             return
+        BackgroundTask((self.DoRestore, command), (self.FinishRestore,))
+
+    def DoRestore(self, command):
         result = mhMgr.DeleteIRCommand(command.Id, self.deviceId)
+        self.LoadData()
+        return result
+
+    def FinishRestore(self, result):
         if result is not None:
             wx.MessageBox('IR command deletion failed: ' + result, 'Error',
                           wx.OK | wx.ICON_WARNING)
-        self.PopulateCommandsLists()
+        self.LoadDataUI(None)
 
     def UpdateIR(self, commandName):
         msg = 'Please ensure your remote control is connected.'
@@ -1302,48 +1386,60 @@ class ConfigureDevicePanel(WizardPanelBase):
             + 'pressing OK, press the button on your non-Harmony remote that ' \
             + 'you wish to be learned.'
         wx.MessageBox(msg, 'Position Remotes', wx.OK)
-        carrierClock = c_uint()
-        signal = POINTER(c_uint)()
-        signalLength = c_uint()
-        self.StartBusy()
+        self.commandName = commandName
+        self.carrierClock = c_uint()
+        self.signal = POINTER(c_uint)()
+        self.signalLength = c_uint()
+        BackgroundTask((self.DoLearnIR,), (self.FinishLearnIR,), 
+                       throbberTitle=ThrobberDialog.TITLE_REMOTE)
+
+    def DoLearnIR(self):
+        msg = None
         try:
             libconcord.learn_from_remote(
-                byref(carrierClock),
-                byref(signal),
-                byref(signalLength),
+                byref(self.carrierClock),
+                byref(self.signal),
+                byref(self.signalLength),
                 libconcord.callback_type(dummy_callback_imp),
                 None
             )
         except:
-            self.EndBusy()
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
                 sys.exc_value.result_str,
                 sys.exc_value.func,
                 sys.exc_value.result
             )
+            libconcord.deinit_concord()
+
+    def FinishLearnIR(self, msg):
+        if msg is not None:
             wx.MessageBox('IR learning failed: ' + msg + '\nPerhaps you did '
                           + 'not press a key?', 'Error',
                           wx.OK | wx.ICON_WARNING)
-            libconcord.deinit_concord()
             return
-        self.EndBusy()
 
-        rawSequence = c_char_p()
-        libconcord.encode_for_posting(carrierClock, signal, signalLength,
-                                      rawSequence)
-        
-        result = mhMgr.UpdateIRCommand(commandName, rawSequence.value,
+        self.rawSequence = c_char_p()
+        libconcord.encode_for_posting(self.carrierClock, self.signal,
+                                      self.signalLength, self.rawSequence)
+        BackgroundTask((self.DoUpdateIR,), (self.FinishUpdateIR,))
+
+    def DoUpdateIR(self):
+        result = mhMgr.UpdateIRCommand(self.commandName, self.rawSequence.value,
                                        self.deviceId)
+        self.LoadData()
+        return result
+
+    def FinishUpdateIR(self, result):
         if result is not None:
             wx.MessageBox('IR learning update failed: ' + result, 'Error',
                           wx.OK | wx.ICON_WARNING)
-        self.PopulateCommandsLists()
-        libconcord.delete_ir_signal(signal)
-        libconcord.delete_encoded_signal(rawSequence)
+        self.LoadDataUI(None)
+        libconcord.delete_ir_signal(self.signal)
+        libconcord.delete_encoded_signal(self.rawSequence)
         libconcord.deinit_concord()
 
     def GetTitle(self):
-        return self.title
+        return "Device Configuration"
 
     def IsCancelInitiallyDisabled(self):
         return False
@@ -1407,34 +1503,26 @@ class FavoriteChannelsPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        self.skinId, self.deviceId, self.deviceName = data
+        self.parent.title.SetLabel(self.deviceName)
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
-    def SetDevice(self, skinId, deviceId, deviceName):
-        self.skinId = skinId
-        self.deviceId = deviceId
-        self.deviceName = deviceName
-        self.title = self.deviceName
-        self.PopulateData()
-
-    def PopulateData(self):
+    def LoadData(self):
         self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+
+    def LoadDataUI(self, loadDataResult):
         self.remoteButtonsList = []
         if self.remoteButtons is not None:
             for button in self.remoteButtons:
                 if button.ButtonType == "FavoriteChannelButton":
                     self.remoteButtonsList.append(button.ButtonKey)
             self.remoteButtonsListBox.Set(self.remoteButtonsList)
-            
-        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+        self.parent.Show()
 
     def OnRemoteButtonSelection(self, event):
         key = self.remoteButtons[self.remoteButtonsListBox.GetSelection()] \
@@ -1463,15 +1551,16 @@ class FavoriteChannelsPanel(WizardPanelBase):
             wx.MessageBox('Please select a button and channel to assign.',
                           'No selection(s) made.', wx.OK | wx.ICON_WARNING)
             return
-        self.StartBusy()
         button = self.remoteButtons[buttonSelection]
+        BackgroundTask((self.DoUpdate, button, channel), (self.LoadDataUI,))
+
+    def DoUpdate(self, button, channel):
         mhMgr.UpdateButtonMap(self.buttonMap, button, channel,
                               isChannelButton = True)
-        self.PopulateData()
-        self.EndBusy()
+        self.LoadData()
 
     def GetTitle(self):
-        return self.title
+        return "Favorite Channels"
 
     def IsCancelInitiallyDisabled(self):
         return False
@@ -1559,12 +1648,6 @@ class SetupWatchTVPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def FindRole(self, device, activity):
         if activity:
             for role in activity.Roles.AbstractActivityRole:
@@ -1578,14 +1661,18 @@ class SetupWatchTVPanel(WizardPanelBase):
             if device.Id.Value == role.DeviceId.Value:
                 return (device.Name, device.Id)
 
-    def SetRemote(self, remote):
+    def LoadData(self):
+        self.devices = mhMgr.GetDevices(self.remote.Id)
+        self.activity = mhMgr.GetActivity(self.remote.Id, "WatchTV")
+        self.inputNames = {}
+        for device in self.devices:
+            self.inputNames[device.Id] = mhMgr.GetDeviceInputNames(device.Id)
+
+    def LoadDataUI(self, loadDataResult):
         self.selectedDevicesListBox.Clear()
         self.unselectedDevicesListBox.Clear()
         self.inputSelectionSizer.Clear(deleteWindows=True)
         self.inputSelectionWidgets = {}
-        self.remote = remote
-        self.devices = mhMgr.GetDevices(self.remote.Id)
-        self.activity = mhMgr.GetActivity(self.remote.Id, "WatchTV")
 
         # Add devices from the roles first since they need to be added in role
         # order
@@ -1599,7 +1686,7 @@ class SetupWatchTVPanel(WizardPanelBase):
             role = self.FindRole(device, self.activity)
             if not role:
                 self.unselectedDevicesListBox.Append(device.Name, device.Id)
-            inputNames = mhMgr.GetDeviceInputNames(device.Id)
+            inputNames = self.inputNames[device.Id]
             if inputNames:
                 label = wx.StaticText(self, -1, "Input for " + device.Name
                                       + ":")
@@ -1615,10 +1702,13 @@ class SetupWatchTVPanel(WizardPanelBase):
                 self.inputSelectionSizer.Add(sizer)
                 self.inputSelectionWidgets[device.Id] = choice
         self.Layout()
+        self.parent.Show()
 
-    def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+    def OnActivated(self, prev_page, remote):
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        self.remote = remote
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
     def OnSelect(self, event):
@@ -1661,12 +1751,8 @@ class SetupWatchTVPanel(WizardPanelBase):
     def OnSave(self, event):
         if self.selectedDevicesListBox.GetCount() == 0:
             if self.activity is not None:
-                self.StartBusy()
-                mhMgr.DeleteActivity(self.activity)
-                self.SetRemote(self.remote)
-                self.EndBusy()
+                BackgroundTask((self.DoDelete,), (self.LoadDataUI,))
         else:
-            self.StartBusy()
             deviceInfo = []
             for index in range(self.selectedDevicesListBox.GetCount()):
                 deviceId = self.selectedDevicesListBox.GetClientData(index)
@@ -1676,9 +1762,15 @@ class SetupWatchTVPanel(WizardPanelBase):
                 except KeyError:
                     inputName = None
                 deviceInfo.append((deviceId, inputName))
-            mhMgr.SaveWatchTVActivity(self.remote.Id, deviceInfo, self.activity)
-            self.SetRemote(self.remote)
-            self.EndBusy()
+            BackgroundTask((self.DoSave, deviceInfo), (self.LoadDataUI,))
+
+    def DoDelete(self):
+        mhMgr.DeleteActivity(self.activity)
+        self.LoadData()
+
+    def DoSave(self, deviceInfo):
+        mhMgr.SaveWatchTVActivity(self.remote.Id, deviceInfo, self.activity)
+        self.LoadData()
 
     def GetTitle(self):
         return "Setup Watch TV Button"
@@ -1789,19 +1881,15 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        self.remote = data
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), 
+                       throbberTitle=ThrobberDialog.TITLE_REMOTE)
         return (None, None)
 
-    def LoadData(self, remote):
-        self.remote = remote
+    def LoadData(self):
         try:
             libconcord.init_concord()
         except:
@@ -1810,9 +1898,7 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
                 sys.exc_value.func,
                 sys.exc_value.result
             )
-            wx.MessageBox('Could not detect remote: ' + msg, 'Error',
-                          wx.OK | wx.ICON_WARNING)
-            return False
+            return msg
 
         # We don't really care about the identity, but for the Harmony Link,
         # this seems to be the more reliable way of starting off a conversation
@@ -1828,12 +1914,24 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
         self.LoadConfigProperties()
         self.LoadWifiConfig()
         self.LoadWifiNetworks()
-        return True
+        return None
+
+    def LoadDataUI(self, msg):
+        if msg is not None:
+            wx.MessageBox('Could not detect Harmony Link: ' + msg, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+            self.parent._SetPage(self.resources.page_remote_configuration, None)
+            return
+        self.LoadConfigPropertiesUI(None)
+        self.LoadWifiConfigUI(None)
+        self.LoadWifiNetworksUI(None)
 
     def LoadConfigProperties(self):
         self.remoteName = mhMgr.GetRemoteName(self.remote.Id)
         self.cfg_prop = libconcord.mh_cfg_properties()
         libconcord.mh_get_cfg_properties(byref(self.cfg_prop))
+
+    def LoadConfigPropertiesUI(self, result):
         if self.remoteName is None:
             choiceItem = wx.NOT_FOUND
         else:
@@ -1846,6 +1944,8 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
     def LoadWifiConfig(self):
         self.wifi_cfg = libconcord.mh_wifi_config()
         libconcord.mh_get_wifi_config(byref(self.wifi_cfg))
+
+    def LoadWifiConfigUI(self, result):
         self.ssidCtrl.SetValue(self.wifi_cfg.ssid)
         self.passwordCtrl.SetValue(self.wifi_cfg.password)
         encNum = self.encryptionChoice.FindString(self.wifi_cfg.encryption)
@@ -1860,11 +1960,13 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
                                          self.wifi_cfg.error_code)
 
     def LoadWifiNetworks(self):
-        wifi_networks = libconcord.mh_wifi_networks()
-        libconcord.mh_get_wifi_networks(byref(wifi_networks))
+        self.wifi_networks = libconcord.mh_wifi_networks()
+        libconcord.mh_get_wifi_networks(byref(self.wifi_networks))
+
+    def LoadWifiNetworksUI(self, result):
         self.wifiNetworksListBox.DeselectAll()
         self.wifiNetworksListBox.Clear()
-        for network in wifi_networks.network:
+        for network in self.wifi_networks.network:
             if network.ssid == "":
                 break
             self.wifiNetworksListBox.Append(network.ssid, network.encryption)
@@ -1892,12 +1994,12 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
             return
 
         # Determine which item(s) needs to be saved
-        saveCfgProp = False
+        self.saveCfgProp = False
         roomName = self.roomNameChoice.GetStringSelection()
         if self.cfg_prop.host_name != roomName or self.cfg_prop.email != \
                 mhMgr.email or self.remoteName != roomName:
-            saveCfgProp = True
-        saveWifi = False
+            self.saveCfgProp = True
+        self.saveWifi = False
         ssid = self.ssidCtrl.GetValue()
         password = self.passwordCtrl.GetValue()
         encryption = self.encryptionChoice.GetStringSelection()
@@ -1905,26 +2007,35 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
             encryption = ""
         if self.wifi_cfg.ssid != ssid or self.wifi_cfg.password != password or \
                 self.wifi_cfg.encryption != encryption:
-            saveWifi = True
+            self.saveWifi = True
 
         # Save what needs to be saved
-        self.StartBusy()
-        if saveWifi:
+        if self.saveWifi:
             self.wifi_cfg.ssid = ssid
             self.wifi_cfg.encryption = encryption
             self.wifi_cfg.password = password
-            libconcord.mh_set_wifi_config(byref(self.wifi_cfg))
-            self.LoadWifiConfig()
-        if saveCfgProp:
-            mhMgr.SetRemoteName(self.remote.Id, roomName)
+        if self.saveCfgProp:
             self.cfg_prop.host_name = roomName
             self.cfg_prop.email = mhMgr.email
             self.cfg_prop.service_link = self.serviceLink
+        if self.saveWifi or self.saveCfgProp:
+            BackgroundTask((self.DoSaveChanges,), (self.FinishSaveChanges,), 
+                           throbberTitle=ThrobberDialog.TITLE_REMOTE)
+
+    def DoSaveChanges(self):
+        if self.saveWifi:
+            libconcord.mh_set_wifi_config(byref(self.wifi_cfg))
+            self.LoadWifiConfig()
+        if self.saveCfgProp:
+            mhMgr.SetRemoteName(self.remote.Id, self.cfg_prop.host_name)
             libconcord.mh_set_cfg_properties(byref(self.cfg_prop))
             time.sleep(10)
             # Do not self.LoadConfigProperties() here.  The Link doesn't
             # respond very well if you do.  Just assume everything worked.
-        self.EndBusy()
+
+    def FinishSaveChanges(self, result):
+        if self.saveWifi:
+            self.LoadWifiConfigUI(None)
 
     def GetTitle(self):
         return "Configure Harmony Link Settings"
@@ -1984,29 +2095,25 @@ class SetupActivitiesPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        if data is not None:
+            self.remote = data
+            BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
-    def LoadData(self, remote):
-        self.remote = remote
-        self.LoadActivities()
+    def LoadData(self):
+        self.activities = mhMgr.GetActivities(self.remote.Id)
         self.recommendedActivities = mhMgr.GetRecommendedActivities(
             self.remote.Id)
 
-    def LoadActivities(self):
+    def LoadDataUI(self, loadDataResult):
         self.activitiesListBox.Clear()
-        self.activities = mhMgr.GetActivities(self.remote.Id)
         if self.activities:
             for activity in self.activities:
                 self.activitiesListBox.Append(activity.Name, activity)
+        self.parent.Show()
 
     def OnAddActivity(self, event):
         activityTypeStrings = []
@@ -2021,27 +2128,21 @@ class SetupActivitiesPanel(WizardPanelBase):
         if dlg.ShowModal() != wx.ID_OK:
             return
         activityType = self.recommendedActivities[dlg.GetSelection()]
-        self.StartBusy()
-        self.resources.page_edit_activity.LoadData(self.remote, activityType)
-        self.EndBusy()
-        self.parent._SetPage(self.resources.page_edit_activity, None)
+        params = (self.remote, activityType, None)
+        self.parent._SetPage(self.resources.page_edit_activity, params, True)
 
     def OnEditActivity(self, event):
         activity = self.GetSelectedActivity()
         if not activity:
             return
-        self.StartBusy()
-        self.resources.page_edit_activity.LoadData(self.remote, activity.Type,
-                                                   activity)
-        self.EndBusy()
-        self.parent._SetPage(self.resources.page_edit_activity, None)
+        params = (self.remote, activity.Type, activity)
+        self.parent._SetPage(self.resources.page_edit_activity, params, True)
 
     def OnDeleteActivity(self, event):
         activity = self.GetSelectedActivity()
         if not activity:
             return
-        mhMgr.DeleteActivity(activity)
-        self.LoadActivities()
+        BackgroundTask((self.DoDelete, activity), (self.LoadDataUI,))
 
     def GetSelectedActivity(self):
         activityNum = self.activitiesListBox.GetSelection()
@@ -2050,6 +2151,10 @@ class SetupActivitiesPanel(WizardPanelBase):
                           wx.OK | wx.ICON_WARNING)
             return None
         return self.activitiesListBox.GetClientData(activityNum)
+
+    def DoDelete(self, activity):
+        mhMgr.DeleteActivity(activity)
+        self.activities = mhMgr.GetActivities(self.remote.Id)
 
     def GetTitle(self):
         return "Activity Setup"
@@ -2077,13 +2182,11 @@ class EditActivityPanel(WizardPanelBase):
 
     def OnActivated(self, prev_page, data):
         self.parent.ReenableBack()
+        self.remote, self.activityType, self.activity = data
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
-    def LoadData(self, remote, activityType, activity=None):
-        self.parent.ReenableBack()
-        self.remote = remote
-        self.activityType = activityType
-        self.activity = activity
+    def LoadData(self):
         if self.activity:
             self.activityNameDefault = self.activity.Name
         else:
@@ -2091,9 +2194,8 @@ class EditActivityPanel(WizardPanelBase):
                 self.activityType)
         self.activityTemplate = mhMgr.GetActivityTemplate(self.remote.Id,
                                                           self.activityType)
-        self.CreateWidgets()
 
-    def CreateWidgets(self):
+    def LoadDataUI(self, loadDataResult):
         self.sizer.Clear(deleteWindows=True)
 
         self.activityNameSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -2152,6 +2254,7 @@ class EditActivityPanel(WizardPanelBase):
         self.saveChangesButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
         self.sizer.Add(self.saveChangesButton)
         self.Layout()
+        self.parent.Show()
 
     def OnSaveChanges(self, event):
         if self.activityNameCtrl.IsEmpty():
@@ -2177,13 +2280,15 @@ class EditActivityPanel(WizardPanelBase):
                 inputName = None
             template.roles.append((role, deviceId, inputName))
 
+        self.parent.Hide()
+        BackgroundTask((self.DoSave, template), (self.FinishSave,), False)
+
+    def DoSave(self, template):
         mhMgr.SaveActivityByTemplate(self.remote.Id, template, self.activity)
 
-        # After saving, go back to the main activity setup page.
-        self.StartBusy()
-        self.resources.page_setup_activities.LoadData(self.remote)
-        self.EndBusy()
-        self.parent._SetPage(self.resources.page_setup_activities, None)
+    def FinishSave(self, saveResult):
+        self.parent._SetPage(self.resources.page_setup_activities, self.remote,
+                             True)
 
     def GetTitle(self):
         return "Edit Activity"
@@ -2254,21 +2359,18 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
+        self.device = data
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
-    def LoadData(self, device):
-        self.device = device
-        self.powerFeature = mhMgr.GetPowerFeature(device.Id)
-        self.deviceCommands = mhMgr.GetCommands(device.Id)
+    def LoadData(self):
+        self.powerFeature = mhMgr.GetPowerFeature(self.device.Id)
+        self.deviceCommands = mhMgr.GetCommands(self.device.Id)
+
+    def LoadDataUI(self, loadDataResult):
         self.deviceCommandsList = []
         if self.deviceCommands:
             for command in self.deviceCommands:
@@ -2300,6 +2402,8 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
             self.commandGrid.ClearSelection()
         else:
             self.actions = []
+
+        self.parent.Show()
 
     def AddRow(self):
         self.commandGrid.AppendRows(1)
@@ -2404,9 +2508,13 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
             del self.actions[rowNum]
 
     def OnSaveChanges(self, event):
-        self.StartBusy()
+        BackgroundTask((self.DoSaveChanges,), (self.FinishSaveChanges,))
+
+    def DoSaveChanges(self):
         mhMgr.SavePowerFeature(self.powerFeature, self.actions, self.actionType)
-        self.EndBusy()
+
+    def FinishSaveChanges(self, saveChangesResult):
+        pass
 
     def GetTitle(self):
         return "Power Setting Adjustment"
@@ -2540,20 +2648,30 @@ class Wizard(wx.Dialog):
         self._ReenableButton(self.btn_cancel)
 
     def _OnBack(self, event):
-        (page, data) = self.cur_page.GetBack()
-        self._SetPage(page, data)
+        try:
+            (page, data, hide) = self.cur_page.GetBack()
+        except:
+            (page, data) = self.cur_page.GetBack()
+            hide = False
+        self._SetPage(page, data, hide)
 
     def _OnNext(self, event):
         if self.cur_page.IsTerminal():
             self.OnExit(self.cur_page.GetExitCode())
         if self.cur_page.OnNext():
-            (page, data) = self.cur_page.GetNext()
-            self._SetPage(page, data)
+            try:
+                (page, data, hide) = self.cur_page.GetNext()
+            except:
+                (page, data) = self.cur_page.GetNext()
+                hide = False
+            self._SetPage(page, data, hide)
 
     def _OnCancel(self, event):
         self.cur_page.OnCancel()
 
-    def _SetPage(self, page, data):
+    def _SetPage(self, page, data, hide=False):
+        if hide:
+            self.Hide()
         while page:
             if not page in self.pages:
                 raise Exception("Invalid page")

@@ -25,6 +25,7 @@ install:
 	$(INSTALL) --mode=755 mhgui.patched $(DESTDIR)$(BINDIR)/mhgui
 	rm -f mhgui.patched
 	mkdir -p --mode=755 $(DESTDIR)$(APPSHAREDIR)
+	$(INSTALL) --mode=644 *.gif $(DESTDIR)$(APPSHAREDIR)
 	$(INSTALL) --mode=644 *.png $(DESTDIR)$(APPSHAREDIR)
 	$(INSTALL) --mode=644 harmony.wsdl $(DESTDIR)$(APPSHAREDIR)
 	$(INSTALL) --mode=644 *.xsd $(DESTDIR)$(APPSHAREDIR)
