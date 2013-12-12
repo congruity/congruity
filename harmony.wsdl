@@ -16,6 +16,7 @@
  xmlns:ns10="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data"
  xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
  xmlns:ns12="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
+ xmlns:ns13="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -30,6 +31,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.AccountManager.Contracts.Data" location="am_data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" location="user_feature.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract" location="product.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -107,99 +109,6 @@
       <element name="ApproximateSize" type="xsd:long"/>
       <element name="DownloadUrl" type="xsd:string"/>
       <element name="SimulationDownloadUrl" type="xsd:string"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="CompilerArchitecture">
-    <sequence>
-      <element name="Architecture" type="xsd:string"/>
-      <element name="CompilerArchitectureId" type="xsd:string"/>
-      <element name="DefaultSkinId" type="xsd:string"/>
-      <element name="Flash" type="xsd:string"/>
-      <element name="Protocol" type="xsd:string"/>
-      <element name="RegionID" type="xsd:string"/>
-      <element name="SoftwareType" type="xsd:string"/>
-      <element name="Type" type="xsd:string"/>
-    </sequence>
-  </complexType>
-  
-  <complexType name="Display">
-    <sequence>
-      <element name="ColorDisplay" type="xsd:string"/>
-      <element name="DisplayId" type="xsd:string"/>
-      <element name="Height" type="xsd:string"/>
-      <element name="NumColumns" type="xsd:string"/>
-      <element name="NumRows" type="xsd:string"/>
-      <element name="Width" type="xsd:string"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="Displays">
-    <sequence>
-      <element name="Display" type="ns:Display" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="Keyboard">
-    <sequence>
-      <element name="KeyboardId" type="xsd:string"/>
-      <element name="KeyboardLayout">
-	<complexType>
-	  <sequence>
-	    <element name="KeyboardLayoutId" type="xsd:string"/>
-	    <element name="Name" type="xsd:string"/>
-	  </sequence>
-	</complexType>
-      </element>
-      <element name="KeyboardLayoutId" type="xsd:string"/>
-      <element name="ProductId" type="xsd:string"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="Keyboards">
-    <sequence>
-      <element name="Keyboard" type="ns:Keyboard" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="Manufacturer">
-    <sequence>
-      <element name="ManufacturerId" type="xsd:string"/>
-      <element name="Name" type="xsd:string"/>
-    </sequence>
-  </complexType>
-  
-  <complexType name="SupportedCapabilities">
-    <sequence>
-      <element name="SupportedCapability" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
-
-  <complexType name="GetProductResult">
-    <sequence>
-      <element name="CompilerArchitecture" type="ns:CompilerArchitecture"/>
-      <element name="DefaultMode" type="xsd:string"/>
-      <element name="DisplayName" type="xsd:string"/>
-      <element name="Displays" type="ns:Displays"/>
-      <element name="IsAlwaysConnected" type="xsd:boolean"/>
-      <element name="IsEnabled" type="xsd:boolean"/>
-      <element name="IsHosted" type="xsd:boolean"/>
-      <element name="IsStaticLocation" type="xsd:boolean"/>
-      <element name="Keyboards" type="ns:Keyboards"/>
-      <element name="Manufacturer" type="ns:Manufacturer"/>
-      <element name="MaxActivities" type="xsd:string"/>
-      <element name="MaxDevicesPerAccount" type="xsd:integer"/>
-      <element name="MaxDevicesPerTimePeriod" type="xsd:integer"/>
-      <element name="MaxFavoriteChannels" type="xsd:integer"/>
-      <element name="MinutesPerTimePeriod" type="xsd:string"/>
-      <element name="Name" type="xsd:string"/>
-      <element name="NumOfAddDevice" type="xsd:integer"/>
-      <element name="ProductId" type="xsd:string"/>
-      <element name="ProductIdentifier" type="xsd:string"/>
-      <element name="ProductSettings" type="xsd:string"/>
-      <element name="Region" type="xsd:string"/>
-      <element name="SkinId" type="xsd:string"/>
-      <element name="SupportedCapabilities" type="ns:SupportedCapabilities"/>
     </sequence>
   </complexType>
 
@@ -392,7 +301,7 @@
   <part name="skinId" type="xsd:string"/>
 </message>
 <message name="GetProductResponse">
-  <part name="GetProductResult" type="GetProductResult"/>
+  <part name="GetProductResult" type="ns13:GetProductResult"/>
 </message>
 
 <message name="DeleteDevices">
