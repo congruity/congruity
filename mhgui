@@ -2768,8 +2768,7 @@ class Finalizer(object):
 
 
 def main(argv):
-    app = argv.pop(0)
-    appdir = os.path.dirname(app)
+    appdir = os.path.dirname(argv[0])
 
     app = wx.PySimpleApp()
     wx.InitAllImageHandlers()
