@@ -89,7 +89,7 @@ class ThrobberDialog(wx.Dialog):
         self.gif = wx.animate.GIFAnimationCtrl(self, -1,
                                                self.FindGif("throbber.gif"))
         self.gif.GetPlayer().UseBackgroundColour(True)
-	self.gif.Play()
+        self.gif.Play()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.AddSpacer(64)
         self.sizer.Add(self.gif, 0, wx.ALIGN_CENTER_HORIZONTAL)
