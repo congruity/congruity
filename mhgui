@@ -1198,27 +1198,39 @@ class ConfigureDevicePanel(WizardPanelBase):
 
         WizardPanelBase.__init__(self, parent, resources)
 
+        self.LC_WIDTH = 225
+        self.LC_HEIGHT = 225
+        self.LC_SIZE = (self.LC_WIDTH, self.LC_HEIGHT)
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = WrappedStaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
 
+        self.sizer.AddSpacer(10)
         self.hSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.leftSizer = wx.BoxSizer(wx.VERTICAL)
         self.remoteButtonsLabel = wx.StaticText(self, -1, "Remote Buttons:")
         self.leftSizer.Add(self.remoteButtonsLabel, 0, 0, 0)
-        self.remoteButtonsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
-        self.remoteButtonsListBox.Bind(wx.EVT_LISTBOX,
-                                       self.OnRemoteButtonSelection)
-        self.leftSizer.Add(self.remoteButtonsListBox, 0, 0, 0)
+        self.remoteButtonsListCtrl = wx.ListCtrl(self, size=self.LC_SIZE,
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER)
+        self.remoteButtonsListCtrl.InsertColumn(0, "")
+        self.remoteButtonsListCtrl.SetColumnWidth(0, self.LC_WIDTH - 1)
+        self.remoteButtonsListCtrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
+                                        self.OnRemoteButtonSelection)
+        self.leftSizer.Add(self.remoteButtonsListCtrl)
         self.hSizer.Add(self.leftSizer, 0, 0, 0)
         self.hSizer.AddSpacer(20)
         self.rightSizer = wx.BoxSizer(wx.VERTICAL)
         self.deviceCommandsLabel = wx.StaticText(self, -1, "Device Commands:")
         self.rightSizer.Add(self.deviceCommandsLabel, 0, 0, 0)
-        self.deviceCommandsListBox = wx.ListBox(self, style=wx.LB_SINGLE)
-        self.rightSizer.Add(self.deviceCommandsListBox, 0, 0, 0)
+        self.deviceCommandsListCtrl = wx.ListCtrl(self, size=self.LC_SIZE,
+            style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER)
+        self.deviceCommandsListCtrl.InsertColumn(0, "")
+        self.deviceCommandsListCtrl.SetColumnWidth(0, self.LC_WIDTH - 1)
+        self.rightSizer.Add(self.deviceCommandsListCtrl)
         self.hSizer.Add(self.rightSizer, 0, 0, 0)
         self.sizer.Add(self.hSizer, 0, 0, 0)
+        self.sizer.AddSpacer(10)
 
         self.bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.updateButton = wx.Button(self, label="Update Button")
@@ -1270,27 +1282,29 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
 
     def LoadDataUI(self, loadDataResult):
-        self.remoteButtonsList = []
-        self.remoteButtonsListBox.Clear()
+        self.remoteButtonsListCtrl.DeleteAllItems()
         if self.remoteButtons is not None:
-            for button in self.remoteButtons:
-                self.remoteButtonsList.append(button.ButtonKey)
-            self.remoteButtonsListBox.Set(self.remoteButtonsList)
+            for i in range(len(self.remoteButtons)):
+                buttonKey = self.remoteButtons[i].ButtonKey
+                self.remoteButtonsListCtrl.InsertStringItem(i, buttonKey)
             
-        self.deviceCommandsList = []
-        self.deviceCommandsListBox.Clear()
+        self.deviceCommandsListCtrl.DeleteAllItems()
         if self.deviceCommands is not None:
-            for command in self.deviceCommands:
+            for i in range(len(self.deviceCommands)):
+                command = self.deviceCommands[i]
                 name = command.Name
                 if command.IsLearned == "true":
                     name += "*"
-                self.deviceCommandsList.append(name)
-            self.deviceCommandsListBox.Set(self.deviceCommandsList)
+                self.deviceCommandsListCtrl.InsertStringItem(i, name)
+                if self.IsCommandMapped(command):
+                    color = wx.LIGHT_GREY
+                    self.deviceCommandsListCtrl.SetItemTextColour(i, color)
+
         self.parent.Show()
 
     def OnRemoteButtonSelection(self, event):
-        key = self.remoteButtons[self.remoteButtonsListBox.GetSelection()] \
-            .ButtonKey
+        buttonSelection = self.remoteButtonsListCtrl.GetFirstSelected()
+        key = self.remoteButtons[buttonSelection].ButtonKey
         foundCommand = self.FindCommand(key)
         if foundCommand is not None:
             for i in range(len(self.deviceCommands)):
@@ -1299,11 +1313,14 @@ class ConfigureDevicePanel(WizardPanelBase):
                 try:
                     if foundCommand.ButtonAssignment.CommandId.Value == \
                             self.deviceCommands[i].Id.Value:
-                        self.deviceCommandsListBox.SetSelection(i)
+                        self.deviceCommandsListCtrl.Select(i)
+                        self.deviceCommandsListCtrl.EnsureVisible(i)
                         return
                 except AttributeError:
                     pass
-        self.deviceCommandsListBox.DeselectAll()
+        commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
+        if commandSelection != -1:
+            self.deviceCommandsListCtrl.Select(commandSelection, 0)
 
     def FindCommand(self, buttonKey):
         for button in self.buttonMap.Buttons.AbstractButton:
@@ -1311,9 +1328,21 @@ class ConfigureDevicePanel(WizardPanelBase):
                 return button
         return None
 
+    def IsCommandMapped(self, command):
+        for button in self.buttonMap.Buttons.AbstractButton:
+            # ButtonAssignment might not be a CommandButtonAssignment, but
+            # ignore the error if it isn't.
+            try:
+                if button.ButtonAssignment.CommandId.Value == \
+                   command.Id.Value:
+                    return True
+            except AttributeError:
+                pass
+        return False
+
     def OnUpdate(self, event):
-        buttonSelection = self.remoteButtonsListBox.GetSelection()
-        commandSelection = self.deviceCommandsListBox.GetSelection()
+        buttonSelection = self.remoteButtonsListCtrl.GetFirstSelected()
+        commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
         if (buttonSelection == -1) or (commandSelection == -1):
             wx.MessageBox('Please select a button and command to assign.',
                           'No selection(s) made.', wx.OK | wx.ICON_WARNING)
@@ -1327,7 +1356,7 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.LoadData()
 
     def OnOverride(self, event):
-        commandSelection = self.deviceCommandsListBox.GetSelection()
+        commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
         if commandSelection == -1:
             wx.MessageBox('Please select a command to override.',
                           'No command selected.', wx.OK | wx.ICON_WARNING)
@@ -1344,7 +1373,7 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.UpdateIR(command)
 
     def OnRestore(self, event):
-        commandSelection = self.deviceCommandsListBox.GetSelection()
+        commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
         if commandSelection == -1:
             wx.MessageBox('Please select a command to restore.',
                           'No command selected.', wx.OK | wx.ICON_WARNING)
