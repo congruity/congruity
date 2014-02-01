@@ -131,6 +131,28 @@
     </sequence>
   </complexType>
 
+  <complexType name="AbstractActivityAction" abstract="true">
+  </complexType>
+
+  <complexType name="CommandActivityAction">
+    <complexContent>
+      <extension base="ns11:AbstractActivityAction">
+	<sequence>
+	  <element name="ActionOrder" type="xsd:string"/>
+	  <element name="Id" type="xsd:string"/>
+	  <element name="CommandName" type="xsd:string"/>
+	  <element name="DeviceId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="Actions">
+    <sequence>
+      <element name="AbstractActivityAction" type="ns11:AbstractActivityAction" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Activity">
     <sequence>
       <element name="AccountId" type="ns1:Id"/>
@@ -143,13 +165,13 @@
       <element name="DefaultChannel" type="xsd:string" nillable="true"/>
       <element name="DefaultStation" type="xsd:string" nillable="true"/>
       <element name="DefaultStationName" type="xsd:string" nillable="true"/>
-      <element name="EnterActions" type="xsd:string" nillable="true"/>
+      <element name="EnterActions" type="ns11:Actions" nillable="true"/>
       <element name="Icon" type="xsd:string" nillable="true"/>
       <element name="Id" type="ns1:Id" nillable="true"/>
       <element name="ImageKey" type="xsd:string" nillable="true"/>
       <element name="IsDefault" type="xsd:boolean"/>
       <element name="IsTuningDefault" type="xsd:boolean"/>
-      <element name="LeaveActions" type="xsd:string" nillable="true"/>
+      <element name="LeaveActions" type="ns11:Actions" nillable="true"/>
       <element name="Name" type="xsd:string"/>
       <element name="Roles" type="ns11:Roles"/>
       <element name="StartScreen" type="xsd:string" nillable="true"/>
