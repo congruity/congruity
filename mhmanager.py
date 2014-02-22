@@ -153,16 +153,31 @@ class MHManager():
             logging.basicConfig(level=logging.INFO)
             logging.getLogger('suds.transport').setLevel(logging.DEBUG)
         self.client = Client(url, cache=cache, plugins=[MHPlugin()])
-        self.logged_in = False
 
     # Log in to web service - Returns True if login succeeded, False otherwise.
     def Login(self, email, password):
-        self.logged_in = self.client.service['Security'].LoginUser(
-            email=email, password=password, customCredential='',
-            isPresistent=False)
+        baseUrl = "https://setup.myharmony.com"
+        url = baseUrl + "/Home/TestLogin"
+        params = urllib.urlencode({'username': email, 'password': password})
+        request = urllib2.Request(url, params)
+        response = urllib2.urlopen(request)
+        jsonResponse = json.loads(response.read())
+        if jsonResponse["Result"] != True:
+            return False
+        self.client.options.transport.cookiejar.extract_cookies(response,
+                                                                request)
+
+        url = baseUrl + "/Home/Login?usr=" + jsonResponse["Token"]
+        request = urllib2.Request(url)
+        response = urllib2.urlopen(request)
+        parser = LoginResponseHTMLParser()
+        parser.feed(response.read())
+        initparams = dict(u.split("=", 1) for u in parser.initparams.split(","))
+        self.contentServiceAuthKey = initparams['ContentServiceAuthKey']
+
         self.email = email
         self.password = password
-        return self.logged_in is not None
+        return True
 
     # Gets the household info.
     def GetHousehold(self):
@@ -909,6 +924,13 @@ class MHAccountDetails:
         securityQuestion = ""
         securityAnswer = ""
         keepMeInformed = ""
+
+class LoginResponseHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        if tag == 'param' and ('name', 'initparams') in attrs:
+            for key, value in attrs:
+                if key == 'value':
+                    self.initparams = value
 
 class CreateAccountResponseHTMLParser(HTMLParser):
     def __init__(self):
