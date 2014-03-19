@@ -55,4 +55,13 @@
     </sequence>
   </complexType>
 
+  <complexType name="AutoDetectedDevice">
+    <sequence>
+      <element name="Class" type="xsd:string" nillable="true"/>
+      <element name="Id" type="xsd:string" nillable="true"/>
+      <element name="Name" type="xsd:string" nillable="true"/>
+      <element name="USN" type="xsd:string" nillable="true"/>
+    </sequence>
+  </complexType>
+
 </schema>

@@ -56,6 +56,7 @@
       <element name="DecodedEdid" type="xsd:string"/>
       <element name="DefaultInterDeviceDelay" type="xsd:string"/>
       <element name="DefaultInterKeyDelay" type="xsd:string"/>
+      <element name="DefaultPressMinRepeats" type="xsd:string"/>
       <element name="DeviceOrder" type="xsd:string"/>
       <element name="DeviceType" type="xsd:string"/>
       <element name="EncodedEdid" type="xsd:string"/>
@@ -70,7 +71,8 @@
       <element name="PictureId" type="xsd:string"/>
       <element name="PressMinRepeats" type="xsd:string"/>
       <element name="ActivityIds" type="xsd:string"/>
-      <element name="AdditionalControlType" type="xsd:string"/>
+      <element name="AutoDetectedDevice" type="ns1:AutoDetectedDevice"/>
+      <element name="BTAddress" type="xsd:string" nillable="true"/>
       <element name="Characterization" type="xsd:string"/>
       <element name="ContentProfileKey" type="xsd:string"/>
       <element name="ControlPort" type="xsd:string"/>
@@ -80,11 +82,14 @@
       <element name="DeviceProfileUri" type="xsd:string"/>
       <element name="DeviceSearchType" type="xsd:string"/>
       <element name="DeviceTypeDisplayName" type="xsd:string"/>
+      <element name="DongleIndex" type="xsd:string"/>
+      <element name="DongleRFID" type="xsd:string"/>
       <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
       <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
       <element name="Icon" type="xsd:string"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
+      <element name="IsKeyboardAssociated" type="xsd:boolean"/>
       <element name="IsMultiCode" type="xsd:string"/>
       <element name="IsScartCableSupported" type="xsd:boolean"/>
       <element name="ParentDevice" type="ns1:Id"/>

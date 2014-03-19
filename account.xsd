@@ -57,6 +57,7 @@
     <sequence>
       <element name="ComputedProductSerial" type="xsd:string"/>
       <element name="DateCreated" type="xsd:string"/>
+      <element name="Dongles" type="xsd:string"/>
       <element name="FirstConnectDate" type="xsd:string"/>
       <element name="FirstSyncDate" type="xsd:string"/>
       <element name="GlobalRemoteId" type="xsd:string"/>
@@ -69,11 +70,12 @@
       <element name="IsSyncRequired" type="xsd:boolean"/>
       <element name="JabberId" type="xsd:string"/>
       <element name="KeyboardLayout" type="xsd:string"/>
+      <element name="LastProductIdentifier" type="xsd:string"/>
       <element name="LastSyncDate" type="xsd:string"/>
       <element name="LogitechProductId" type="xsd:string"/>
       <element name="LogitechSerial" type="xsd:string"/>
       <element name="Mode" type="xsd:string"/>
-      <element name="Pairings" type="xsd:string"/>
+      <element name="OriginalProductIdentifier" type="xsd:string"/>
       <element name="RFEquadID" type="xsd:string" nillable="true"/>
       <element name="RFID" type="xsd:string" nillable="true"/>
       <element name="RemoteProperties" type="ns6:RemoteProperties"/>
