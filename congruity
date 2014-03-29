@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright 2008-2010 Stephen Warren
-# Copyright 2012-2013 Scott Talbert
+# Copyright 2012-2014 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -31,7 +31,7 @@ wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
-version = "17"
+version = "18"
 
 try:
     import libconcord

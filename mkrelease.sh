@@ -21,7 +21,10 @@ cp -rp \
   congruity \
   harmony.wsdl \
   mhgui \
+  mhgui.1 \
+  mhgui.desktop \
   mhmanager.py \
+  *.gif \
   *.png \
   *.xsd \
   Changelog \

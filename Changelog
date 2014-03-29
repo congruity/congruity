@@ -1,3 +1,20 @@
+* 2014-03-29 Scott Talbert <swt@techie.net>
+- congruity-18 is released
+- mhgui: Added support for Harmony 650
+- mhgui: Added support for Harmony Link
+- mhgui: Added support for configuring the Watch TV button on Harmony 200/300
+- mhgui: Numerous updates to WSDL/XSD to match Logitech changes
+- mhgui: Update Device Configuration page to clearly show which commands are
+  mapped and which are not (already mapped commands are shown in light grey)
+- mhgui: All long running tasks (website or remote communication) are now run
+  in a separate thread to avoid stalling the UI.  A throbber was added to
+  provide an indication that a background operation is in progress.
+- mhgui: Added .desktop and a man page
+- mhgui: Added support for modifying power up/down settings (adding delays,
+  additional commands, etc.)
+- mhgui: Added command line option to enable Suds debugging
+- mhgui: Added capability to delete remotes from an account
+
 * 2013-06-11 Scott Talbert <swt@techie.net>
 - congruity-17 is released
 - mhgui: Update XSD to match Logitech changes.  (mhgui is broken otherwise)
