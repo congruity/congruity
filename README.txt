@@ -1,21 +1,21 @@
 Requirements
 ==============================================================================
 
-Python (tested with 2.7.3 on Fedora 18)
+Python (tested with 2.7.5 on Fedora 20)
   See http://www.python.org/
 
 Python ctypes library (included with Python 2.5, separate earlier)
   See http://sourceforge.net/projects/ctypes/
 
-wxPython (tested with wxGTK-2.8.12 on Fedora 18)
+wxPython (tested with wxPython-2.8.12.0 on Fedora 20)
   See http://www.wxpython.org/
 
-libconcord (version 1.0 is *required*; tested on Fedora 18)
+libconcord (version 1.1 is *required*; tested on Fedora 20)
   See http://www.phildev.net/concordance/
   Note that the python bindings are also required; see
   libconcord/bindings/python
 
-python-suds (tested with 0.4.1 on Fedora 18)
+python-suds (tested with 0.4.1 on Fedora 20)
   Suds is required for mhgui.
 
 Python, ctypes, wxPython, and Suds are typically installed using your
