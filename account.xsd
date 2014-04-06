@@ -49,6 +49,7 @@
     <sequence>
       <element name="IsActiveRemote" type="xsd:boolean" nillable="true"/>
       <element name="IsLocked" type="xsd:boolean" nillable="true"/>
+      <element name="KeyboardLocale" type="xsd:string" nillable="true"/>
       <element name="RemoteName" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
@@ -70,6 +71,7 @@
       <element name="IsSyncRequired" type="xsd:boolean"/>
       <element name="JabberId" type="xsd:string"/>
       <element name="KeyboardLayout" type="xsd:string"/>
+      <element name="KeyboardLocale" type="xsd:string" nillable="true"/>
       <element name="LastProductIdentifier" type="xsd:string"/>
       <element name="LastSyncDate" type="xsd:string"/>
       <element name="LogitechProductId" type="xsd:string"/>
@@ -136,6 +138,7 @@
       <element name="AccountTypeId" type="xsd:string"/>
       <element name="AccountUri" type="xsd:string"/>
       <element name="Activities" type="xsd:string" nillable="true"/>
+      <element name="ConfigVersion" type="xsd:string" nillable="true"/>
       <element name="CreateDate" type="xsd:string"/>
       <element name="Devices" type="ns:Devices"/>
       <element name="HouseholdId" type="ns1:Id"/>
