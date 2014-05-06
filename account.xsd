@@ -51,6 +51,7 @@
       <element name="IsLocked" type="xsd:boolean" nillable="true"/>
       <element name="KeyboardLocale" type="xsd:string" nillable="true"/>
       <element name="RemoteName" type="xsd:string" nillable="true"/>
+      <element name="Status" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
 
@@ -63,6 +64,7 @@
       <element name="FirstSyncDate" type="xsd:string"/>
       <element name="GlobalRemoteId" type="xsd:string"/>
       <element name="GlobalRemoteSkinId" type="xsd:string"/>
+      <element name="GlobalRemoteStatus" type="xsd:string" nillable="true"/>
       <element name="HubRemoteId" type="xsd:string" nillable="true"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsAcceptLicense" type="xsd:boolean"/>
@@ -114,6 +116,7 @@
   <complexType name="Properties">
     <sequence>
       <element name="AnonymizedEmail" type="xsd:string" nillable="true"/>
+      <element name="ConfigVersion" type="xsd:string" nillable="true"/>
       <element name="ContactMe" type="xsd:string"/>
       <element name="CountryType" type="xsd:string"/>
       <element name="Email" type="xsd:string"/>
