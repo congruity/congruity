@@ -140,6 +140,7 @@
       <element name="BaseImageUri" type="xsd:string" nillable="true"/>
       <element name="DateCreated" type="xsd:dateTime"/>
       <element name="DateModified" type="xsd:dateTime"/>
+      <element name="DefaultChannel" type="xsd:string" nillable="true"/>
       <element name="EnterActions" type="xsd:string" nillable="true"/>
       <element name="Icon" type="xsd:string" nillable="true"/>
       <element name="Id" type="ns1:Id" nillable="true"/>
