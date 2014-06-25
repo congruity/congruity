@@ -1717,6 +1717,8 @@ class SetupWatchTVPanel(WizardPanelBase):
                 self.unselectedDevicesListBox.Append(device.Name, device.Id)
             inputNames = self.inputNames[device.Id]
             if inputNames:
+                # Allow input to be set to 'None'
+                inputNames.append('None')
                 label = wx.StaticText(self, -1, "Input for " + device.Name
                                       + ":")
                 choice = wx.Choice(self, -1, choices=inputNames)
@@ -1724,7 +1726,7 @@ class SetupWatchTVPanel(WizardPanelBase):
                     choice.SetSelection(choice.FindString(
                             role.SelectedInput.Name))
                 except:
-                    pass
+                    choice.SetSelection(choice.FindString('None'))
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 sizer.Add(label, flag=wx.ALIGN_CENTER_VERTICAL)
                 sizer.Add(choice)
@@ -1788,6 +1790,8 @@ class SetupWatchTVPanel(WizardPanelBase):
                 try:
                     inputName = self.inputSelectionWidgets[deviceId].\
                         GetStringSelection()
+                    if inputName == 'None':
+                        inputName = None
                 except KeyError:
                     inputName = None
                 deviceInfo.append((deviceId, inputName))
@@ -2265,6 +2269,8 @@ class EditActivityPanel(WizardPanelBase):
         self.inputSelectionChoices = {}
         for deviceName, deviceId, inputs in \
             self.activityTemplate.devicesWithInputs:
+            # Allow input to be set to 'None'
+            inputs.append('None')
             label = "What input should " + deviceName + " be set to?"
             inputSelectionLabel = wx.StaticText(self, -1, label)
             self.sizer.Add(inputSelectionLabel)
@@ -2276,7 +2282,9 @@ class EditActivityPanel(WizardPanelBase):
                 input = mhMgr.GetDeviceInput(self.activity, deviceId)
                 if input:
                     inputNum = inputSelectionChoice.FindString(input)
-                    inputSelectionChoice.SetSelection(inputNum)
+                else:
+                    inputNum = inputSelectionChoice.FindString('None')
+                inputSelectionChoice.SetSelection(inputNum)
 
         self.sizer.AddSpacer(20)
         self.saveChangesButton = wx.Button(self, label="Save Changes")
@@ -2305,6 +2313,8 @@ class EditActivityPanel(WizardPanelBase):
             try:
                 inputChoice = self.inputSelectionChoices[deviceId.Value]
                 inputName = inputChoice.GetStringSelection()
+                if inputName == 'None':
+                    inputName = ''
             except KeyError:
                 inputName = None
             template.roles.append((role, deviceId, inputName))

@@ -670,7 +670,7 @@ class MHManager():
                                               roleType)
             role.DeviceId = deviceId
             role.Id = None
-            if inputName:
+            if inputName or inputName == '':
                 role.SelectedInput.Id = None
                 role.SelectedInput.Name = inputName
             else:
