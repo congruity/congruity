@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with congruity.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 from ctypes import *
 import os
 import os.path
@@ -79,7 +80,7 @@ def program_callback_imp(stage_id, count, current, total, type, context, stages)
         percent = (current * 100) / total
         f(False, percent, fcontext)
     except:
-        print
+        print()
         traceback.print_exc()
 
 def program_callback_imp_multi(stage_id, count, current, total, type, context, stages):
@@ -114,7 +115,7 @@ def program_callback_imp_multi(stage_id, count, current, total, type, context, s
             context._DgUpdate(True, percent, context.dg_widgets[widget_num][1])
             context.dg_widgets[widget_num][2] = True
     except:
-        print
+        print()
         traceback.print_exc()
 
 class CmdLineException(Exception):
@@ -1859,7 +1860,7 @@ def main(argv):
         while len(argv) and argv[0].startswith('-'):
             arg = argv.pop(0)
             if arg == '--version':
-                print version
+                print(version)
                 return
             elif arg == '--no-web':
                 no_web = True

@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with congruity.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import logging
 import httplib
 import urlparse
@@ -115,7 +116,6 @@ class MHPlugin(MessagePlugin):
             # on the children.
             if (element.prefix is None) and (prefix is not None):
                 element.setPrefix(prefix)
-                #print "PLUGIN: set prefix for {0}".format(element)
             # Recursively fix the child elements.
             if element.getChildren() is not None:
                 self.fix_elements(element.prefix, element.getChildren())
@@ -411,7 +411,7 @@ class MHManager():
         handshakeResult = self.client.service['AccountManager']. \
             SecureControllerHandshake(nonce)
         if handshakeResult is None:
-            print "SecureControllerHandshake failed."
+            print("SecureControllerHandshake failed.")
             return False
 
         accountId = self.household.Accounts.Account[0].Id
@@ -429,7 +429,7 @@ class MHManager():
             SecureUpdateAccountProperties(accountId, properties,
                                           handshakeResult.Challenge)
         if result is not None:
-            print "SecureUpdateAccountProperties failed: " + str(result)
+            print("SecureUpdateAccountProperties failed: " + str(result))
             return False
 
         if details.securityAnswer != "":
@@ -438,7 +438,7 @@ class MHManager():
                                                 details.securityQuestion,
                                                 details.securityAnswer)
             if result != "true":
-                print "UpdatePasswordQuestionAndAnswer failed: " + str(result)
+                print("UpdatePasswordQuestionAndAnswer failed: " + str(result))
                 return False
 
         if details.password != self.password:
@@ -446,7 +446,7 @@ class MHManager():
                 UpdatePasswordByOldPassword(details.email, self.password,
                                             details.password)
             if result != "true":
-                print "UpdatePasswordByOldPassword failed: " + str(result)
+                print("UpdatePasswordByOldPassword failed: " + str(result))
                 return False
             self.password = details.password
 
@@ -570,8 +570,8 @@ class MHManager():
             return role
 
     def GetActivityTypesAndRoles(self, accountId):
-        print self.client.service['ActivityManager'].\
-            GetActivityTypesAndRoles(accountId)
+        print(self.client.service['ActivityManager'].\
+            GetActivityTypesAndRoles(accountId))
 
     def GetActivityRolesAndDevices(self, remoteId, activityType):
         account = self.GetAccountForRemote(remoteId)
