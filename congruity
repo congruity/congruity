@@ -22,7 +22,7 @@ from ctypes import *
 import os
 import os.path
 import sys
-import thread
+import threading
 import time
 import traceback
 
@@ -91,7 +91,7 @@ def program_callback_imp_multi(stage_id, count, current, total, type, context, s
             wx.CallAfter(context._AddDg, stages[i])
         # Wait until we're sure all the widgets have been added.  Lock will be
         # released by _FinishWidgets().
-        context.dg_widget_lock = thread.allocate_lock()
+        context.dg_widget_lock = threading.Lock()
         context.dg_widget_lock.acquire()
         wx.CallAfter(context._FinishWidgets)
         context.dg_widget_lock.acquire()
@@ -468,7 +468,7 @@ class WelcomePanel(MessagePanelBase):
         self.initial_exception = initial_exception
 
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        threading.Thread(target=self._WorkerFunction).start()
         return (None, None)
 
     def GetTitle(self):
@@ -530,7 +530,7 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         self.finished = False
         self.cancelled = False
 
-        self.lock = thread.allocate_lock()
+        self.lock = threading.Lock()
 
     def _WorkerFunction(self):
         try:
@@ -671,7 +671,7 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
     def OnActivated(self, prev_page, data):
         self.btn_details.Hide()
         self.text_full_details.Hide()
-        thread.start_new_thread(self._WorkerFunction, ())
+        threading.Thread(target=self._WorkerFunction).start()
         return (None, None)
 
     def OnCancel(self):
@@ -748,7 +748,7 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
         self.parent.ReenableNext()
 
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        threading.Thread(target=self._WorkerFunction).start()
         return (None, None)
 
     def OnCancel(self):
@@ -1240,7 +1240,7 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         self.text_top_message.UpdateText(
             "Please press and hold the button on your original remote now."
         )
-        thread.start_new_thread(self._WorkerFunction, ())
+        threading.Thread(target=self._WorkerFunction).start()
         return (None, None)
 
     def GetTitle(self):
@@ -1476,7 +1476,7 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         self.parent.ReenableNext()
 
     def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
+        threading.Thread(target=self._WorkerFunction).start()
         return (None, None)
 
     def GetTitle(self):
