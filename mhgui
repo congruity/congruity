@@ -21,7 +21,7 @@ from ctypes import *
 import os
 import os.path
 import sys
-import thread
+import threading
 import time
 import traceback
 
@@ -111,7 +111,7 @@ class BackgroundTask:
         self.backgroundFunctionArgs = backgroundFunctionSpec[1:]
         self.onDoneFunction = onDoneFunctionSpec[0]
         self.onDoneFunctionArgs = onDoneFunctionSpec[1:]
-        thread.start_new_thread(self.ThreadFunction, ())
+        threading.Thread(target=self.ThreadFunction).start()
         self.throbber = None
         if modalThrobber is not None:
             self.throbber = ThrobberDialog(throbberTitle)
@@ -223,17 +223,10 @@ class WelcomePanel(WizardPanelBase):
 
         self.next = None
 
-    def _WorkerFunction(self):
-        wx.CallAfter(
-            self.textMessage.UpdateText,
-            self._msg_welcome
-        )
-
+    def OnActivated(self, prev_page, data):
+        self.textMessage.UpdateText(self._msg_welcome)
         self.next = self.resources.page_remote_select
         self.parent.ReenableNext()
-
-    def OnActivated(self, prev_page, data):
-        thread.start_new_thread(self._WorkerFunction, ())
         return (None, None)
 
     def GetTitle(self):
