@@ -123,19 +123,19 @@ class CmdLineException(Exception):
 
 def exception_message():
     msg = ''
-    if type(sys.exc_value) == libconcord.LibConcordException:
+    if type(sys.exc_info()[1]) == libconcord.LibConcordException:
         try:
             msg += '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
         except:
             pass
-    if type(sys.exc_value) == CmdLineException:
+    if type(sys.exc_info()[1]) == CmdLineException:
         try:
             msg += '%s\n\n' % (
-                str(sys.exc_value)
+                str(sys.exc_info()[1])
             )
         except:
             pass
@@ -171,8 +171,8 @@ def worker_body_connect(
                 )
             except:
                 ignore = False
-                if type(sys.exc_value) == libconcord.LibConcordException:
-                    ignore = sys.exc_value.result == libconcord.LC_ERROR_INVALID_CONFIG
+                if type(sys.exc_info()[1]) == libconcord.LibConcordException:
+                    ignore = sys.exc_info()[1].result == libconcord.LC_ERROR_INVALID_CONFIG
                 if not ignore:
                     raise
             break
@@ -767,7 +767,7 @@ class ProgramRemotePanelBase(WizardPanelBase, DecoratedContainerThreadMixin):
         return (self.next, None)
 
     def _AddDg(self, stage_id):
-        self.dg_widgets.append([stage_id, DecoratedGauge(self.dc, libconcord.lc_cb_stage_str(stage_id), self.vpos.next()), False])
+        self.dg_widgets.append([stage_id, DecoratedGauge(self.dc, libconcord.lc_cb_stage_str(stage_id), next(self.vpos)), False])
 
 class CheckConnectivityPanel(ProgramRemotePanelBase):
     def __init__(self, parent, resources):
@@ -780,7 +780,7 @@ class CheckConnectivityPanel(ProgramRemotePanelBase):
 
     def _AddWidgets(self):
         vpos = counter()
-        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", vpos.next())
+        self.dg_notify_website = DecoratedGauge(self.dc, "Notify Website", next(vpos))
 
     def DoParsing(self):
         pass
@@ -818,12 +818,12 @@ class WriteConfigurationPanel(ProgramRemotePanelBase):
     def _AddWidgets(self):
         self.vpos = counter()
         if not self.resources.no_web:
-            self.dg_check_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
+            self.dg_check_website = DecoratedGauge(self.dc, "Contacting website", next(self.vpos))
         self.dg_widgets = []
 
     def _FinishWidgets(self):
         if not self.resources.no_web:
-            self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
+            self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", next(self.vpos))
         self.Layout()
         self.dg_widget_lock.release()
 
@@ -868,7 +868,7 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
 
     def _FinishWidgets(self):
         if not self.resources.no_web:
-            self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", self.vpos.next())
+            self.dg_notify_website = DecoratedGauge(self.dc, "Contacting website", next(self.vpos))
         self.Layout()
         self.dg_widget_lock.release()
 
@@ -1143,7 +1143,7 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         DecoratedContainerThreadMixin.__init__(self, self.dc)
 
         vpos = counter()
-        self.dg_learn = DecoratedGauge(self.dc, "Learn IR", vpos.next())
+        self.dg_learn = DecoratedGauge(self.dc, "Learn IR", next(vpos))
 
         self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
 
@@ -1409,7 +1409,7 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         DecoratedContainerThreadMixin.__init__(self, self.dc)
 
         vpos = counter()
-        self.dg_upload = DecoratedGauge(self.dc, "Upload Signal", vpos.next())
+        self.dg_upload = DecoratedGauge(self.dc, "Upload Signal", next(vpos))
 
         self.sizer.Add(self.dc, 0, wx.EXPAND | wx.ALL, 5)
 
