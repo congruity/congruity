@@ -127,8 +127,12 @@
       <element name="FirstName" type="xsd:string"/>
       <element name="IsPolicyAccepted" type="xsd:string"/>
       <element name="LastName" type="xsd:string"/>
+      <element name="Latitude" type="xsd:string"/>
+      <element name="Longitude" type="xsd:string"/>
       <element name="RemoteLanguage" type="xsd:string" nillable="true"/>
+      <element name="TimeZone" type="xsd:string" nillable="true"/>
       <element name="UserKey" type="xsd:string"/>
+      <element name="UserTimeZone" type="xsd:string" nillable="true"/>
       <element name="ZipCode" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
@@ -153,11 +157,15 @@
       <element name="Id" type="ns1:Id"/>
       <element name="IsRemoved" type="xsd:string"/>
       <element name="LastSetupRating" type="xsd:string"/>
+      <element name="Latitude" type="xsd:string" nillable="true"/>
+      <element name="Longitude" type="xsd:string" nillable="true"/>
       <element name="ProductIdentifier" type="xsd:string"/>
       <element name="Properties" type="ns6:Properties"/>
       <element name="Remotes" type="ns6:Remotes"/>
       <element name="SetupSession" type="ns6:SetupSession"/>
       <element name="Surfaces" type="ns6:Surfaces" nillable="true"/>
+      <element name="TimeZone" type="xsd:string" nillable="true"/>
+      <element name="UserTimeZone" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
 
