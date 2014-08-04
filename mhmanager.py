@@ -30,6 +30,7 @@ import os
 import sys
 import random
 import datetime
+import json
 from HTMLParser import HTMLParser
 from suds.cache import ObjectCache
 from suds.client import Client
