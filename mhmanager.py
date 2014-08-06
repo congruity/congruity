@@ -155,7 +155,9 @@ class MHManager():
             logging.getLogger('suds.transport').setLevel(logging.DEBUG)
         self.client = Client(url, cache=cache, plugins=[MHPlugin()])
 
-    # Log in to web service - Returns True if login succeeded, False otherwise.
+    # Log in to web service - returns True if login succeeded, False if login
+    # failed, and None if the account appears to be a members.harmonyremote.com
+    # account.
     def Login(self, email, password):
         baseUrl = "https://setup.myharmony.com"
         url = baseUrl + "/Home/TestLogin"
@@ -163,8 +165,10 @@ class MHManager():
         request = urllib2.Request(url, params)
         response = urllib2.urlopen(request)
         jsonResponse = json.loads(response.read())
-        if jsonResponse["Result"] != True or jsonResponse["Token"] is None:
+        if jsonResponse["Result"] == False:
             return False
+        elif jsonResponse["Token"] is None: # members.harmonyremote.com acct
+            return None
         self.client.options.transport.cookiejar.extract_cookies(response,
                                                                 request)
 

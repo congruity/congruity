@@ -248,8 +248,13 @@ class WelcomePanel(WizardPanelBase):
         if loginResult is True:
             self.parent._SetPage(self.next, True, True)
         else:
-            wx.MessageBox('Login failed.', 'Login failed.', wx.OK |
-                          wx.ICON_WARNING)
+            if loginResult is None:
+                msg = 'You appear to have used a members.harmonyremote.com ' \
+                      'account.  Please create a myharmony.com account or ' \
+                      'login with an existing one.'
+            else:
+                msg = 'Login failed.  Username or password incorrect.'
+            wx.MessageBox(msg, 'Login Failed', wx.OK | wx.ICON_WARNING)
             self.usernameCtrl.Clear()
             self.passwordCtrl.Clear()
 
