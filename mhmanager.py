@@ -163,7 +163,7 @@ class MHManager():
         request = urllib2.Request(url, params)
         response = urllib2.urlopen(request)
         jsonResponse = json.loads(response.read())
-        if jsonResponse["Result"] != True:
+        if jsonResponse["Result"] != True or jsonResponse["Token"] is None:
             return False
         self.client.options.transport.cookiejar.extract_cookies(response,
                                                                 request)
