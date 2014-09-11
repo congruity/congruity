@@ -38,7 +38,7 @@ try:
     import libconcord
 except:
     str = traceback.format_exc()
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     dlg = wx.MessageDialog(
         None,
         "Could not load libconcord; please ensure it, and the Python "
@@ -54,7 +54,7 @@ try:
     libconcord.update_configuration
 except:
     str = traceback.format_exc()
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     dlg = wx.MessageDialog(
         None,
         "Could not load the correct version of libconcord; please ensure "
@@ -225,6 +225,7 @@ class DecoratedContainer(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         self.sizer = wx.GridBagSizer(5, 5)
+        self.sizer.SetCols(3)
         self.sizer.AddGrowableCol(2)
         self.SetSizer(self.sizer)
 
@@ -1577,7 +1578,7 @@ class Wizard(wx.Dialog):
         resources,
         app_finalizer,
         min_page_width = 658,
-        min_page_height = 550
+        min_page_height = 560
     ):
         self.app_finalizer = app_finalizer
 
@@ -1652,7 +1653,7 @@ class Wizard(wx.Dialog):
             size_page = self.GetSizeTuple()
             size_wiz = tuple_max(size_wiz, size_page)
             page.Hide()
-            self.sizer_top_right.Remove(page)
+            self.sizer_top_right.Detach(page)
 
         if self.min_page_width and (size_wiz[0] < self.min_page_width):
             size_wiz = (self.min_page_width, size_wiz[1])
@@ -1660,7 +1661,7 @@ class Wizard(wx.Dialog):
         if self.min_page_height and (size_wiz[1] < self.min_page_height):
             size_wiz = (size_wiz[0], self.min_page_height )
 
-        self.SetSize(size_wiz)
+        self.SetClientSize(size_wiz)
 
     def SetInitialPage(self, page):
         if self.cur_page:
@@ -1711,7 +1712,7 @@ class Wizard(wx.Dialog):
             prev_page = self.cur_page
             if prev_page:
                 prev_page.Hide()
-                self.sizer_top_right.Remove(prev_page)
+                self.sizer_top_right.Detach(prev_page)
 
             self.cur_page = page
 
@@ -1874,8 +1875,7 @@ def main(argv):
         ezhex_filename = None
         initial_exception = ("Command-line error", exception_message())
 
-    app = wx.PySimpleApp()
-    wx.InitAllImageHandlers()
+    app = wx.App(False)
 
     resources = Resources(appdir, no_web)
     resources.LoadImages()

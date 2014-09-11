@@ -53,7 +53,7 @@ try:
     import libconcord
 except:
     str = traceback.format_exc()
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     dlg = wx.MessageDialog(
         None,
         "Could not load libconcord; please ensure it, and the Python "
@@ -84,15 +84,15 @@ class ThrobberDialog(wx.Dialog):
             self.title = self.TITLE_WEBSITE
         else:
             self.title = title
-        wx.Dialog.__init__(self, None, -1, size=(256, 256), title=self.title)
+        wx.Dialog.__init__(self, None, -1, title=self.title)
+        self.SetClientSize((256, 256))
         self.SetBackgroundColour("white")
         self.gif = wx.animate.GIFAnimationCtrl(self, -1,
                                                self.FindGif("throbber.gif"))
         self.gif.GetPlayer().UseBackgroundColour(True)
         self.gif.Play()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.AddSpacer(64)
-        self.sizer.Add(self.gif, 0, wx.ALIGN_CENTER_HORIZONTAL)
+        self.sizer.Add(self.gif, 1, wx.EXPAND|wx.ALL, 64)
         self.SetSizer(self.sizer)
     def FindGif(self, filename):
         appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -1549,6 +1549,7 @@ class FavoriteChannelsPanel(WizardPanelBase):
                 if button.ButtonType == "FavoriteChannelButton":
                     self.remoteButtonsList.append(button.ButtonKey)
             self.remoteButtonsListBox.Set(self.remoteButtonsList)
+        self.Fit()
         self.parent.Show()
 
     def OnRemoteButtonSelection(self, event):
@@ -2646,7 +2647,7 @@ class Wizard(wx.Dialog):
             size_page = self.GetSizeTuple()
             size_wiz = tuple_max(size_wiz, size_page)
             page.Hide()
-            self.sizer_top_right.Remove(page)
+            self.sizer_top_right.Detach(page)
 
         if self.min_page_width and (size_wiz[0] < self.min_page_width):
             size_wiz = (self.min_page_width, size_wiz[1])
@@ -2654,7 +2655,7 @@ class Wizard(wx.Dialog):
         if self.min_page_height and (size_wiz[1] < self.min_page_height):
             size_wiz = (size_wiz[0], self.min_page_height )
 
-        self.SetSize(size_wiz)
+        self.SetClientSize(size_wiz)
 
     def SetInitialPage(self, page):
         if self.cur_page:
@@ -2716,7 +2717,7 @@ class Wizard(wx.Dialog):
             prev_page = self.cur_page
             if prev_page:
                 prev_page.Hide()
-                self.sizer_top_right.Remove(prev_page)
+                self.sizer_top_right.Detach(prev_page)
 
             self.cur_page = page
 
@@ -2807,8 +2808,7 @@ class Finalizer(object):
 def main(argv):
     appdir = os.path.dirname(argv[0])
 
-    app = wx.PySimpleApp()
-    wx.InitAllImageHandlers()
+    app = wx.App(False)
 
     resources = Resources(appdir, True)
     resources.LoadImages()
