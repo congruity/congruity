@@ -145,11 +145,23 @@
     </sequence>
   </complexType>
 
+  <complexType name="Activity">
+    <sequence>
+      <element name="Id" type="ns1:Id"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Activities">
+    <sequence>
+      <element name="Activity" type="ns6:Activity" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Account">
     <sequence>
       <element name="AccountTypeId" type="xsd:string"/>
       <element name="AccountUri" type="xsd:string"/>
-      <element name="Activities" type="xsd:string" nillable="true"/>
+      <element name="Activities" type="ns6:Activities" nillable="true"/>
       <element name="ConfigVersion" type="xsd:string" nillable="true"/>
       <element name="CreateDate" type="xsd:string"/>
       <element name="Devices" type="ns:Devices"/>
