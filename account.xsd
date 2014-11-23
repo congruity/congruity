@@ -165,6 +165,7 @@
       <element name="ConfigVersion" type="xsd:string" nillable="true"/>
       <element name="CreateDate" type="xsd:string"/>
       <element name="Devices" type="ns:Devices"/>
+      <element name="EmailToken" type="xsd:string"/>
       <element name="HouseholdId" type="ns1:Id"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsRemoved" type="xsd:string"/>
