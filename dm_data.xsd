@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns14="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="Device">
+    <sequence>
+      <element name="DecodedEdid" type="xsd:string"/>
+      <element name="DefaultInterDeviceDelay" type="xsd:string"/>
+      <element name="DefaultInterKeyDelay" type="xsd:string"/>
+      <element name="DefaultPressMinRepeats" type="xsd:string"/>
+      <element name="DeviceOrder" type="xsd:string"/>
+      <element name="DeviceType" type="xsd:string"/>
+      <element name="EncodedEdid" type="xsd:string"/>
+      <element name="HoldInterDeviceDelay" type="xsd:string"/>
+      <element name="HoldInterKeyDelay" type="xsd:string"/>
+      <element name="HoldMinRepeats" type="xsd:string"/>
+      <element name="InterDeviceDelay" type="xsd:string"/>
+      <element name="InterKeyDelay" type="xsd:string"/>
+      <element name="Manufacturer" type="xsd:string"/>
+      <element name="Model" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="PictureId" type="xsd:string"/>
+      <element name="PressMinRepeats" type="xsd:string"/>
+      <element name="ActivityIds" type="xsd:string"/>
+      <element name="AutoDetectedDevice" type="ns1:AutoDetectedDevice"/>
+      <element name="BTAddress" type="xsd:string" nillable="true"/>
+      <element name="Characterization" type="xsd:string"/>
+      <element name="ContentProfileKey" type="xsd:string"/>
+      <element name="ControlPort" type="xsd:string"/>
+      <element name="DeviceAddedDate" type="xsd:string"/>
+      <element name="DeviceCapabilitiesWithPriority" type="ns1:DeviceCapabilitiesWithPriority"/>
+      <element name="DeviceClassification" type="xsd:string"/>
+      <element name="DeviceProfileUri" type="xsd:string"/>
+      <element name="DeviceSearchType" type="xsd:string"/>
+      <element name="DeviceTypeDisplayName" type="xsd:string"/>
+      <element name="DongleIndex" type="xsd:string"/>
+      <element name="DongleRFID" type="xsd:string"/>
+      <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
+      <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
+      <element name="Icon" type="xsd:string"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
+      <element name="IsKeyboardAssociated" type="xsd:boolean"/>
+      <element name="IsMultiCode" type="xsd:string"/>
+      <element name="IsScartCableSupported" type="xsd:boolean"/>
+      <element name="ParentDevice" type="ns1:Id"/>
+      <element name="ParentDeviceManufacturer" type="xsd:string"/>
+      <element name="ParentDeviceModel" type="xsd:string"/>
+      <element name="PrivateAddType" type="xsd:string"/>
+      <element name="RegionalCharset" type="xsd:string"/>
+      <element name="SetupState" type="xsd:string"/>
+      <element name="State" type="xsd:string"/>
+      <element name="SuggestedDisplay" type="xsd:string"/>
+      <element name="Transport" type="xsd:string"/>
+    </sequence>
+  </complexType>
+  
+</schema>

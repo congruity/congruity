@@ -17,6 +17,7 @@
  xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
  xmlns:ns12="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
  xmlns:ns13="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract"
+ xmlns:ns14="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -32,6 +33,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" location="user_feature.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract" location="product.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data" location="dm_data.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -51,61 +53,9 @@
     </sequence>
   </complexType>
 
-  <complexType name="Device">
-    <sequence>
-      <element name="DecodedEdid" type="xsd:string"/>
-      <element name="DefaultInterDeviceDelay" type="xsd:string"/>
-      <element name="DefaultInterKeyDelay" type="xsd:string"/>
-      <element name="DefaultPressMinRepeats" type="xsd:string"/>
-      <element name="DeviceOrder" type="xsd:string"/>
-      <element name="DeviceType" type="xsd:string"/>
-      <element name="EncodedEdid" type="xsd:string"/>
-      <element name="HoldInterDeviceDelay" type="xsd:string"/>
-      <element name="HoldInterKeyDelay" type="xsd:string"/>
-      <element name="HoldMinRepeats" type="xsd:string"/>
-      <element name="InterDeviceDelay" type="xsd:string"/>
-      <element name="InterKeyDelay" type="xsd:string"/>
-      <element name="Manufacturer" type="xsd:string"/>
-      <element name="Model" type="xsd:string"/>
-      <element name="Name" type="xsd:string"/>
-      <element name="PictureId" type="xsd:string"/>
-      <element name="PressMinRepeats" type="xsd:string"/>
-      <element name="ActivityIds" type="xsd:string"/>
-      <element name="AutoDetectedDevice" type="ns1:AutoDetectedDevice"/>
-      <element name="BTAddress" type="xsd:string" nillable="true"/>
-      <element name="Characterization" type="xsd:string"/>
-      <element name="ContentProfileKey" type="xsd:string"/>
-      <element name="ControlPort" type="xsd:string"/>
-      <element name="DeviceAddedDate" type="xsd:string"/>
-      <element name="DeviceCapabilitiesWithPriority" type="ns1:DeviceCapabilitiesWithPriority"/>
-      <element name="DeviceClassification" type="xsd:string"/>
-      <element name="DeviceProfileUri" type="xsd:string"/>
-      <element name="DeviceSearchType" type="xsd:string"/>
-      <element name="DeviceTypeDisplayName" type="xsd:string"/>
-      <element name="DongleIndex" type="xsd:string"/>
-      <element name="DongleRFID" type="xsd:string"/>
-      <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
-      <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
-      <element name="Icon" type="xsd:string"/>
-      <element name="Id" type="ns1:Id"/>
-      <element name="IsInterKeyDelayOptimized" type="xsd:boolean"/>
-      <element name="IsKeyboardAssociated" type="xsd:boolean"/>
-      <element name="IsMultiCode" type="xsd:string"/>
-      <element name="IsScartCableSupported" type="xsd:boolean"/>
-      <element name="ParentDevice" type="ns1:Id"/>
-      <element name="ParentDeviceManufacturer" type="xsd:string"/>
-      <element name="ParentDeviceModel" type="xsd:string"/>
-      <element name="PrivateAddType" type="xsd:string"/>
-      <element name="RegionalCharset" type="xsd:string"/>
-      <element name="SetupState" type="xsd:string"/>
-      <element name="State" type="xsd:string"/>
-      <element name="SuggestedDisplay" type="xsd:string"/>
-      <element name="Transport" type="xsd:string"/>
-    </sequence>
-  </complexType>
   <complexType name="GetDevicesResult">
     <sequence>
-      <element name="Device" type="ns:Device" minOccurs="0" maxOccurs="unbounded"/>
+      <element name="Device" type="ns14:Device" minOccurs="0" maxOccurs="unbounded"/>
     </sequence>
   </complexType>
 
@@ -286,6 +236,13 @@
 </message>
 <message name="LoginResponse">
  <part name="LoginResult" type="xsd:boolean"/>
+</message>
+
+<message name="GetDevice">
+  <part name="deviceId" type="ns1:Id"/>
+</message>
+<message name="GetDeviceResponse">
+  <part name="GetDeviceResult" type="ns14:Device"/>
 </message>
 
 <message name="GetDevices">
@@ -586,6 +543,10 @@
  </operation>
 </portType>
 <portType name="DeviceManagerPortType">
+ <operation name="GetDevice">
+  <input message="ns:GetDevice"/>
+  <output message="ns:GetDeviceResponse"/>
+ </operation>
  <operation name="GetDevices">
   <input message="ns:GetDevices"/>
   <output message="ns:GetDevicesResponse"/>
@@ -813,6 +774,15 @@
 </binding>
 <binding name="DeviceManagerBinding" type="ns:DeviceManagerPortType">
  <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="GetDevice">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetDevice"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
  <operation name="GetDevices">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IDeviceManager/GetDevices"/>
   <input>

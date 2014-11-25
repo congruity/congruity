@@ -30,7 +30,7 @@
     </sequence>
   </complexType>
 
-  <complexType name="UpdateDeviceNameOperationStart">
+  <complexType name="UpdateDeviceOperationStart">
     <sequence>
       <element name="ParentAccount" type="ns1:Id"/>
       <element name="Object" type="xsd:string" nillable="true"/>

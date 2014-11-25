@@ -519,6 +519,14 @@ class RemoteConfigurationPanel(WizardPanelBase):
                 "Adjust power on/off settings for a device"
         ))
         self.leftButtonSizer.Add(self.adjustPowerSettingsButton)
+        self.adjustDeviceDelaysButton = wx.Button(
+            self, label="Adjust Device Delays", size=self.buttonSize)
+        self.adjustDeviceDelaysButton.Bind(wx.EVT_BUTTON,
+                                           self.OnAdjustDeviceDelays)
+        self.adjustDeviceDelaysButton.SetToolTip(wx.ToolTip(
+                "Adjust speed of commands sent to a device"
+        ))
+        self.leftButtonSizer.Add(self.adjustDeviceDelaysButton)
         self.buttonSizer.Add(self.leftButtonSizer, 0, 0, 0)
 
         self.rightButtonSizer = wx.BoxSizer(wx.VERTICAL)
@@ -760,6 +768,16 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if deviceToConfigure != ():
             self.parent._SetPage(self.resources.page_adjust_power_settings,
                                  self.devices[deviceToConfigure[0]], True)
+        else:
+            wx.MessageBox('Please select a device to adjust.',
+                          'No selection made.', wx.OK | wx.ICON_WARNING)
+
+    def OnAdjustDeviceDelays(self, event):
+        deviceToConfigure = self.devicesListBox.GetSelections()
+        if deviceToConfigure != ():
+            self.parent._SetPage(self.resources.page_adjust_device_delays,
+                                 (self.remote.Id,
+                                  self.devices[deviceToConfigure[0]].Id), True)
         else:
             wx.MessageBox('Please select a device to adjust.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
@@ -2566,6 +2584,118 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_remote_configuration, None)
 
+class AdjustDeviceDelaysPanel(WizardPanelBase):
+    _msg_welcome = (
+        "On this page, you can adjust how quickly commands are sent to your " +
+        "device."
+    )
+
+    def __init__(self, parent, resources):
+        self.parent = parent
+        self.resources = resources
+
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+        self.sizer.AddSpacer(10)
+
+        self.controlsSizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.controlsSizer)
+
+        self.SetSizerAndFit(self.sizer)
+
+        self.next = None
+
+    def OnActivated(self, prev_page, data):
+        self.textMessage.UpdateText(self._msg_welcome)
+        self.parent.ReenableBack()
+        self.remoteId, self.deviceId = data
+        BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
+        return (None, None)
+
+    def LoadData(self):
+        self.device = mhMgr.GetDevice(self.deviceId)
+        self.userFeatures = mhMgr.GetUserFeatures(self.deviceId)
+
+    def LoadDataUI(self, loadDataResult):
+        self.controlsSizer.Clear(deleteWindows=True)
+        self.controls = {}
+        self.featureIdxs = {}
+        self.AddControl("interdevice", "Inter-device Delay (ms):", 0, 5000,
+                        self.device.InterDeviceDelay,
+                        self.device.DefaultInterDeviceDelay)
+        self.AddControl("interkey", "Inter-key Delay (ms):", 0, 1000,
+                        self.device.InterKeyDelay,
+                        self.device.DefaultInterKeyDelay)
+        for i in range(len(self.userFeatures.DeviceFeature)):
+            deviceFeature = self.userFeatures.DeviceFeature[i]
+            if deviceFeature.__class__.__name__ == "InputFeature":
+                self.AddControl("input", "Input Delay (ms):", 0, 5000,
+                                deviceFeature.InputDelay,
+                                deviceFeature.DefaultInputDelay)
+                self.featureIdxs["input"] = i
+            elif deviceFeature.__class__.__name__ == "PowerFeature":
+                self.AddControl("poweron", "Power-on Delay (ms):", 0, 60000,
+                                deviceFeature.PowerOnDelay,
+                                deviceFeature.DefaultPowerOnDelay)
+                self.featureIdxs["poweron"] = i
+        saveButton = wx.Button(self, label="Save Changes")
+        saveButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
+        self.controlsSizer.Add(saveButton)
+        self.Layout()
+        self.parent.Show()
+
+    def AddControl(self, key, labelText, min, max, value, default):
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        label = wx.StaticText(self, label=labelText, size=(157, 21))
+        sizer.Add(label, flag=wx.ALIGN_CENTER_VERTICAL)
+        sizer.AddSpacer(10)
+        ctrl = wx.SpinCtrl(self, min=min, max=max, value=value)
+        self.controls[key] = ctrl
+        sizer.Add(ctrl)
+        sizer.AddSpacer(10)
+        button = wx.Button(self, label="Restore Default")
+        def OnRestoreDefault(event, ctrl=ctrl, default=default):
+            ctrl.SetValue(int(default))
+        button.Bind(wx.EVT_BUTTON, OnRestoreDefault)
+        sizer.Add(button)
+        self.controlsSizer.Add(sizer)
+        self.controlsSizer.AddSpacer(10)
+
+    def OnSaveChanges(self, event):
+        self.device.InterDeviceDelay = self.controls["interdevice"].GetValue()
+        self.device.InterKeyDelay = self.controls["interkey"].GetValue()
+        if "input" in self.controls:
+            idx = self.featureIdxs["input"]
+            self.userFeatures.DeviceFeature[idx].InputDelay = \
+                self.controls["input"].GetValue()
+        if "poweron" in self.controls:
+            idx = self.featureIdxs["poweron"]
+            self.userFeatures.DeviceFeature[idx].PowerOnDelay = \
+                self.controls["poweron"].GetValue()
+        BackgroundTask((self.DoSaveChanges,), (self.FinishSaveChanges,))
+
+    def DoSaveChanges(self):
+        mhMgr.UpdateDevice(self.device, self.remoteId)
+        mhMgr.SaveUserFeatures(self.userFeatures)
+
+    def FinishSaveChanges(self, saveChangesResult):
+        pass
+
+    def GetTitle(self):
+        return "Device Delay Adjustment"
+
+    def IsCancelInitiallyDisabled(self):
+        return False
+
+    def GetNext(self):
+        return (self.next, None)
+
+    def GetBack(self):
+        return (self.resources.page_remote_configuration, None)
+
 class Wizard(wx.Dialog):
     def __init__(
         self,
@@ -2782,6 +2912,7 @@ class Resources(object):
         self.page_setup_activities = SetupActivitiesPanel(wizard, self)
         self.page_edit_activity = EditActivityPanel(wizard, self)
         self.page_adjust_power_settings = AdjustPowerSettingsPanel(wizard, self)
+        self.page_adjust_device_delays = AdjustDeviceDelaysPanel(wizard, self)
         self.pages = [
             self.page_welcome,
             self.page_remote_select,
@@ -2795,6 +2926,7 @@ class Resources(object):
             self.page_setup_activities,
             self.page_edit_activity,
             self.page_adjust_power_settings,
+            self.page_adjust_device_delays,
         ]
 
 class Finalizer(object):

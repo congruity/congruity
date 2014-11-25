@@ -57,6 +57,7 @@ TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (DM_OPERATION_NS, "Operation"),
     (DM_OPERATION_NS, "AddDeviceBySearchResultOperation"),
     (DM_OPERATION_NS, "UpdateDeviceNameOperation"),
+    (DM_OPERATION_NS, "UpdateUserDeviceOperation"),
     (DM_OPERATION_NS, "AddCommandOperation"),
     (DM_OPERATION_NS, "DeleteCommandOperation"),
     (ACTIVITY_NS, "AccessInternetActivityRole"),
@@ -323,6 +324,9 @@ class MHManager():
                         return account.Id
         return None
 
+    def GetDevice(self, deviceId):
+        return self.client.service['DeviceManager'].GetDevice(deviceId)
+
     def GetDevices(self, remoteId):
         self.GetHousehold()
         account = self.GetAccountForRemote(remoteId)
@@ -372,6 +376,14 @@ class MHManager():
         operation.ParentAccount = self.GetAccountIdForDevice(deviceId)
         operation.DeviceId = id
         operation.DeviceName = newName
+        return self.client.service['DeviceManager'].UpdateMyData(operation)
+
+    def UpdateDevice(self, device, remoteId):
+        operation = self.client.factory.create(
+            '{' + DM_OPERATION_NS + '}UpdateUserDeviceOperation'
+        )
+        operation.ParentAccount = self.GetAccountForRemote(remoteId).Id
+        operation.Device = device
         return self.client.service['DeviceManager'].UpdateMyData(operation)
 
     # Returns 'None' on success.  Otherwise returns a string with an error msg.
@@ -790,6 +802,10 @@ class MHManager():
             return result.KeyValueOfDeviceIdArrayOfDeviceFeatureeiEyJu8p[0].\
                 Value
         return None
+
+    def SaveUserFeatures(self, userFeatures):
+        return self.client.service['UserFeatureManager'].SaveUserFeatures(
+            userFeatures)
 
     def GetPowerFeature(self, deviceId):
         features = self.GetUserFeatures(deviceId)

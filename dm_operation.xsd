@@ -7,12 +7,14 @@
   xmlns:ns4="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation"
   xmlns:ns5="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.Operation"
   xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
+  xmlns:ns14="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data.SearchMatch" location="search_match.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data.Operation" location="operation.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data" location="dm_data.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
@@ -38,10 +40,21 @@
 
   <complexType name="UpdateDeviceNameOperation">
     <complexContent>
-      <extension base="ns4:UpdateDeviceNameOperationStart">
+      <extension base="ns4:UpdateDeviceOperationStart">
 	<sequence>
 	  <element name="DeviceId" type="ns1:Id"/>
 	  <element name="DeviceName" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="UpdateUserDeviceOperation">
+    <complexContent>
+      <extension base="ns4:UpdateDeviceOperationStart">
+	<sequence>
+	  <element name="Device" type="ns14:Device"/>
+	  <element name="RegionalCharset" type="xsd:string" nillable="true"/>
 	</sequence>
       </extension>
     </complexContent>
