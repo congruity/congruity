@@ -122,6 +122,7 @@
       <element name="AccountId" type="xsd:string"/>
       <element name="AuthToken" type="xsd:string"/>
       <element name="Email" type="xsd:string"/>
+      <element name="IsLockedOut" type="xsd:boolean"/>
     </sequence>
   </complexType>
 
