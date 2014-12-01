@@ -2629,7 +2629,7 @@ class AdjustDeviceDelaysPanel(WizardPanelBase):
         self.AddControl("interkey", "Inter-key Delay (ms):", 0, 1000,
                         self.device.InterKeyDelay,
                         self.device.DefaultInterKeyDelay)
-        for i in range(len(self.userFeatures.DeviceFeature)):
+        for i in range(len(self.userFeatures.DeviceFeature) - 1, -1, -1):
             deviceFeature = self.userFeatures.DeviceFeature[i]
             if deviceFeature.__class__.__name__ == "InputFeature":
                 self.AddControl("input", "Input Delay (ms):", 0, 5000,
@@ -2641,6 +2641,8 @@ class AdjustDeviceDelaysPanel(WizardPanelBase):
                                 deviceFeature.PowerOnDelay,
                                 deviceFeature.DefaultPowerOnDelay)
                 self.featureIdxs["poweron"] = i
+            else:
+                del self.userFeatures.DeviceFeature[i]
         saveButton = wx.Button(self, label="Save Changes")
         saveButton.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
         self.controlsSizer.Add(saveButton)

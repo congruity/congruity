@@ -77,6 +77,7 @@ TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (USER_FEATURE_NS, "InputFeature"),
     (USER_FEATURE_NS, "PowerFeature"),
     (USER_FEATURE_NS, "ChannelTuningFeature"),
+    (USER_FEATURE_NS, "InternalStateFeature"),
 ]
 
 # This is a mapping between ActivityTypes and a friendly string
