@@ -39,7 +39,7 @@ from mhmanager import SaveActivityTemplate
 version = "18"
 
 HARMONY_LINK_SKIN_ID = 82
-WATCH_TV_BUTTON_SKIN_IDS = [78, 79, 80, 81]
+WATCH_TV_BUTTON_SKIN_IDS = [78, 79, 80, 81, 104]
 
 use_local_wsdl = False
 if '--use-local-wsdl' in sys.argv:
