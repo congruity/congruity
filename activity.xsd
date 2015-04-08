@@ -132,16 +132,28 @@
   </complexType>
 
   <complexType name="AbstractActivityAction" abstract="true">
+    <sequence>
+      <element name="ActionOrder" type="xsd:string"/>
+      <element name="Id" type="xsd:string"/>
+    </sequence>
   </complexType>
 
   <complexType name="CommandActivityAction">
     <complexContent>
       <extension base="ns11:AbstractActivityAction">
 	<sequence>
-	  <element name="ActionOrder" type="xsd:string"/>
-	  <element name="Id" type="xsd:string"/>
 	  <element name="CommandName" type="xsd:string"/>
 	  <element name="DeviceId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="DelayActivityAction">
+    <complexContent>
+      <extension base="ns11:AbstractActivityAction">
+	<sequence>
+	  <element name="Duration" type="xsd:string"/>
 	</sequence>
       </extension>
     </complexContent>
