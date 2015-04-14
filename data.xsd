@@ -59,6 +59,8 @@
     <sequence>
       <element name="Class" type="xsd:string" nillable="true"/>
       <element name="Id" type="xsd:string" nillable="true"/>
+      <element name="Manufacturer" type="xsd:string" nillable="true"/>
+      <element name="Model" type="xsd:string" nillable="true"/>
       <element name="Name" type="xsd:string" nillable="true"/>
       <element name="USN" type="xsd:string" nillable="true"/>
     </sequence>
