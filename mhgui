@@ -24,6 +24,7 @@ import sys
 import threading
 import time
 import traceback
+from urllib2 import URLError
 
 import wxversion
 wxversion.ensureMinimal('2.8')
@@ -267,7 +268,11 @@ class WelcomePanel(WizardPanelBase):
         return False
 
     def DoLogin(self, username, password):
-        return mhMgr.Login(username, password)
+        try:
+            result = mhMgr.Login(username, password)
+        except URLError as e:
+            result = e.reason
+        return result
 
     def FinishLogin(self, loginResult):
         if loginResult is True:
@@ -277,8 +282,10 @@ class WelcomePanel(WizardPanelBase):
                 msg = 'You appear to have used a members.harmonyremote.com ' \
                       'account.  Please create a myharmony.com account or ' \
                       'login with an existing one.'
-            else:
+            elif loginResult is False:
                 msg = 'Login failed.  Username or password incorrect.'
+            else:
+                msg = 'Login failed.  %s' % loginResult
             wx.MessageBox(msg, 'Login Failed', wx.OK | wx.ICON_WARNING)
             self.usernameCtrl.Clear()
             self.passwordCtrl.Clear()
