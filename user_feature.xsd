@@ -67,6 +67,7 @@
       <element name="InputOrder" type="xsd:string"/>
       <element name="IsActiveInput" type="xsd:string"/>
       <element name="IsAutoSwitch" type="xsd:string" nillable="true"/>
+      <element name="IsOnline" type="xsd:string"/>
       <element name="PressDuration" type="xsd:string"/>
       <element name="StateName" type="xsd:string" nillable="true"/>
       <element name="StateValue" type="xsd:string" nillable="true"/>
@@ -129,6 +130,7 @@
     <complexContent>
       <extension base="ns12:DeviceFeature">
 	<sequence>
+	  <element name="ConnectedAppPowerOnDelay" type="xsd:string"/>
 	  <element name="DefaultPowerOnDelay" type="xsd:string"/>
 	  <element name="HasAdditionalActions" type="xsd:boolean"/>
 	  <element name="Id" type="xsd:string"/>
