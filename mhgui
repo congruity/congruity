@@ -41,12 +41,24 @@ version = "18"
 HARMONY_LINK_SKIN_ID = 82
 WATCH_TV_BUTTON_SKIN_IDS = [78, 79, 80, 81, 104]
 
-use_local_wsdl = False
-if '--use-local-wsdl' in sys.argv:
-    use_local_wsdl = True
-suds_debug = False
-if '--suds-debug' in sys.argv:
-    suds_debug = True
+try:
+    import argparse
+except:
+    use_local_wsdl = False
+    if '--use-local-wsdl' in sys.argv:
+        use_local_wsdl = True
+    suds_debug = False
+    if '--suds-debug' in sys.argv:
+        suds_debug = True
+else:
+    parser = argparse.ArgumentParser(description='Manage Logitech Harmony Remotes.')
+    parser.add_argument('-d', '--suds-debug', help='output SOAP messages',
+        action='store_true')
+    parser.add_argument('-l', '--use-local-wsdl', help='use local wsdl file',
+        action='store_true')
+    args = parser.parse_args()
+    suds_debug = args.suds_debug
+    use_local_wsdl = args.use_local_wsdl
 mhMgr = MHManager(use_local_wsdl, suds_debug)
 
 try:
