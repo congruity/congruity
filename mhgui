@@ -195,6 +195,18 @@ class WizardPanelBase(wx.Panel):
     def GetNext(self):
         return (None, None)
 
+class DevicePanelTemplate(WizardPanelBase):
+    def __init__(self, parent, resources):
+        WizardPanelBase.__init__(self, parent, resources)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.deviceTitle = wx.StaticText(self)
+        font = wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD)
+        self.deviceTitle.SetFont(font)
+        self.sizer.Add(self.deviceTitle, 0, ALIGN_XCA, 5)
+        self.textMessage = WrappedStaticText(self)
+        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
+
 class WelcomePanel(WizardPanelBase):
     _msg_welcome = (
         "Welcome to MHGUI: an application for accessing " +
@@ -786,7 +798,9 @@ class RemoteConfigurationPanel(WizardPanelBase):
         if deviceToConfigure != ():
             self.parent._SetPage(self.resources.page_adjust_device_delays,
                                  (self.remote.Id,
-                                  self.devices[deviceToConfigure[0]].Id), True)
+                                  self.devices[deviceToConfigure[0]].Id,
+                                  self.devices[deviceToConfigure[0]].Name),
+                                  True)
         else:
             wx.MessageBox('Please select a device to adjust.',
                           'No selection made.', wx.OK | wx.ICON_WARNING)
@@ -2347,20 +2361,16 @@ class EditActivityPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_setup_activities, None)
 
-class AdjustPowerSettingsPanel(WizardPanelBase):
+class AdjustPowerSettingsPanel(DevicePanelTemplate):
     _msg_welcome = (
         "On this page, you can adjust the commands that are sent when your " +
         "device\nis powered on and off."
     )
 
     def __init__(self, parent, resources):
-        WizardPanelBase.__init__(self, parent, resources)
+        DevicePanelTemplate.__init__(self, parent, resources)
 
         self.buttonSize = (127, 33)
-
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.textMessage = WrappedStaticText(self)
-        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
 
         self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.addCommandButton = wx.Button(self, label="Add Command",
@@ -2405,6 +2415,7 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
         self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
         self.device = data
+        self.deviceTitle.SetLabel(self.device.Name)
         BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
@@ -2570,18 +2581,15 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
     def GetBack(self):
         return (self.resources.page_remote_configuration, None)
 
-class AdjustDeviceDelaysPanel(WizardPanelBase):
+class AdjustDeviceDelaysPanel(DevicePanelTemplate):
     _msg_welcome = (
         "On this page, you can adjust how quickly commands are sent to your " +
         "device."
     )
 
     def __init__(self, parent, resources):
-        WizardPanelBase.__init__(self, parent, resources)
+        DevicePanelTemplate.__init__(self, parent, resources)
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.textMessage = WrappedStaticText(self)
-        self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
         self.sizer.AddSpacer(10)
 
         self.controlsSizer = wx.BoxSizer(wx.VERTICAL)
@@ -2594,7 +2602,8 @@ class AdjustDeviceDelaysPanel(WizardPanelBase):
     def OnActivated(self, prev_page, data):
         self.textMessage.UpdateText(self._msg_welcome)
         self.parent.ReenableBack()
-        self.remoteId, self.deviceId = data
+        self.remoteId, self.deviceId, deviceName = data
+        self.deviceTitle.SetLabel(deviceName)
         BackgroundTask((self.LoadData,), (self.LoadDataUI,), False)
         return (None, None)
 
