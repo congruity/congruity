@@ -204,9 +204,6 @@ class WelcomePanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -287,9 +284,6 @@ class RemoteSelectPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -490,9 +484,6 @@ class RemoteConfigurationPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.buttonSize = (170, 33) # Size of largest button
@@ -826,9 +817,6 @@ class AddDevicePanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -952,9 +940,6 @@ class CreateAccountPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.securityQuestionChoices = [
@@ -1225,9 +1210,6 @@ class ConfigureDevicePanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.LC_WIDTH = 225
@@ -1524,9 +1506,6 @@ class FavoriteChannelsPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1644,9 +1623,6 @@ class SetupWatchTVPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1860,9 +1836,6 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         self.roomNames = [ "", "Basement", "Bedroom", "Den", "Dorm",
                            "Family Room", "Hallway", "Kitchen", "Living Room",
                            "Media Room", "Office", "Rec Room" ]
@@ -2129,9 +2102,6 @@ class SetupActivitiesPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.buttonSize = (127, 33)
@@ -2236,9 +2206,6 @@ class SetupActivitiesPanel(WizardPanelBase):
 
 class EditActivityPanel(WizardPanelBase):
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -2381,9 +2348,6 @@ class AdjustPowerSettingsPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.buttonSize = (127, 33)
@@ -2607,9 +2571,6 @@ class AdjustDeviceDelaysPanel(WizardPanelBase):
     )
 
     def __init__(self, parent, resources):
-        self.parent = parent
-        self.resources = resources
-
         WizardPanelBase.__init__(self, parent, resources)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
