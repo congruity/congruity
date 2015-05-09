@@ -1853,8 +1853,9 @@ class Finalizer(object):
             pass
 
 def main(argv):
-    app = argv.pop(0)
-    appdir = os.path.dirname(app)
+    app = wx.App(False)
+
+    appdir = os.path.dirname(argv.pop(0))
 
     no_web = False
     try:
@@ -1874,8 +1875,6 @@ def main(argv):
     except:
         ezhex_filename = None
         initial_exception = ("Command-line error", exception_message())
-
-    app = wx.App(False)
 
     resources = Resources(appdir, no_web)
     resources.LoadImages()
