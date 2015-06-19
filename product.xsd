@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
   xmlns:ns13="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
 
   <complexType name="CompilerArchitecture">
     <sequence>
@@ -64,12 +66,6 @@
       <element name="Name" type="xsd:string"/>
     </sequence>
   </complexType>
-  
-  <complexType name="SupportedCapabilities">
-    <sequence>
-      <element name="SupportedCapability" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
-    </sequence>
-  </complexType>
 
   <complexType name="Setting">
     <sequence>
@@ -119,7 +115,7 @@
       <element name="ProductSettings" type="ns13:ProductSettings"/>
       <element name="Region" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
-      <element name="SupportedCapabilities" type="ns13:SupportedCapabilities"/>
+      <element name="SupportedCapabilities" type="ns1:ProductCapabilities"/>
     </sequence>
   </complexType>
 

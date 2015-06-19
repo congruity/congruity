@@ -66,4 +66,23 @@
     </sequence>
   </complexType>
 
+  <complexType name="ProductCapability">
+    <sequence>
+      <element name="CapabilityId" type="xsd:string"/>
+      <element name="Data" type="xsd:string" nillable="true"/>
+      <element name="FWFeatureDependencies" type="xsd:string" nillable="true"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="ParentCapabilityId" type="xsd:string" nillable="true"/>
+      <element name="RequiredFor" type="xsd:string" nillable="true"/>
+      <element name="Status" type="xsd:string" nillable="true"/>
+      <element name="Type" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ProductCapabilities">
+    <sequence>
+      <element name="ProductCapability" type="ns1:ProductCapability" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
 </schema>
