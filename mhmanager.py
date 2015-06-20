@@ -207,6 +207,12 @@ class MHManager():
     def GetProductButtonList(self, skinId):
         return self.client.service['ProductsManager'].GetProductButtonList(skinId).Buttons.ButtonDefinition
 
+    def GetCapabilityNames(self, product):
+        capabilityNames = []
+        for capability in product.SupportedCapabilities.ProductCapability:
+            capabilityNames.append(capability.Name)
+        return capabilityNames
+
     def GetCommands(self, deviceId):
         deviceIds = self.client.factory.create('{' + DATA_NS + '}deviceIds')
         deviceIds.DeviceId.append(deviceId)

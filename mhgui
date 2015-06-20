@@ -629,7 +629,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
         # Populate remote-specific buttons in rightButtonSizer
         self.rightButtonSizer.Clear(deleteWindows=True)
-        capabilities = self.product.SupportedCapabilities.SupportedCapability
+        capabilities = mhMgr.GetCapabilityNames(self.product)
         if "FavoriteChannels" in capabilities:
             self.AddFavoriteChannelsButton()
         if "CompiledRemoteButtonMapping" in capabilities or \
@@ -1316,7 +1316,7 @@ class ConfigureDevicePanel(WizardPanelBase):
         # Only populate the buttons list if this remote has buttons; if the
         # 'remote' is a Harmony Link, it has no ProductButtonList.
         self.remoteButtons = None
-        capabilities = self.product.SupportedCapabilities.SupportedCapability
+        capabilities = mhMgr.GetCapabilityNames(self.product)
         if "CompiledRemoteButtonMapping" in capabilities:
             self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
         self.deviceCommands = mhMgr.GetCommands(self.deviceId)
