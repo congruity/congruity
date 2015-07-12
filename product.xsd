@@ -110,6 +110,7 @@
       <element name="MinutesPerTimePeriod" type="xsd:string"/>
       <element name="Name" type="xsd:string"/>
       <element name="NumOfAddDevice" type="xsd:integer"/>
+      <element name="ProSKUDisplayName" type="xsd:string" nillable="true"/>
       <element name="ProductId" type="xsd:string"/>
       <element name="ProductIdentifier" type="xsd:string"/>
       <element name="ProductSettings" type="ns13:ProductSettings"/>

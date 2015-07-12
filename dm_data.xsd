@@ -33,6 +33,7 @@
       <element name="Characterization" type="xsd:string"/>
       <element name="ContentProfileKey" type="xsd:string"/>
       <element name="ControlPort" type="xsd:string"/>
+      <element name="CopiedDeviceSource" type="xsd:string"/>
       <element name="DeviceAddedDate" type="xsd:string"/>
       <element name="DeviceCapabilitiesWithPriority" type="ns1:DeviceCapabilitiesWithPriority"/>
       <element name="DeviceClassification" type="xsd:string"/>

@@ -69,8 +69,10 @@
   <complexType name="ProductCapability">
     <sequence>
       <element name="CapabilityId" type="xsd:string"/>
+      <element name="CountryId" type="xsd:string" nillable="true"/>
       <element name="Data" type="xsd:string" nillable="true"/>
       <element name="FWFeatureDependencies" type="xsd:string" nillable="true"/>
+      <element name="IsDeny" type="xsd:boolean"/>
       <element name="Name" type="xsd:string"/>
       <element name="ParentCapabilityId" type="xsd:string" nillable="true"/>
       <element name="RequiredFor" type="xsd:string" nillable="true"/>
