@@ -128,8 +128,8 @@
       <element name="FirstName" type="xsd:string"/>
       <element name="IsPolicyAccepted" type="xsd:string"/>
       <element name="LastName" type="xsd:string"/>
-      <element name="Latitude" type="xsd:string"/>
-      <element name="Longitude" type="xsd:string"/>
+      <element name="Latitude" type="xsd:string" nillable="true"/>
+      <element name="Longitude" type="xsd:string" nillable="true"/>
       <element name="RemoteLanguage" type="xsd:string" nillable="true"/>
       <element name="TimeZone" type="xsd:string" nillable="true"/>
       <element name="UserKey" type="xsd:string"/>

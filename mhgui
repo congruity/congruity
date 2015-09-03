@@ -969,19 +969,6 @@ class CreateAccountPanel(WizardPanelBase):
     def __init__(self, parent, resources):
         WizardPanelBase.__init__(self, parent, resources)
 
-        self.securityQuestionChoices = [
-            "What was the make of your first car?",
-            "What's your mother's maiden name?",
-            "What's the name of your favorite sports team?",
-            "What's your first pet's name?",
-            "Who is your all-time favorite movie character?" ]
-        self.securityQuestionTokens = [
-            "QuestionCar",
-            "QuestionMothersMaidenName",
-            "QuestionSportsTeam",
-            "QuestionFirstPet",
-            "QuestionMovieCharacter" ]
-
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.textMessage = WrappedStaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
@@ -1036,25 +1023,6 @@ class CreateAccountPanel(WizardPanelBase):
         self.sizer.Add(self.lineFourSizer)
         self.sizer.AddSpacer(12)
 
-        self.lineFiveSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.securityQuestionLabel = wx.StaticText(self, -1,
-                                                   "Security Question:")
-        self.lineFiveSizer.Add(self.securityQuestionLabel, 0, ALIGN_LCA)
-        self.securityQuestionChoice = wx.Choice(self, -1,
-            choices=self.securityQuestionChoices)
-        self.lineFiveSizer.Add(self.securityQuestionChoice)
-        self.sizer.Add(self.lineFiveSizer)
-        self.sizer.AddSpacer(12)
-
-        self.lineSixSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.securityAnswerLabel = wx.StaticText(self, -1, "Security Answer:")
-        self.lineSixSizer.Add(self.securityAnswerLabel, 0, ALIGN_LCA)
-        self.securityAnswerCtrl = wx.TextCtrl(self, size=(170,31))
-        self.securityAnswerCtrl.SetMaxLength(30)
-        self.lineSixSizer.Add(self.securityAnswerCtrl)
-        self.sizer.Add(self.lineSixSizer)
-        self.sizer.AddSpacer(12)
-
         self.lineSevenSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.termsCheckBox = wx.CheckBox(self,
             label="I agree to the Logitech Terms of Use and Privacy Policy")
@@ -1103,6 +1071,7 @@ class CreateAccountPanel(WizardPanelBase):
         self.countryChoice.SetItems(self.countries)
         if self.isUpdate:
             self.PopulateData()
+        self.Layout()
         self.parent.Show()
 
     def PopulateData(self):
@@ -1115,10 +1084,6 @@ class CreateAccountPanel(WizardPanelBase):
         self.emailAddressCtrl.SetValue(details.email)
         self.passwordCtrl.SetValue(details.password) 
         self.retypePasswordCtrl.SetValue(details.password)
-        self.securityQuestionChoice.SetSelection(
-            self.securityQuestionTokens.index(details.securityQuestion)
-        )
-        self.securityAnswerCtrl.Clear()
         self.termsCheckBox.SetValue(True)
         if str(details.keepMeInformed).lower() == "true":
             self.contactCheckBox.SetValue(True)
@@ -1132,8 +1097,6 @@ class CreateAccountPanel(WizardPanelBase):
         self.emailAddressCtrl.Clear()
         self.passwordCtrl.Clear()
         self.retypePasswordCtrl.Clear()
-        self.securityQuestionChoice.SetSelection(0)
-        self.securityAnswerCtrl.Clear()
         self.termsCheckBox.SetValue(False)
         self.contactCheckBox.SetValue(False)
 
@@ -1168,10 +1131,6 @@ class CreateAccountPanel(WizardPanelBase):
             wx.MessageBox('Passwords do not match.',
                           'Error', wx.OK | wx.ICON_WARNING)
             return
-        if (not self.isUpdate) and (self.securityAnswerCtrl.IsEmpty()):
-            wx.MessageBox('Security Answer Required.',
-                          'Error', wx.OK | wx.ICON_WARNING)
-            return
         if self.termsCheckBox.GetValue() is False:
             wx.MessageBox('Must accept terms and conditions.',
                           'Error', wx.OK | wx.ICON_WARNING)
@@ -1183,9 +1142,6 @@ class CreateAccountPanel(WizardPanelBase):
         mhAccount.country = self.countryCodes[self.countryChoice.GetSelection()]
         mhAccount.email = self.emailAddressCtrl.GetValue()
         mhAccount.password = self.passwordCtrl.GetValue()
-        mhAccount.securityQuestion = \
-            self.securityQuestionTokens[self.securityQuestionChoice.GetSelection()]
-        mhAccount.securityAnswer = self.securityAnswerCtrl.GetValue()
         if self.contactCheckBox.GetValue() is True:
             mhAccount.keepMeInformed = "true"
         else:

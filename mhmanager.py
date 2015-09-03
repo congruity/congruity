@@ -403,8 +403,6 @@ class MHManager():
              'ctl00$MainContent$selectCountry': '- Select Country -',
              'region': details.country, 'Emailaddress': details.email,
              'Password': details.password, 'RetypePassword': details.password,
-             'securityquestion': details.securityQuestion,
-             'Securityanswer': details.securityAnswer,
              'IsPolicyAccepted': 'true',
              'Keepmeinformed': details.keepMeInformed})
         headers = {"Content-type": "application/x-www-form-urlencoded"}
@@ -430,15 +428,11 @@ class MHManager():
         details = MHAccountDetails()
         self.GetHousehold()
         properties = self.household.Accounts.Account[0].Properties
-        passwordQuestion = self.client.service['AccountManager']. \
-            GetPasswordQuestion(properties.Email)
         details.firstName = properties.FirstName
         details.lastName = properties.LastName
         details.country = properties.CountryType
         details.email = properties.Email
         details.password = self.password
-        details.securityQuestion = passwordQuestion.PasswordQuestion
-        details.securityAnswer = None
         details.keepMeInformed = properties.ContactMe
         return details
 
@@ -453,7 +447,6 @@ class MHManager():
             print("SecureControllerHandshake failed.")
             return False
 
-        accountId = self.household.Accounts.Account[0].Id
         properties = self.client.factory.create('{' + ACCOUNT_NS
                                                 + '}Properties')
         properties.ContactMe = details.keepMeInformed
@@ -465,20 +458,10 @@ class MHManager():
         properties.UserKey = \
             self.household.Accounts.Account[0].Properties.UserKey
         result = self.client.service['AccountManager']. \
-            SecureUpdateAccountProperties(accountId, properties,
-                                          handshakeResult.Challenge)
+            UpdateMyAccountProperties(properties)
         if result is not None:
-            print("SecureUpdateAccountProperties failed: " + str(result))
+            print("UpdateMyAccountProperties failed: " + str(result))
             return False
-
-        if details.securityAnswer != "":
-            result = self.client.service['AccountManager']. \
-                UpdatePasswordQuestionAndAnswer(self.password,
-                                                details.securityQuestion,
-                                                details.securityAnswer)
-            if result != "true":
-                print("UpdatePasswordQuestionAndAnswer failed: " + str(result))
-                return False
 
         if details.password != self.password:
             result = self.client.service['AccountManager']. \
@@ -949,8 +932,6 @@ class MHAccountDetails:
         country = ""
         email = ""
         password = ""
-        securityQuestion = ""
-        securityAnswer = ""
         keepMeInformed = ""
 
 class LoginResponseHTMLParser(HTMLParser):
