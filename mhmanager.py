@@ -162,7 +162,7 @@ class MHManager():
     # account.
     def Login(self, email, password):
         baseUrl = "https://setup.myharmony.com"
-        url = baseUrl + "/Home/TestLogin"
+        url = baseUrl + "/MartiniWeb/Home/TestLogin"
         params = urllib.urlencode({'username': email, 'password': password})
         request = urllib2.Request(url, params)
         response = urllib2.urlopen(request)
@@ -174,7 +174,7 @@ class MHManager():
         self.client.options.transport.cookiejar.extract_cookies(response,
                                                                 request)
 
-        url = baseUrl + "/Home/Login?usr=" + jsonResponse["Token"]
+        url = baseUrl + "/MartiniWeb/Home/Login?usr=" + jsonResponse["Token"]
         request = urllib2.Request(url)
         response = urllib2.urlopen(request)
         parser = LoginResponseHTMLParser()
@@ -476,7 +476,8 @@ class MHManager():
 
     def GetCountryLists(self):
         conn = httplib.HTTPSConnection("setup.myharmony.com")
-        conn.request("GET", "https://setup.myharmony.com/Account/Register")
+        conn.request("GET",
+                     "https://setup.myharmony.com/MartiniWeb/Account/Register")
         response = conn.getresponse()
         data = unicode(response.read(), 'utf-8')
         parser = CountryListHTMLParser()
