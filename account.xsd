@@ -173,6 +173,7 @@
       <element name="LastSetupRating" type="xsd:string"/>
       <element name="Latitude" type="xsd:string" nillable="true"/>
       <element name="Longitude" type="xsd:string" nillable="true"/>
+      <element name="OriginalProductIdentifier" type="xsd:string" nillable="true"/>
       <element name="ProductIdentifier" type="xsd:string"/>
       <element name="Properties" type="ns6:Properties"/>
       <element name="Remotes" type="ns6:Remotes"/>
