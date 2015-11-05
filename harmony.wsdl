@@ -124,7 +124,10 @@
     <sequence>
       <element name="DisplayName" type="xsd:string"/>
       <element name="DisplayPriority" type="xsd:string"/>
+      <element name="IsProSKUEnabled" type="xsd:boolean"/>
       <element name="Name" type="xsd:string"/>
+      <element name="ProSKUDisplayName" type="xsd:string" nillable="true"/>
+      <element name="ProductFamily" type="xsd:string"/>
       <element name="ProductId" type="xsd:string"/>
       <element name="ProductIdentifier" type="xsd:string"/>
       <element name="SkinId" type="xsd:string"/>
