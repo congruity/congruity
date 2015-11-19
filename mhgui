@@ -1274,9 +1274,14 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.remoteButtons = None
         capabilities = mhMgr.GetCapabilityNames(self.product)
         if "CompiledRemoteButtonMapping" in capabilities:
+            self.buttonMapType = "Compiled"
             self.remoteButtons = mhMgr.GetProductButtonList(self.skinId)
+            self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
+        elif "ActivityCompiledRemoteButtonMapping" in capabilities:
+            self.buttonMapType = "ActivityCompiled"
+            self.remoteButtons = mhMgr.GetRemoteCanvas(self.skinId)
+            self.buttonMap = mhMgr.GetUserButtonMap(self.deviceId)
         self.deviceCommands = mhMgr.GetCommands(self.deviceId)
-        self.buttonMap = mhMgr.GetButtonMap(self.deviceId)
 
     def LoadDataUI(self, loadDataResult):
         self.remoteButtonsListCtrl.DeleteAllItems()
@@ -1305,37 +1310,69 @@ class ConfigureDevicePanel(WizardPanelBase):
         foundCommand = self.FindCommand(key)
         if foundCommand is not None:
             for i in range(len(self.deviceCommands)):
-                # ButtonAssignment might not be a CommandButtonAssignment, but
-                # ignore the error if it isn't.
-                try:
-                    if foundCommand.ButtonAssignment.CommandId.Value == \
-                            self.deviceCommands[i].Id.Value:
-                        self.deviceCommandsListCtrl.Select(i)
-                        self.deviceCommandsListCtrl.EnsureVisible(i)
-                        return
-                except AttributeError:
-                    pass
+                if self.buttonMapType == "Compiled":
+                    # ButtonAssignment might not be a CommandButtonAssignment,
+                    # but ignore the error if it isn't.
+                    try:
+                        if foundCommand.ButtonAssignment.CommandId.Value == \
+                                self.deviceCommands[i].Id.Value:
+                            self.deviceCommandsListCtrl.Select(i)
+                            self.deviceCommandsListCtrl.EnsureVisible(i)
+                            return
+                    except AttributeError:
+                        pass
+                elif self.buttonMapType == "ActivityCompiled":
+                    # ButtonAction might not be a CommandButtonAction,
+                    # but ignore the error if it isn't.
+                    try:
+                        if foundCommand.ButtonAction.CommandName == \
+                                self.deviceCommands[i].Name:
+                            self.deviceCommandsListCtrl.Select(i)
+                            self.deviceCommandsListCtrl.EnsureVisible(i)
+                            return
+                    except AttributeError:
+                        pass
+
         commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
         if commandSelection != -1:
             self.deviceCommandsListCtrl.Select(commandSelection, 0)
 
     def FindCommand(self, buttonKey):
-        for button in self.buttonMap.Buttons.AbstractButton:
-            if buttonKey == button.ButtonKey:
-                return button
+        if self.buttonMapType == "Compiled":
+            for button in self.buttonMap.Buttons.AbstractButton:
+                if buttonKey == button.ButtonKey:
+                    return button
+        elif self.buttonMapType == "ActivityCompiled":
+            for button in self.buttonMap.Buttons.AbstractRemoteButton:
+                try:
+                    if buttonKey == button.ButtonKey:
+                        return button
+                except AttributeError:
+                    pass
         return None
 
     def IsCommandMapped(self, command):
-        for button in self.buttonMap.Buttons.AbstractButton:
-            # ButtonAssignment might not be a CommandButtonAssignment, but
-            # ignore the error if it isn't.
-            try:
-                if button.ButtonAssignment.CommandId.Value == \
-                   command.Id.Value:
-                    return True
-            except AttributeError:
-                pass
-        return False
+        if self.buttonMapType == "Compiled":
+            for button in self.buttonMap.Buttons.AbstractButton:
+                # ButtonAssignment might not be a CommandButtonAssignment, but
+                # ignore the error if it isn't.
+                try:
+                    if button.ButtonAssignment.CommandId.Value == \
+                       command.Id.Value:
+                        return True
+                except AttributeError:
+                    pass
+            return False
+        elif self.buttonMapType == "ActivityCompiled":
+            for button in self.buttonMap.Buttons.AbstractRemoteButton:
+                # ButtonAction might not be a CommandButtonAction, but
+                # ignore the error if it isn't.
+                try:
+                    if button.ButtonAction.CommandName == command.Name:
+                        return True
+                except AttributeError:
+                    pass
+            return False
 
     def OnUpdate(self, event):
         buttonSelection = self.remoteButtonsListCtrl.GetFirstSelected()
@@ -1349,7 +1386,10 @@ class ConfigureDevicePanel(WizardPanelBase):
         BackgroundTask((self.DoUpdate, button, command), (self.LoadDataUI,))
 
     def DoUpdate(self, button, command):
-        mhMgr.UpdateButtonMap(self.buttonMap, button, command)
+        if self.buttonMapType == "Compiled":
+            mhMgr.UpdateButtonMap(self.buttonMap, button, command)
+        elif self.buttonMapType == "ActivityCompiled":
+            mhMgr.UpdateUserButtonMap(self.buttonMap, button, command)
         self.LoadData()
 
     def OnOverride(self, event):

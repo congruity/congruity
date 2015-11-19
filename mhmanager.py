@@ -46,10 +46,13 @@ BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Se
 ACTIVITY_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
 ARRAYS_NS = "http://schemas.microsoft.com/2003/10/Serialization/Arrays"
 USER_FEATURE_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
+USER_BUTTON_MAPPING_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserButtonMapping"
 
 TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (XSI_NS, "long"),
     (MS_NS, "guid"),
+    (DATA_NS, "ActivityId"),
+    (DATA_NS, "DeviceId"),
     (BUTTON_MAPPING_NS, "HardButton"),
     (BUTTON_MAPPING_NS, "CommandButtonAssignment"),
     (BUTTON_MAPPING_NS, "ChannelButtonAssignment"),
@@ -78,6 +81,12 @@ TYPES_FOR_WHICH_TO_INCLUDE_TYPE_ENCODING = [
     (USER_FEATURE_NS, "PowerFeature"),
     (USER_FEATURE_NS, "ChannelTuningFeature"),
     (USER_FEATURE_NS, "InternalStateFeature"),
+    (USER_BUTTON_MAPPING_NS, "ButtonChannelAction"),
+    (USER_BUTTON_MAPPING_NS, "ButtonCommandAction"),
+    (USER_BUTTON_MAPPING_NS, "HardRemoteButton"),
+    (USER_BUTTON_MAPPING_NS, "SoftRemoteButton"),
+    (USER_BUTTON_MAPPING_NS, "ActivityButtonMap"),
+    (USER_BUTTON_MAPPING_NS, "DeviceButtonMap"),
 ]
 
 # This is a mapping between ActivityTypes and a friendly string
@@ -200,12 +209,26 @@ class MHManager():
                     remotes.append(remote)
         return remotes
 
+    def GetRemoteForAccountId(self, accountId):
+        foundAccount = None
+        for account in self.household.Accounts.Account:
+            if account.Id.Value == accountId.Value:
+                foundAccount = account
+        try:
+            return foundAccount.Remotes.Remote[0]
+        except:
+            return None
+
     # Gets the product info for a given Skin Id.
     def GetProduct(self, skinId):
         return self.client.service['ProductsManager'].GetProduct(skinId)
 
     def GetProductButtonList(self, skinId):
         return self.client.service['ProductsManager'].GetProductButtonList(skinId).Buttons.ButtonDefinition
+
+    def GetRemoteCanvas(self, skinId):
+        return self.client.service['UserButtonMappingManager']. \
+            GetRemoteCanvas(skinId).AbstractRemoteButton
 
     def GetCapabilityNames(self, product):
         capabilityNames = []
@@ -272,6 +295,67 @@ class MHManager():
         buttonMaps.ButtonMap = buttonMap
         self.client.service['UserButtonMappingManager'] \
             .UpdateDeviceModeButtonMaps(buttonMaps)
+
+    def GetUserButtonMap(self, deviceId):
+        DeviceId = self.client.factory.create('{' + DATA_NS + '}DeviceId')
+        DeviceId.IsPersisted = deviceId.IsPersisted
+        DeviceId.Value = deviceId.Value
+        deviceIds = self.client.factory.create('{' + DATA_NS + '}abstractIds')
+        deviceIds.AbstractId.append(DeviceId)
+        accountId = self.GetAccountIdForDevice(deviceId)
+        remote = self.GetRemoteForAccountId(accountId)
+        surfaceId = remote.Surfaces.Surface[0].Id.Value
+        return self.client.service['UserButtonMappingManager'] \
+            .GetButtonMaps(deviceIds, "", remote.SkinId, accountId,
+                           surfaceId).AbstractButtonMap[0]
+
+    def UpdateUserButtonMap(self, userButtonMap, button, command):
+        accountId = self.GetAccountIdForDevice(userButtonMap.DeviceId)
+        remote = self.GetRemoteForAccountId(accountId)
+        surfaceId = remote.Surfaces.Surface[0].Id
+        userButtonMap.ButtonMapSurfaceId = surfaceId
+        userButtonMap.SurfaceId = surfaceId
+
+        # Check to see if there is an existing entry for this button
+        bmIndex = -1
+        for i in range(len(userButtonMap.Buttons.AbstractRemoteButton)):
+            try:
+                if userButtonMap.Buttons.AbstractRemoteButton[i].ButtonKey == \
+                   button.ButtonKey:
+                    bmIndex = i
+                    break
+            except AttributeError:
+                pass
+        if bmIndex != -1:
+            bmEntry = userButtonMap.Buttons.AbstractRemoteButton[i]
+        else:
+            bmEntry = self.client.factory.create('{' + USER_BUTTON_MAPPING_NS
+                                                + '}HardRemoteButton')
+            bmEntry.ButtonAction = self.client.factory.create('{' +
+                                                USER_BUTTON_MAPPING_NS
+                                                + '}ButtonCommandAction')
+        bmEntry.ButtonAction.EventType = 0
+        bmEntry.ButtonAction.Id = 0
+        bmEntry.ButtonAction.Order = 0
+        bmEntry.ButtonAction.CommandName = command.Name
+        bmEntry.ButtonAction.DeviceId = userButtonMap.DeviceId
+        bmEntry.ButtonAction.FunctionId = command.FunctionId
+        bmEntry.ButtonDoublePressAction = None
+        bmEntry.ButtonId = 0
+        bmEntry.ButtonLongPressAction = None
+        bmEntry.ButtonState = button.ButtonState
+        bmEntry.FunctionGroupType = button.FunctionGroupType
+        bmEntry.ButtonKey = button.ButtonKey
+
+        if bmIndex != -1:
+            userButtonMap.Buttons.AbstractRemoteButton[bmIndex] = bmEntry
+        else:
+            userButtonMap.Buttons.AbstractRemoteButton.append(bmEntry)
+        buttonMaps = self.client.factory.create('{' + USER_BUTTON_MAPPING_NS
+                                                + '}ButtonMaps')
+        buttonMaps.AbstractButtonMap = userButtonMap
+        self.client.service['UserButtonMappingManager'] \
+            .SaveButtonMaps(buttonMaps)
 
     # Get remote config file for the specified remote and write it to the
     # specified filename.

@@ -25,6 +25,30 @@
     </sequence>
   </complexType>
 
+  <complexType name="DeviceId">
+    <complexContent>
+      <extension base="ns1:Id">
+	<sequence>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ActivityId">
+    <complexContent>
+      <extension base="ns1:Id">
+	<sequence>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="abstractIds">
+    <sequence>
+      <element name="AbstractId" type="ns1:Id" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
   <complexType name="GlobalDeviceVersionId">
     <sequence>
       <element name="IsPersisted" type="xsd:boolean"/>
@@ -84,6 +108,28 @@
   <complexType name="ProductCapabilities">
     <sequence>
       <element name="ProductCapability" type="ns1:ProductCapability" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Command">
+    <sequence>
+      <element name="CommandTypeId" type="xsd:string"/>
+      <element name="DateTaught" type="xsd:string" nillable="true"/>
+      <element name="FunctionGroupId" type="xsd:string"/>
+      <element name="FunctionId" type="ns1:Id"/>
+      <element name="Id" type="ns1:Id"/>
+      <element name="IsLearned" type="xsd:string"/>
+      <element name="KeyCode" type="xsd:string"/>
+      <element name="Name" type="xsd:string"/>
+      <element name="ProtocolId" type="xsd:string"/>
+      <element name="Raw" type="xsd:string" nillable="true"/>
+      <element name="TransportType" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Commands">
+    <sequence>
+      <element name="Command" type="ns1:Command" minOccurs="0" maxOccurs="unbounded"/>
     </sequence>
   </complexType>
 

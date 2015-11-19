@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserButtonMapping"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
+  xmlns:ns15="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserButtonMapping"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  attributeFormDefault="qualified">
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
+
+  <complexType name="AbstractButtonAction" abstract="true">
+    <sequence>
+      <element name="EventType" type="xsd:string"/>
+      <element name="Id" type="xsd:string"/>
+      <element name="Order" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ButtonChannelAction">
+    <complexContent>
+      <extension base="ns15:AbstractButtonAction">
+	<sequence>
+          <element name="ChannelNumber" type="xsd:string"/>
+          <element name="DeviceId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ButtonCommandAction">
+    <complexContent>
+      <extension base="ns15:AbstractButtonAction">
+	<sequence>
+          <element name="CommandName" type="xsd:string"/>
+          <element name="DeviceId" type="ns1:Id"/>
+          <element name="FunctionId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="MenuItem">
+    <sequence>
+      <element name="IndexInMenu" type="xsd:string"/>
+      <element name="MenuName" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="AbstractRemoteButton" abstract="true">
+    <sequence>
+      <element name="ButtonAction" type="ns15:AbstractButtonAction"/>
+      <element name="ButtonDoublePressAction" type="ns15:AbstractButtonAction" nillable="true"/>
+      <element name="ButtonId" type="xsd:string"/>
+      <element name="ButtonLongPressAction" type="ns15:AbstractButtonAction" nillable="true"/>
+      <element name="ButtonState" type="xsd:string"/>
+      <element name="FunctionGroupType" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="HardRemoteButton">
+    <complexContent>
+      <extension base="ns15:AbstractRemoteButton">
+	<sequence>
+	  <element name="ButtonKey" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="SoftRemoteButton">
+    <complexContent>
+      <extension base="ns15:AbstractRemoteButton">
+	<sequence>
+	  <element name="ButtonImageKey" type="xsd:string" nillable="true"/>
+	  <element name="ButtonImagePath" type="xsd:string" nillable="true"/>
+	  <element name="ImageId" type="ns1:Id"/>
+	  <element name="MenuItem" type="ns15:MenuItem"/>
+	  <element name="TextOnRemote" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="Buttons">
+    <sequence>
+      <element name="AbstractRemoteButton" type="ns15:AbstractRemoteButton" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="AbstractButtonMap" abstract="true">
+    <sequence>
+      <element name="ButtonMapId" type="ns1:Id" nillable="true"/>
+      <element name="ButtonMapIdentifier" type="xsd:string" nillable="true"/>
+      <element name="ButtonMapSurfaceId" type="xsd:string" nillable="true"/>
+      <element name="Buttons" type="ns15:Buttons"/>
+      <element name="DateModified" type="xsd:string" nillable="true"/>
+      <element name="RemoteId" type="ns1:Id"/>
+      <element name="Sequences" type="xsd:string" nillable="true"/>
+      <element name="SurfaceId" type="ns1:Id" nillable="true"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ActivityButtonMap">
+    <complexContent>
+      <extension base="ns15:AbstractButtonMap">
+	<sequence>
+	  <element name="ActivityId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="DeviceButtonMap">
+    <complexContent>
+      <extension base="ns15:AbstractButtonMap">
+	<sequence>
+	  <element name="DeviceId" type="ns1:Id"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ButtonMaps">
+    <sequence>
+      <element name="AbstractButtonMap" type="ns15:AbstractButtonMap" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+</schema>

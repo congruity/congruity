@@ -18,6 +18,7 @@
  xmlns:ns12="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
  xmlns:ns13="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract"
  xmlns:ns14="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data"
+ xmlns:ns15="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserButtonMapping"
  xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns="http://schemas.xmlsoap.org/wsdl/">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
@@ -34,6 +35,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" location="user_feature.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Product.DataContract" location="product.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Manager.DeviceManager.Contracts.Data" location="dm_data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserButtonMapping" location="user_button_mapping.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
 <types>
@@ -159,11 +161,9 @@
     </sequence>
   </complexType>
 
-  <!-- Contains a KeyValueOfDeviceIdArrayOfCommandXXXX where XXXX varies, not
-       sure how to deal with other than using an any.-->
   <complexType name="GetCommandsResult">
     <sequence>
-      <any/>
+      <element name="KeyValueOfDeviceIdArrayOfCommand8_PSBnnKs" type="ns9:KeyValueOfDeviceIdArrayOfCommand"/>
     </sequence>
   </complexType>
 
@@ -505,6 +505,30 @@
   <part name="GetActivityRolesResult" type="GetActivityRolesResult"/>
 </message>
 
+<message name="GetRemoteCanvas">
+  <part name="remoteSkinId" type="xsd:string"/>
+</message>
+<message name="GetRemoteCanvasResponse">
+  <part name="GetRemoteCanvasResult" type="ns15:Buttons"/>
+</message>
+
+<message name="GetButtonMaps">
+  <part name="deviceIds" type="ns1:abstractIds"/>
+  <part name="activityIds" type="ns1:abstractIds"/>
+  <part name="remoteSkinId" type="xsd:string"/>
+  <part name="accountId" type="ns1:Id"/>
+  <part name="surfaceId" type="xsd:string"/>
+</message>
+<message name="GetButtonMapsResponse">
+  <part name="GetButtonMapsResult" type="ns15:ButtonMaps"/>
+</message>
+
+<message name="SaveButtonMaps">
+  <part name="buttonMaps" type="ns15:ButtonMaps"/>
+</message>
+<message name="SaveButtonMapsResponse">
+</message>
+
 <portType name="DiscoveryPortType">
  <operation name="GetSoapServices">
   <input message="ns:GetSoapServices"/>
@@ -635,6 +659,18 @@
  <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
    <input message="ns:DeleteTaughtDeviceModeCommandButtonMaps"/>
    <output message="ns:DeleteTaughtDeviceModeCommandButtonMapsResponse"/>
+ </operation>
+ <operation name="GetRemoteCanvas">
+   <input message="ns:GetRemoteCanvas"/>
+   <output message="ns:GetRemoteCanvasResponse"/>
+ </operation>
+ <operation name="GetButtonMaps">
+   <input message="ns:GetButtonMaps"/>
+   <output message="ns:GetButtonMapsResponse"/>
+ </operation>
+ <operation name="SaveButtonMaps">
+   <input message="ns:SaveButtonMaps"/>
+   <output message="ns:SaveButtonMapsResponse"/>
  </operation>
 </portType>
 <portType name="InfraredAnalysisManagerPortType">
@@ -960,6 +996,33 @@
  </operation>
  <operation name="DeleteTaughtDeviceModeCommandButtonMaps">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/DeleteTaughtDeviceModeCommandButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetRemoteCanvas">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/GetRemoteCanvas"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="GetButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/GetButtonMaps"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="SaveButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/SaveButtonMaps"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>

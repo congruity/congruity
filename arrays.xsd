@@ -52,4 +52,11 @@
     </sequence>
   </complexType>
 
+  <complexType name="KeyValueOfDeviceIdArrayOfCommand">
+    <sequence>
+      <element name="Key" type="ns1:Id"/>
+      <element name="Value" type="ns1:Commands"/>
+    </sequence>
+  </complexType>
+
 </schema>
