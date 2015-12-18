@@ -100,9 +100,9 @@ class ThrobberDialog(wx.Dialog):
         wx.Dialog.__init__(self, None, -1, title=self.title)
         self.SetClientSize((256, 256))
         self.SetBackgroundColour("white")
-        self.gif = wx.animate.GIFAnimationCtrl(self, -1,
-                                               self.FindGif("throbber.gif"))
-        self.gif.GetPlayer().UseBackgroundColour(True)
+        self.gif = wx.animate.AnimationCtrl(self, -1)
+        self.gif.LoadFile(self.FindGif("throbber.gif"),
+                          wx.animate.ANIMATION_TYPE_GIF)
         self.gif.Play()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.gif, 1, wx.EXPAND|wx.ALL, 64)
