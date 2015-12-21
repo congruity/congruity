@@ -36,6 +36,7 @@ sys.path.append('/usr/share/congruity')
 from mhmanager import MHManager
 from mhmanager import MHAccountDetails
 from mhmanager import SaveActivityTemplate
+from mhmanager import Secrets
 
 version = "18"
 
@@ -61,6 +62,8 @@ else:
     suds_debug = args.suds_debug
     use_local_wsdl = args.use_local_wsdl
 mhMgr = MHManager(use_local_wsdl, suds_debug)
+
+secrets = Secrets()
 
 try:
     import libconcord
@@ -241,6 +244,12 @@ class WelcomePanel(WizardPanelBase):
         self.userSizer.Add(self.passwordSizer, 0, wx.EXPAND, 0)
         self.sizer.Add(self.userSizer)
         self.sizer.AddSpacer(25)
+        if secrets.HAVE_SECRET:
+            self.storeUserCtrl = wx.CheckBox(self, 0,
+                "Store username and password")
+            self.storeUserCtrl.Bind(wx.EVT_CHECKBOX, self.OnStoreUserChecked)
+            self.sizer.Add(self.storeUserCtrl)
+            self.sizer.AddSpacer(25)
         self.createAccountButton = wx.Button(self, label="Create Account")
         self.createAccountButton.Bind(wx.EVT_BUTTON, self.OnCreateAccount)
         self.sizer.Add(self.createAccountButton)
@@ -248,6 +257,10 @@ class WelcomePanel(WizardPanelBase):
         self.SetSizerAndFit(self.sizer)
 
         self.next = None
+
+        self.fetchedUsername = None
+        self.fetchedPassword = None
+        if secrets.HAVE_SECRET: self.FetchUser()
 
     def OnActivated(self, prev_page, data):
         self.textMessage.UpdateText(self._msg_welcome)
@@ -260,6 +273,13 @@ class WelcomePanel(WizardPanelBase):
 
     def IsCancelInitiallyDisabled(self):
         return False
+
+    def OnUserFetched(self, username, password):
+        self.usernameCtrl.ChangeValue(username)
+        self.passwordCtrl.ChangeValue(password)
+        self.fetchedUsername = username
+        self.fetchedPassword = password
+        self.storeUserCtrl.SetValue(True)
 
     def OnNext(self):
         username = self.usernameCtrl.GetValue()
@@ -276,6 +296,10 @@ class WelcomePanel(WizardPanelBase):
 
     def FinishLogin(self, loginResult):
         if loginResult is True:
+            if secrets.HAVE_SECRET and self.storeUserCtrl.IsChecked():
+                if self.fetchedUsername != mhMgr.email or \
+                   self.fetchedPassword != mhMgr.password:
+                    secrets.storeUser(mhMgr.email, mhMgr.password)
             self.parent._SetPage(self.next, True, True)
         else:
             if loginResult is None:
@@ -295,6 +319,13 @@ class WelcomePanel(WizardPanelBase):
 
     def OnCreateAccount(self, event):
         self.parent._SetPage(self.resources.page_create_account, None, True)
+
+    def FetchUser(self):
+        secrets.fetchUser(self.OnUserFetched)
+
+    def OnStoreUserChecked(self, event):
+        if not event.IsChecked():
+            secrets.clearUser()
 
 class RemoteSelectPanel(WizardPanelBase):
     _msg_welcome = (

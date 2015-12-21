@@ -36,6 +36,15 @@ from suds.cache import ObjectCache
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
+try:
+    import gi
+    gi.require_version("Secret", "1")
+    from gi.repository import Secret
+except:
+    HAVE_SECRET = False
+else:
+    HAVE_SECRET = True
+
 XSI_NS = "http://www.w3.org/2001/XMLSchema"
 MS_NS = "http://schemas.microsoft.com/2003/10/Serialization/"
 DATA_NS = "http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
@@ -1009,6 +1018,37 @@ class SaveActivityTemplate:
         self.activityName = None               # Activity Name (String)
         self.activityType = None               # ActivityType
         self.roles = None                      # [(Role Name, DeviceId, Input)]
+
+class Secrets:
+    def __init__(self):
+        self.HAVE_SECRET = HAVE_SECRET
+        self.SCHEMA = None if not HAVE_SECRET else \
+            Secret.Schema.new("net.sourceforge.congruity",
+                Secret.SchemaFlags.NONE,
+                {"application": Secret.SchemaAttributeType.STRING})
+        self.KEY = {"application": "mhgui"}
+
+    def _finishLookup(self, source, result, callback):
+        secret = Secret.password_lookup_finish(result)
+        if secret: callback(*json.loads(secret))
+
+    def _finishStore(self, source, result, callback):
+        if not Secret.password_store_finish(result):
+            print("Failed to store password")
+        elif callback:
+            callback()
+
+    def fetchUser(self, callback):
+        Secret.password_lookup(self.SCHEMA, self.KEY, None,
+            self._finishLookup, callback)
+
+    def storeUser(self, username, password, callback=None):
+        Secret.password_store(self.SCHEMA, self.KEY, Secret.COLLECTION_DEFAULT,
+            "MHGUI", json.dumps([username, password]), None,
+            self._finishStore, callback)
+
+    def clearUser(self):
+        Secret.password_clear(self.SCHEMA, self.KEY, None, None)
 
 class MHAccountDetails:
     def __init__(self):
