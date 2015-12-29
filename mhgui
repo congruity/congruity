@@ -284,7 +284,12 @@ class WelcomePanel(WizardPanelBase):
     def OnNext(self):
         username = self.usernameCtrl.GetValue()
         password = self.passwordCtrl.GetValue()
-        BackgroundTask((self.DoLogin, username, password), (self.FinishLogin,))
+        if not (username and password):
+            wx.MessageBox('Please enter a username and password',
+                'Missing Login Details', wx.OK | wx.ICON_WARNING)
+        else:
+            BackgroundTask((self.DoLogin, username, password),
+                           (self.FinishLogin,))
         return False
 
     def DoLogin(self, username, password):
