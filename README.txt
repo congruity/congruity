@@ -18,6 +18,12 @@ libconcord (version 1.1 is *required*; tested on Fedora 20)
 python-suds (tested with 0.4.1 on Fedora 20)
   Suds is required for mhgui.
 
+libsecret and PyGObject (optional for mhgui)
+  libsecret and PyGObject are used by mhgui to store usernames and passwords.
+  mhgui will work just fine without them, however.
+  See https://wiki.gnome.org/Projects/Libsecret
+  And https://wiki.gnome.org/Projects/PyGObject
+
 Python, ctypes, wxPython, and Suds are typically installed using your
 distribution's package management system. If this is not the case, installation
 instructions should be located in the documentation accompanying those packages.
