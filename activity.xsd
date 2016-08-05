@@ -171,6 +171,7 @@
       <element name="ActivityDisplayName" type="xsd:string" nillable="true"/>
       <element name="ActivityGroup" type="xsd:string"/>
       <element name="ActivityOrder" type="xsd:string"/>
+      <element name="Alternatives" type="xsd:string" nillable="true"/>
       <element name="BaseImageUri" type="xsd:string" nillable="true"/>
       <element name="DateCreated" type="xsd:dateTime"/>
       <element name="DateModified" type="xsd:dateTime"/>

@@ -130,6 +130,7 @@
       <element name="LastName" type="xsd:string"/>
       <element name="Latitude" type="xsd:string" nillable="true"/>
       <element name="Longitude" type="xsd:string" nillable="true"/>
+      <element name="Password" type="xsd:string" nillable="true"/>
       <element name="RemoteLanguage" type="xsd:string" nillable="true"/>
       <element name="TimeZone" type="xsd:string" nillable="true"/>
       <element name="UserKey" type="xsd:string"/>
@@ -142,6 +143,7 @@
     <sequence>
       <element name="Client" type="xsd:string" nillable="true"/>
       <element name="IsStale" type="xsd:string"/>
+      <element name="SetupType" type="xsd:string" nillable="true"/>
       <element name="Type" type="xsd:string"/>
     </sequence>
   </complexType>
