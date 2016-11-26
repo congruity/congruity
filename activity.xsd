@@ -183,6 +183,7 @@
       <element name="Id" type="ns1:Id" nillable="true"/>
       <element name="ImageKey" type="xsd:string" nillable="true"/>
       <element name="IsDefault" type="xsd:boolean"/>
+      <element name="IsMultiZone" type="xsd:boolean"/>
       <element name="IsTuningDefault" type="xsd:boolean"/>
       <element name="LeaveActions" type="ns11:Actions" nillable="true"/>
       <element name="Name" type="xsd:string"/>
@@ -191,6 +192,7 @@
       <element name="State" type="xsd:string"/>
       <element name="SuggestedDisplay" type="xsd:string" nillable="true"/>
       <element name="Type" type="xsd:string"/>
+      <element name="Zones" type="xsd:string" nillable="true"/>
     </sequence>
   </complexType>
 

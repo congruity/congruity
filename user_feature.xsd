@@ -60,6 +60,7 @@
       <element name="ActionName" type="xsd:string" nillable="true"/>
       <element name="ActionSetTypeId" type="xsd:string"/>
       <element name="Actions" type="ns12:Actions" nillable="true"/>
+      <element name="Attributes" type="xsd:string" nillable="true"/>
       <element name="DevActionType" type="xsd:string"/>
       <element name="HasAdditionalActions" type="xsd:string"/>
       <element name="Id" type="xsd:string"/>
@@ -77,6 +78,21 @@
   <complexType name="Inputs">
     <sequence>
       <element name="Input" type="ns12:Input" minOccurs="0" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Output">
+    <sequence>
+      <element name="Id" type="xsd:string"/>
+      <element name="IsActiveOutput" type="xsd:boolean"/>
+      <element name="NoOfPorts" type="xsd:string"/>
+      <element name="OutputName" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Outputs">
+    <sequence>
+      <element name="Output" type="ns12:Output" minOccurs="0" maxOccurs="unbounded"/>
     </sequence>
   </complexType>
 
@@ -121,6 +137,18 @@
 	  <element name="NextActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PreviousActions" type="ns12:Actions" nillable="true"/>
 	  <element name="StartActions" type="ns12:Actions" nillable="true"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="OutputFeature">
+    <complexContent>
+      <extension base="ns12:DeviceFeature">
+	<sequence>
+	  <element name="Id" type="xsd:string"/>
+	  <element name="IsConfirmed" type="xsd:boolean"/>
+	  <element name="Outputs" type="ns12:Outputs"/>
 	</sequence>
       </extension>
     </complexContent>

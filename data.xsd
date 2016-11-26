@@ -68,7 +68,9 @@
 
   <complexType name="PrioritizedDeviceCapability">
     <sequence>
+      <element name="Capability" type="xsd:string" nillable="true"/>
       <element name="DeviceCapability" type="xsd:string"/>
+      <element name="HasCapability" type="xsd:boolean"/>
       <element name="Priority" type="xsd:string"/>
     </sequence>
   </complexType>
