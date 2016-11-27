@@ -180,25 +180,37 @@ class MHManager():
     # account.
     def Login(self, email, password):
         baseUrl = "https://setup.myharmony.com"
-        url = baseUrl + "/MartiniWeb/Home/TestLogin"
-        params = urllib.urlencode({'username': email, 'password': password})
-        request = urllib2.Request(url, params)
+        url = baseUrl + "/MartiniWeb/Account/TestLoginAndMW?provider=hp&&verify=true&toucheck=true"
+        data = json.dumps({'email': email, 'password': password})
+        headers = {'Content-Type': 'application/json'}
+        request = urllib2.Request(url, data, headers)
         response = urllib2.urlopen(request)
-        jsonResponse = json.loads(response.read())
-        if jsonResponse["Result"] == False:
-            return False
-        elif jsonResponse["Token"] is None: # members.harmonyremote.com acct
-            return None
-        self.client.options.transport.cookiejar.extract_cookies(response,
-                                                                request)
+        # For some reason the response to this is double-encoded
+        jsonResponse = json.loads(json.loads(response.read()))
+        if "mwResult" in jsonResponse:
+            if jsonResponse["mwResult"]: # members.harmonyremote.com acct
+                return None
+            else:
+                return False
 
-        url = baseUrl + "/MartiniWeb/Home/Login?usr=" + jsonResponse["Token"]
+        url = baseUrl + "/MartiniWeb/Home/Login?i=" + jsonResponse["id_token"]
+        url += "&a=" + jsonResponse["access_token"] + "&cl=en-US"
         request = urllib2.Request(url)
         response = urllib2.urlopen(request)
         parser = LoginResponseHTMLParser()
         parser.feed(response.read())
         initparams = dict(u.split("=", 1) for u in parser.initparams.split(","))
         self.contentServiceAuthKey = initparams['ContentServiceAuthKey']
+
+        url = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json2/signin"
+        data = json.dumps({'id_token': jsonResponse['id_token'],
+                           'access_token': jsonResponse['access_token']})
+        headers = {'Content-Type': 'application/json'}
+        request = urllib2.Request(url, data, headers)
+        response = urllib2.urlopen(request)
+        jsonResponse = json.loads(response.read())
+        self.client.options.transport.cookiejar.extract_cookies(response,
+                                                                request)
 
         self.email = email
         self.password = password
