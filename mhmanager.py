@@ -839,6 +839,7 @@ class MHManager():
             activity.DateModified = datetime.datetime.min
             activity.Id = None
             activity.IsDefault = False
+            activity.IsMultiZone = False
             activity.IsTuningDefault = False
             activity.State = "Setup"
             activity.Type = saveActivityTemplate.activityType
