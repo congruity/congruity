@@ -742,11 +742,13 @@ class MHManager():
                     (device.Name, device.Id, inputNames))
         for role in roles:
             roleType = role.Key.__class__.__name__
-            if roleType != "PassThroughActivityRole":
-                roleDevices = []
+            roleDevices = []
+            try:
                 for deviceId in role.Value.DeviceId:
                     roleDevices.append((deviceNames[deviceId.Value], deviceId))
-                activityTemplate.roles.append((roleType, roleDevices))
+            except AttributeError:
+                pass
+            activityTemplate.roles.append((roleType, roleDevices))
         return activityTemplate
 
     # Returns the configured activities (if any) for a given remoteId

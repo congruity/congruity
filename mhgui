@@ -2308,6 +2308,8 @@ class EditActivityPanel(WizardPanelBase):
             if roleType == "DisplayActivityRole": # Don't add widget for Display
                 self.displayDeviceId = devices[0][1]
                 continue
+            if roleType == "PassThroughActivityRole":
+                continue
             roleString = mhMgr.GetRoleString(roleType)
             label = "What device do you use to " + roleString + "?"
             labelText = wx.StaticText(self, -1, label)
@@ -2326,8 +2328,10 @@ class EditActivityPanel(WizardPanelBase):
                         choice.SetSelection(i)
 
         self.inputSelectionChoices = {}
+        self.deviceIdsWithInputs = []
         for deviceName, deviceId, inputs in \
             self.activityTemplate.devicesWithInputs:
+            self.deviceIdsWithInputs.append(deviceId)
             # Allow input to be set to 'None'
             inputs.append('None')
             label = "What input should " + deviceName + " be set to?"
@@ -2363,7 +2367,13 @@ class EditActivityPanel(WizardPanelBase):
         template.activityType = self.activityType
         template.roles = []
 
+        hasPassThroughRole = False
+        assignedDeviceIds = []
+
         for role in self.roles:
+            if role == "PassThroughActivityRole":
+                hasPassThroughRole = True
+                continue
             if role == "DisplayActivityRole":
                 deviceId = self.displayDeviceId
             else:
@@ -2377,6 +2387,18 @@ class EditActivityPanel(WizardPanelBase):
             except KeyError:
                 inputName = None
             template.roles.append((role, deviceId, inputName))
+            assignedDeviceIds.append(deviceId.Value)
+
+        # PassThroughActivityRole handling: if there's a device with an input
+        # assigned, but is not in a role, assign it a PassThrough role.
+        if hasPassThroughRole:
+            for deviceId in self.deviceIdsWithInputs:
+                if deviceId.Value not in assignedDeviceIds:
+                    inputChoice = self.inputSelectionChoices[deviceId.Value]
+                    inputName = inputChoice.GetStringSelection()
+                    if inputName != 'None':
+                        template.roles.append(("PassThroughActivityRole",
+                                               deviceId, inputName))
 
         self.parent.Hide()
         BackgroundTask((self.DoSave, template), (self.FinishSave,), False)
