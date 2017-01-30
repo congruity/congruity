@@ -33,7 +33,7 @@
 	<sequence>
           <element name="CommandName" type="xsd:string"/>
           <element name="DeviceId" type="ns1:Id"/>
-          <element name="FunctionId" type="ns1:Id"/>
+          <element name="FunctionId" type="ns1:Id" nillable="true"/>
 	</sequence>
       </extension>
     </complexContent>
@@ -73,7 +73,7 @@
 	<sequence>
 	  <element name="ButtonImageKey" type="xsd:string" nillable="true"/>
 	  <element name="ButtonImagePath" type="xsd:string" nillable="true"/>
-	  <element name="ImageId" type="ns1:Id"/>
+	  <element name="ImageId" type="ns1:Id" nillable="true"/>
 	  <element name="MenuItem" type="ns15:MenuItem"/>
 	  <element name="TextOnRemote" type="xsd:string"/>
 	</sequence>
@@ -95,7 +95,7 @@
       <element name="Buttons" type="ns15:Buttons"/>
       <element name="DateModified" type="xsd:string" nillable="true"/>
       <element name="RemoteId" type="ns1:Id"/>
-      <element name="Sequences" type="xsd:string" nillable="true"/>
+      <element name="Sequences" type="xsd:string"/>
       <element name="SurfaceId" type="ns1:Id" nillable="true"/>
     </sequence>
   </complexType>
