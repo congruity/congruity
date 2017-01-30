@@ -512,6 +512,17 @@
   <part name="GetRemoteCanvasResult" type="ns15:Buttons"/>
 </message>
 
+<message name="CreateButtonMaps">
+  <part name="deviceIds" type="ns1:abstractIds" nillable="true"/>
+  <part name="activityIds" type="ns1:abstractIds" nillable="true"/>
+  <part name="remoteSkinId" type="xsd:string"/>
+  <part name="accountId" type="ns1:Id"/>
+  <part name="surfaceId" type="xsd:string"/>
+</message>
+<message name="CreateButtonMapsResponse">
+  <part name="CreateButtonMapsResult" type="xsd:string" nillable="true"/>
+</message>
+
 <message name="GetButtonMaps">
   <part name="deviceIds" type="ns1:abstractIds"/>
   <part name="activityIds" type="ns1:abstractIds"/>
@@ -663,6 +674,10 @@
  <operation name="GetRemoteCanvas">
    <input message="ns:GetRemoteCanvas"/>
    <output message="ns:GetRemoteCanvasResponse"/>
+ </operation>
+ <operation name="CreateButtonMaps">
+   <input message="ns:CreateButtonMaps"/>
+   <output message="ns:CreateButtonMapsResponse"/>
  </operation>
  <operation name="GetButtonMaps">
    <input message="ns:GetButtonMaps"/>
@@ -1005,6 +1020,15 @@
  </operation>
  <operation name="GetRemoteCanvas">
   <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/GetRemoteCanvas"/>
+  <input>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </input>
+  <output>
+     <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
+  </output>
+ </operation>
+ <operation name="CreateButtonMaps">
+  <SOAP:operation style="rpc" soapAction="http://tempuri.org/IUserButtonMappingManager/CreateButtonMaps"/>
   <input>
      <SOAP:body use="encoded" namespace="http://tempuri.org/"/>
   </input>
