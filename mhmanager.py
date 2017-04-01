@@ -224,10 +224,13 @@ class MHManager():
     def GetRemotes(self):
         self.GetHousehold()
         remotes = []
-        for account in self.household.Accounts.Account:
-            if account.Remotes != "":
-                for remote in account.Remotes.Remote:
-                    remotes.append(remote)
+        try:
+            for account in self.household.Accounts.Account:
+                if account.Remotes != "":
+                    for remote in account.Remotes.Remote:
+                        remotes.append(remote)
+        except AttributeError:
+            pass
         return remotes
 
     def GetRemoteForAccountId(self, accountId):
