@@ -675,7 +675,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.AddSetupWatchTVButton()
         if "Wifi" in capabilities:
             self.AddConfigureHarmonyLinkButton()
-        if "Activities" in capabilities:
+        if "Activities" in capabilities and "Harmony350" not in capabilities:
             self.AddSetupActivitiesButton()
 
         self.Layout()
@@ -1760,7 +1760,7 @@ class SetupWatchTVPanel(WizardPanelBase):
 
     def LoadData(self):
         self.devices = mhMgr.GetDevices(self.remote.Id)
-        self.activity = mhMgr.GetActivity(self.remote.Id, "WatchTV")
+        self.activity = mhMgr.GetWatchTVActivity(self.remote.Id)
         self.inputNames = {}
         for device in self.devices:
             self.inputNames[device.Id] = mhMgr.GetDeviceInputNames(device.Id)

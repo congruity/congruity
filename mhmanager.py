@@ -769,6 +769,16 @@ class MHManager():
                     return activity
         return None
 
+    # Returns the special WatchTV activity for 200/300/350
+    def GetWatchTVActivity(self, remoteId):
+        account = self.GetAccountForRemote(remoteId)
+        # Harmony 350 has a space in its activity name
+        if account.ProductIdentifier == "104":
+            activityName = "Watch TV"
+        else:
+            activityName = "WatchTV"
+        return self.GetActivity(remoteId, activityName)
+
     # Creates a 'Roles' structure and returns it
     # deviceInfo is a list of (deviceId, selectedInputName)
     def CreateRoles(self, deviceInfo):
@@ -811,11 +821,11 @@ class MHManager():
     # Creates a WatchTV activity for 200/300 remotes
     # deviceInfo is a list of (deviceId, selectedInputName)
     def SaveWatchTVActivity(self, remoteId, deviceInfo, activity=None):
-        accountId = self.GetAccountForRemote(remoteId).Id
+        account = self.GetAccountForRemote(remoteId)
         if not activity:
             activity = self.client.factory.create(
                 '{' + ACTIVITY_NS + '}Activity')
-            activity.AccountId = accountId
+            activity.AccountId = account.Id
             activity.ActivityGroup = "VirtualGeneric"
             activity.ActivityOrder = "0"
             activity.DateCreated = datetime.datetime.min
@@ -824,7 +834,11 @@ class MHManager():
             activity.IsDefault = False
             activity.IsMultiZone = False
             activity.IsTuningDefault = False
-            activity.Name = "WatchTV"
+            # Harmony 350 has a space in its activity name
+            if account.ProductIdentifier == "104":
+                activity.Name = "Watch TV"
+            else:
+                activity.Name = "WatchTV"
             activity.State = "Setup"
             activity.Type = "WatchTV"
         activity.Roles = self.CreateRoles(deviceInfo)
