@@ -772,15 +772,10 @@ class MHManager():
                     return activity
         return None
 
-    # Returns the special WatchTV activity for 200/300/350
+    # Returns the special WatchTV activity for 200/300
     def GetWatchTVActivity(self, remoteId):
         account = self.GetAccountForRemote(remoteId)
-        # Harmony 350 has a space in its activity name
-        if account.ProductIdentifier == "104":
-            activityName = "Watch TV"
-        else:
-            activityName = "WatchTV"
-        return self.GetActivity(remoteId, activityName)
+        return self.GetActivity(remoteId, "WatchTV")
 
     # Creates a 'Roles' structure and returns it
     # deviceInfo is a list of (deviceId, selectedInputName)
@@ -837,11 +832,7 @@ class MHManager():
             activity.IsDefault = False
             activity.IsMultiZone = False
             activity.IsTuningDefault = False
-            # Harmony 350 has a space in its activity name
-            if account.ProductIdentifier == "104":
-                activity.Name = "Watch TV"
-            else:
-                activity.Name = "WatchTV"
+            activity.Name = "WatchTV"
             activity.State = "Setup"
             activity.Type = "WatchTV"
         activity.Roles = self.CreateRoles(deviceInfo)

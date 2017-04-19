@@ -40,6 +40,7 @@ from mhmanager import Secrets
 
 version = "18"
 
+HARMONY_350_SKIN_ID = "104"
 HARMONY_LINK_SKIN_ID = 82
 WATCH_TV_BUTTON_SKIN_IDS = [78, 79, 80, 81, 104]
 
@@ -655,6 +656,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
     def LoadData(self):
         self.product = mhMgr.GetProduct(self.remote.SkinId)
         self.devices = mhMgr.GetDevices(self.remote.Id)
+        if self.remote.SkinId == HARMONY_350_SKIN_ID:
+            self.watchTVActivity = mhMgr.GetActivity(self.remote.Id, "Watch TV")
 
     def LoadDataUI(self, loadDataResult):
         self._msg_welcome = "Remote Configuration for " \
@@ -675,7 +678,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
             self.AddSetupWatchTVButton()
         if "Wifi" in capabilities:
             self.AddConfigureHarmonyLinkButton()
-        if "Activities" in capabilities and "Harmony350" not in capabilities:
+        if "Activities" in capabilities and \
+                int(self.remote.SkinId) not in WATCH_TV_BUTTON_SKIN_IDS:
             self.AddSetupActivitiesButton()
 
         self.Layout()
@@ -817,8 +821,13 @@ class RemoteConfigurationPanel(WizardPanelBase):
                       'Download complete.', wx.OK)
 
     def OnSetupWatchTV(self, event):
-        self.parent._SetPage(self.resources.page_setup_watch_tv, self.remote,
-                             True)
+        if self.remote.SkinId == HARMONY_350_SKIN_ID:
+            params = (self.remote, "WatchTV", self.watchTVActivity)
+            self.parent._SetPage(self.resources.page_edit_activity, params,
+                                 True)
+        else:
+            self.parent._SetPage(self.resources.page_setup_watch_tv,
+                                 self.remote, True)
 
     def OnConfigureHarmonyLink(self, event):
         self.parent._SetPage(self.resources.page_harmony_link, self.remote)
@@ -2296,6 +2305,8 @@ class EditActivityPanel(WizardPanelBase):
                                    flag=wx.ALIGN_CENTER_VERTICAL)
         self.activityNameCtrl = wx.TextCtrl(self, -1, self.activityNameDefault)
         self.activityNameCtrl.SetMinSize((150, 31))
+        if self.remote.SkinId == HARMONY_350_SKIN_ID:
+            self.activityNameCtrl.Disable()
         self.activityNameSizer.Add(self.activityNameCtrl)
         self.sizer.Add(self.activityNameSizer)
         self.sizer.AddSpacer(10)
@@ -2407,8 +2418,12 @@ class EditActivityPanel(WizardPanelBase):
         mhMgr.SaveActivityByTemplate(self.remote.Id, template, self.activity)
 
     def FinishSave(self, saveResult):
-        self.parent._SetPage(self.resources.page_setup_activities, self.remote,
-                             True)
+        if self.remote.SkinId == HARMONY_350_SKIN_ID:
+            self.parent._SetPage(self.resources.page_remote_configuration, None)
+            self.parent.Show()
+        else:
+            self.parent._SetPage(self.resources.page_setup_activities,
+                                 self.remote, True)
 
     def GetTitle(self):
         return "Edit Activity"
@@ -2420,6 +2435,8 @@ class EditActivityPanel(WizardPanelBase):
         return (self.next, None)
 
     def GetBack(self):
+        if self.remote.SkinId == HARMONY_350_SKIN_ID:
+            return (self.resources.page_remote_configuration, None)
         return (self.resources.page_setup_activities, None)
 
 class AdjustPowerSettingsPanel(DevicePanelTemplate):
