@@ -42,6 +42,7 @@
     <sequence>
       <element name="DeviceId" type="ns1:Id"/>
       <element name="Id" type="ns1:Id" nillable="true"/>
+      <element name="NextDevicePowerOnDelay" type="xsd:string" nillable="true"/>
       <element name="PowerOffOrder" type="xsd:string" nillable="true"/>
       <element name="PowerOnOrder" type="xsd:string" nillable="true"/>
       <element name="SelectedInput" type="ns11:SelectedInput" nillable="true"/>

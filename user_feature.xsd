@@ -166,11 +166,13 @@
 	  <element name="IsPoweredOnBetweenActivities" type="xsd:boolean"/>
 	  <element name="PowerOffActionId" type="xsd:string"/>
 	  <element name="PowerOffActions" type="ns12:Actions" nillable="true"/>
+	  <element name="PowerOffSetType" type="xsd:string"/>
 	  <element name="PowerOnActionId" type="xsd:string"/>
 	  <element name="PowerOnActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerOnDelay" type="xsd:string"/>
 	  <element name="PowerOnResetActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerOnResetInputName" type="xsd:string" nillable="true"/>
+	  <element name="PowerOnSetType" type="xsd:string"/>
 	  <element name="PowerToggleActionId" type="xsd:string"/>
 	  <element name="PowerToggleActions" type="ns12:Actions" nillable="true"/>
 	  <element name="PowerTypeId" type="xsd:string"/>

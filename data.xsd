@@ -123,6 +123,7 @@
       <element name="IsLearned" type="xsd:string"/>
       <element name="KeyCode" type="xsd:string"/>
       <element name="Name" type="xsd:string"/>
+      <element name="Parameters" type="xsd:string" nillable="true"/>
       <element name="ProtocolId" type="xsd:string"/>
       <element name="Raw" type="xsd:string" nillable="true"/>
       <element name="TransportType" type="xsd:string"/>

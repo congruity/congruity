@@ -130,6 +130,7 @@
       <element name="InstallerId" type="xsd:string" nillable="true"/>
       <element name="IsPolicyAccepted" type="xsd:string"/>
       <element name="LastName" type="xsd:string"/>
+      <element name="LatestSLAAcceptedDate" type="xsd:string" nillable="true"/>
       <element name="Latitude" type="xsd:string" nillable="true"/>
       <element name="Longitude" type="xsd:string" nillable="true"/>
       <element name="Password" type="xsd:string" nillable="true"/>
