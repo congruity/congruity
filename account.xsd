@@ -85,6 +85,7 @@
       <element name="LogitechSerial" type="xsd:string"/>
       <element name="Mode" type="xsd:string"/>
       <element name="OriginalProductIdentifier" type="xsd:string"/>
+      <element name="PromoCode" type="xsd:string" nillable="true"/>
       <element name="RFEquadID" type="xsd:string" nillable="true"/>
       <element name="RFID" type="xsd:string" nillable="true"/>
       <element name="RemoteProperties" type="ns6:RemoteProperties"/>
