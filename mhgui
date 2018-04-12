@@ -26,10 +26,17 @@ import time
 import traceback
 from urllib2 import URLError
 
-import wxversion
-wxversion.ensureMinimal('2.8')
 import wx
-import wx.animate
+try: # Phoenix
+    import wx.adv
+    AnimationCtrl = wx.adv.AnimationCtrl
+    ANIMATION_TYPE_GIF = wx.adv.ANIMATION_TYPE_GIF
+    HyperlinkCtrl = wx.adv.HyperlinkCtrl
+except: # Classic
+    import wx.animate
+    AnimationCtrl = wx.animate.AnimationCtrl
+    ANIMATION_TYPE_GIF = wx.animate.ANIMATION_TYPE_GIF
+    HyperlinkCtrl = wx.HyperlinkCtrl
 import wx.grid
 from tempfile import NamedTemporaryFile
 sys.path.append('/usr/share/congruity')
@@ -104,9 +111,9 @@ class ThrobberDialog(wx.Dialog):
         wx.Dialog.__init__(self, None, -1, title=self.title)
         self.SetClientSize((256, 256))
         self.SetBackgroundColour("white")
-        self.gif = wx.animate.AnimationCtrl(self, -1)
+        self.gif = AnimationCtrl(self, -1)
         self.gif.LoadFile(self.FindGif("throbber.gif"),
-                          wx.animate.ANIMATION_TYPE_GIF)
+                          ANIMATION_TYPE_GIF)
         self.gif.Play()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.gif, 1, wx.EXPAND|wx.ALL, 64)
@@ -159,6 +166,13 @@ class WrappedStaticText(wx.StaticText):
         self.Wrap(cur_width)
         self.Layout()
         self.parent.Layout()
+
+def wxListStringItem(id, text):
+    item = wx.ListItem()
+    item.SetId(id)
+    item.SetText(text)
+    item.SetMask(wx.LIST_MASK_TEXT)
+    return item
 
 class WizardPanelBase(wx.Panel):
     def __init__(self, parent, resources):
@@ -667,7 +681,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
         self.PopulateDevicesList()
 
         # Populate remote-specific buttons in rightButtonSizer
-        self.rightButtonSizer.Clear(deleteWindows=True)
+        self.rightButtonSizer.Clear(True)
         capabilities = mhMgr.GetCapabilityNames(self.product)
         if "FavoriteChannels" in capabilities:
             self.AddFavoriteChannelsButton()
@@ -703,7 +717,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnDelete(self, event):
         deviceToDelete = self.devicesListBox.GetSelections()
-        if deviceToDelete != ():
+        if deviceToDelete:
             dlg = wx.MessageDialog(self.parent,
                                    'Are you sure you want to delete '
                                    + self.devicesListBox.GetStringSelection()
@@ -728,7 +742,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnRename(self, event):
         deviceToRename = self.devicesListBox.GetSelections()
-        if deviceToRename != ():
+        if deviceToRename:
             dlg = wx.TextEntryDialog(self.parent,
                                      'Enter new name for device "'
                                      + self.devicesListBox.GetStringSelection()
@@ -753,7 +767,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnConfigure(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
-        if deviceToConfigure != ():
+        if deviceToConfigure:
             params = (
                 self.remote.SkinId,
                 self.product,
@@ -768,7 +782,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnFavoriteChannels(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
-        if deviceToConfigure != ():
+        if deviceToConfigure:
             params = (
                 self.remote.SkinId,
                 self.devices[deviceToConfigure[0]].Id,
@@ -838,7 +852,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnAdjustPowerSettings(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
-        if deviceToConfigure != ():
+        if deviceToConfigure:
             self.parent._SetPage(self.resources.page_adjust_power_settings,
                                  self.devices[deviceToConfigure[0]], True)
         else:
@@ -847,7 +861,7 @@ class RemoteConfigurationPanel(WizardPanelBase):
 
     def OnAdjustDeviceDelays(self, event):
         deviceToConfigure = self.devicesListBox.GetSelections()
-        if deviceToConfigure != ():
+        if deviceToConfigure:
             self.parent._SetPage(self.resources.page_adjust_device_delays,
                                  (self.remote.Id,
                                   self.devices[deviceToConfigure[0]].Id,
@@ -912,7 +926,7 @@ class AddDevicePanel(WizardPanelBase):
         self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearch)
         self.sizer.Add(self.searchButton, 0, 0, 0)
 
-        self.divider = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        self.divider = wx.StaticLine(self)
         self.sizer.Add(self.divider, 0, wx.EXPAND | wx.ALL, 5)
 
         self.searchResultsText = wx.StaticText(self, -1, "Search Results:")
@@ -966,7 +980,7 @@ class AddDevicePanel(WizardPanelBase):
 
     def OnAdd(self, event):
         deviceToAdd = self.searchResultsListBox.GetSelections()
-        if deviceToAdd != ():
+        if deviceToAdd:
             BackgroundTask((self.DoAdd, deviceToAdd), (self.FinishAdd,))
         else:
             wx.MessageBox('Please select a device to add.',
@@ -1077,11 +1091,11 @@ class CreateAccountPanel(WizardPanelBase):
         self.sizer.Add(self.contactCheckBox)
 
         self.lineEightSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.termsOfUseLink = wx.HyperlinkCtrl(self, -1, "Terms of Use",
+        self.termsOfUseLink = HyperlinkCtrl(self, -1, "Terms of Use",
             "https://files.myharmony.com/Assets/legal/en/termsofuse.html")
         self.lineEightSizer.Add(self.termsOfUseLink)
         self.lineEightSizer.AddSpacer(10)
-        self.privacyPolicyLink = wx.HyperlinkCtrl(self, -1, "Privacy Policy",
+        self.privacyPolicyLink = HyperlinkCtrl(self, -1, "Privacy Policy",
             "https://files.myharmony.com/Assets/legal/en/privacypolicy.html")
         self.lineEightSizer.Add(self.privacyPolicyLink)
         self.sizer.Add(self.lineEightSizer)
@@ -1333,8 +1347,8 @@ class ConfigureDevicePanel(WizardPanelBase):
         if self.remoteButtons is not None:
             for i in range(len(self.remoteButtons)):
                 buttonKey = self.remoteButtons[i].ButtonKey
-                self.remoteButtonsListCtrl.InsertStringItem(i, buttonKey)
-            
+                self.remoteButtonsListCtrl.InsertItem(wxListStringItem(i, buttonKey))
+
         self.deviceCommandsListCtrl.DeleteAllItems()
         if self.deviceCommands is not None:
             for i in range(len(self.deviceCommands)):
@@ -1342,7 +1356,7 @@ class ConfigureDevicePanel(WizardPanelBase):
                 name = command.Name
                 if command.IsLearned == "true":
                     name += "*"
-                self.deviceCommandsListCtrl.InsertStringItem(i, name)
+                self.deviceCommandsListCtrl.InsertItem(wxListStringItem(i, name))
                 if self.IsCommandMapped(command):
                     color = wx.LIGHT_GREY
                     self.deviceCommandsListCtrl.SetItemTextColour(i, color)
@@ -1777,7 +1791,7 @@ class SetupWatchTVPanel(WizardPanelBase):
     def LoadDataUI(self, loadDataResult):
         self.selectedDevicesListBox.Clear()
         self.unselectedDevicesListBox.Clear()
-        self.inputSelectionSizer.Clear(deleteWindows=True)
+        self.inputSelectionSizer.Clear(True)
         self.inputSelectionWidgets = {}
 
         # Add devices from the roles first since they need to be added in role
@@ -2297,7 +2311,7 @@ class EditActivityPanel(WizardPanelBase):
                                                           self.activityType)
 
     def LoadDataUI(self, loadDataResult):
-        self.sizer.Clear(deleteWindows=True)
+        self.sizer.Clear(True)
 
         self.activityNameSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.activityNameLabel = wx.StaticText(self, -1, "Activity Name:")
@@ -2583,13 +2597,11 @@ class AdjustPowerSettingsPanel(DevicePanelTemplate):
             dlg.SetSelection(self.deviceCommandsList.index(commandName))
         if dlg.ShowModal() == wx.ID_OK:
             commandName = dlg.GetStringSelection()
-            dlg.Destroy()
-            dlg = wx.NumberEntryDialog(self.parent,
-                                       'Enter duration in seconds:',
+            val = wx.GetNumberFromUser('Enter duration in seconds:',
                                        '(0-60 s)', 'Duration Entry',
                                        value=duration, min=0, max=60)
-            if dlg.ShowModal() == wx.ID_OK:
-                self.EditCommandRow(commandName, str(dlg.GetValue()), rowNum)
+            if val != -1:
+                self.EditCommandRow(commandName, str(val), rowNum)
                 self.ResizeGrid()
         dlg.Destroy()
 
@@ -2598,14 +2610,12 @@ class AdjustPowerSettingsPanel(DevicePanelTemplate):
             delayAmount = int(self.commandGrid.GetCellValue(rowNum, 1))
         else:
             delayAmount = 0
-        dlg = wx.NumberEntryDialog(self.parent,
-                                   'Enter delay amount in milliseconds:',
+        val = wx.GetNumberFromUser('Enter delay amount in milliseconds:',
                                    '(0-20000 ms)', 'Delay Entry',
                                    value=delayAmount, min=0, max=20000)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.EditDelayRow(str(dlg.GetValue()), rowNum)
+        if val != -1:
+            self.EditDelayRow(str(val), rowNum)
             self.ResizeGrid()
-        dlg.Destroy()
 
     def OnSelectCell(self, event):
         self.commandGrid.SelectRow(event.GetRow())
@@ -2690,7 +2700,7 @@ class AdjustDeviceDelaysPanel(DevicePanelTemplate):
         self.userFeatures = mhMgr.GetUserFeatures(self.deviceId)
 
     def LoadDataUI(self, loadDataResult):
-        self.controlsSizer.Clear(deleteWindows=True)
+        self.controlsSizer.Clear(True)
         self.controls = {}
         self.featureIdxs = {}
         self.AddControl("interdevice", "Inter-device Delay (ms):", 0, 5000,
@@ -2794,7 +2804,7 @@ class Wizard(wx.Dialog):
         font = wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD)
         self.title.SetFont(font)
         self.sizer_top_right.Add(self.title, 0, wx.EXPAND)
-        divider_top_right = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        divider_top_right = wx.StaticLine(self)
         self.sizer_top_right.Add(divider_top_right, 0, wx.EXPAND)
         spacer = wx.StaticText(self, -1, "")
         self.sizer_top_right.Add(spacer, 0, wx.EXPAND)
@@ -2802,7 +2812,7 @@ class Wizard(wx.Dialog):
         sizer_top.Add(self.sizer_top_right, 1, wx.EXPAND | wx.ALL, 5)
         sizer_main.Add(sizer_top, 1, wx.EXPAND | wx.ALL, 5)
 
-        divider_main = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        divider_main = wx.StaticLine(self)
         sizer_main.Add(divider_main, 0, wx.EXPAND | wx.ALL, 5)
 
         sizer_buttons = wx.BoxSizer(wx.HORIZONTAL)
@@ -2841,12 +2851,12 @@ class Wizard(wx.Dialog):
         for page in self.pages:
             page.Hide()
 
-        size_wiz = self.GetSizeTuple()
+        size_wiz = self.GetSize()
         for page in self.pages:
             page.Show()
             self.sizer_top_right.Add(page, 1, wx.EXPAND)
             self.Fit()
-            size_page = self.GetSizeTuple()
+            size_page = self.GetSize()
             size_wiz = tuple_max(size_wiz, size_page)
             page.Hide()
             self.sizer_top_right.Detach(page)

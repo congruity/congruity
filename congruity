@@ -27,8 +27,6 @@ import threading
 import time
 import traceback
 
-import wxversion
-wxversion.ensureMinimal('2.8')
 import wx
 import wx.lib.dialogs
 
@@ -276,7 +274,7 @@ class DecoratedGauge(object):
             parent,
             -1,
             self.current_bitmap,
-            None,
+            wx.DefaultPosition,
             parent.resources.iwh
         )
         self.text = wx.StaticText(parent, -1, caption)
@@ -284,7 +282,7 @@ class DecoratedGauge(object):
             parent,
             -1,
             100,
-            None,
+            wx.DefaultPosition,
             (250, parent.resources.iwh[1])
         )
         parent.sizer.Add(self.bitmap, (vpos, 0), (1, 1), ALIGN_LBA, 5)
@@ -1048,8 +1046,6 @@ class IRSignalCanvas(wx.ScrolledWindow):
         dc.SetPen(wx.Pen("GREEN"))
         dc.Clear()
 
-        dc.BeginDrawing()
-
         x = 16
         yoffset = 0
 
@@ -1062,8 +1058,6 @@ class IRSignalCanvas(wx.ScrolledWindow):
 
             x = xe
             yoffset = yoffsetmax - yoffset
-
-        dc.EndDrawing()
 
     def SetSignal(self, pulses, pulse_count):
         if pulse_count == 0:
@@ -1100,7 +1094,6 @@ class IRSignalCanvas(wx.ScrolledWindow):
         if pix_to_scroll <= self.GetClientSize()[0]:
             units += 1
         self.SetScrollbars(pix_per_unit, 0, units, 0)
-        self.OnPaint(None)
 
 class IRSignalPanel(wx.Panel):
     def __init__(self, parent):
@@ -1152,7 +1145,7 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         self.sizer.Add(self.btn_details, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self._OnDetails, self.btn_details)
 
-        self.divider = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        self.divider = wx.StaticLine(self)
         self.sizer.Add(self.divider, 0, wx.EXPAND)
 
         self.text_results = WrappedStaticText(self)
@@ -1598,7 +1591,7 @@ class Wizard(wx.Dialog):
         font = wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD)
         self.title.SetFont(font)
         self.sizer_top_right.Add(self.title, 0, wx.EXPAND)
-        divider_top_right = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        divider_top_right = wx.StaticLine(self)
         self.sizer_top_right.Add(divider_top_right, 0, wx.EXPAND)
         spacer = wx.StaticText(self, -1, "")
         self.sizer_top_right.Add(spacer, 0, wx.EXPAND)
@@ -1606,7 +1599,7 @@ class Wizard(wx.Dialog):
         sizer_top.Add(self.sizer_top_right, 1, wx.EXPAND | wx.ALL, 5)
         sizer_main.Add(sizer_top, 1, wx.EXPAND | wx.ALL, 5)
 
-        divider_main = wx.StaticLine(self, -1, None, None, wx.LI_HORIZONTAL)
+        divider_main = wx.StaticLine(self)
         sizer_main.Add(divider_main, 0, wx.EXPAND | wx.ALL, 5)
 
         sizer_buttons = wx.BoxSizer(wx.HORIZONTAL)
@@ -1645,12 +1638,12 @@ class Wizard(wx.Dialog):
         for page in self.pages:
             page.Hide()
 
-        size_wiz = self.GetSizeTuple()
+        size_wiz = self.GetSize()
         for page in self.pages:
             page.Show()
             self.sizer_top_right.Add(page, 1, wx.EXPAND)
             self.Fit()
-            size_page = self.GetSizeTuple()
+            size_page = self.GetSize()
             size_wiz = tuple_max(size_wiz, size_page)
             page.Hide()
             self.sizer_top_right.Detach(page)
