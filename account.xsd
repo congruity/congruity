@@ -126,6 +126,7 @@
       <element name="ConfigVersion" type="xsd:string" nillable="true"/>
       <element name="ContactMe" type="xsd:string"/>
       <element name="CountryType" type="xsd:string"/>
+      <element name="CustomerId" type="xsd:string" nillable="true"/>
       <element name="Email" type="xsd:string"/>
       <element name="FirstName" type="xsd:string"/>
       <element name="InstallerId" type="xsd:string" nillable="true"/>
