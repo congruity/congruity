@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema targetNamespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:mns="http://schemas.microsoft.com/2003/10/Serialization/"
   xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
   xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns:ns11="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity"
@@ -11,6 +12,7 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" location="user_feature.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
 
   <complexType name="taughtCommandIds">
     <sequence>
@@ -56,6 +58,13 @@
     <sequence>
       <element name="Key" type="ns1:Id"/>
       <element name="Value" type="ns1:Commands"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="KeyValueOfanyTypeAbstractId">
+    <sequence>
+      <element name="Key" type="mns:guid"/>
+      <element name="Value" type="ns1:Id"/>
     </sequence>
   </complexType>
 

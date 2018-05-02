@@ -177,6 +177,7 @@
 
   <complexType name="UpdateMultipleResult">
     <sequence>
+      <element name="KeyValueOfanyTypeAbstractIdkS6NGDMp" type="ns9:KeyValueOfanyTypeAbstractId"/>
     </sequence>
   </complexType>
 
