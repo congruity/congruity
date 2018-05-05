@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2008-2010 Stephen Warren
 # Copyright 2012-2014 Scott Talbert
@@ -19,7 +19,8 @@
 # along with congruity.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
-from ctypes import *
+from __future__ import absolute_import
+import ctypes
 import os
 import os.path
 import sys
@@ -62,6 +63,12 @@ except:
     )
     dlg.ShowModal()
     os._exit(1)
+
+def fsencode(filename):
+    try:
+        return os.fsencode(filename)
+    except AttributeError:
+        return filename
 
 def counter():
     i=0
@@ -398,10 +405,10 @@ class WelcomePanel(MessagePanelBase):
 
             self.next = self.resources.page_connect
 
-            type = c_int()
+            type = ctypes.c_int()
             libconcord.read_and_parse_file(
-                self.resources.ezhex_filename,
-                byref(type)
+                fsencode(self.resources.ezhex_filename),
+                ctypes.byref(type)
             )
 
             next_map = {
@@ -549,8 +556,8 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
             )
             self._DgEnd(self.dg_connect)
 
-            mfg = libconcord.get_mfg()
-            model = libconcord.get_model()
+            mfg = libconcord.get_mfg().decode('utf-8')
+            model = libconcord.get_model().decode('utf-8')
 
             mfg_model = mfg + " " + model
             wx.CallAfter(self._OnStatusOk, mfg_model)
@@ -588,18 +595,18 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
         try:
             msg = ""
 
-            mfg = libconcord.get_mfg()
-            model = libconcord.get_model()
-            codename = libconcord.get_codename()
+            mfg = libconcord.get_mfg().decode('utf-8')
+            model = libconcord.get_model().decode('utf-8')
+            codename = libconcord.get_codename().decode('utf-8')
             msg += "Model: %s %s (%s)\n" % (msg, model, codename)
 
-            hid_mfg = libconcord.get_hid_mfg_str()
-            hid_prod = libconcord.get_hid_prod_str()
+            hid_mfg = libconcord.get_hid_mfg_str().decode('utf-8')
+            hid_prod = libconcord.get_hid_prod_str().decode('utf-8')
             msg += "USB HID Model: %s %s\n" % (hid_mfg, hid_prod)
 
-            ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
-            ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
-            ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
+            ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1).decode('utf-8')
+            ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2).decode('utf-8')
+            ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3).decode('utf-8')
             msg += "Serial:\n    %s\n    %s\n    %s\n" % (ser_1, ser_2, ser_3)
 
             arch = libconcord.get_arch()
@@ -620,7 +627,7 @@ class ConnectPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
             flash_mfg = libconcord.get_flash_mfg()
             flash_id = libconcord.get_flash_id()
-            flash_part_num = libconcord.get_flash_part_num()
+            flash_part_num = libconcord.get_flash_part_num().decode('utf-8')
             flash_size = libconcord.get_flash_size()
             msg += "Flash Manufacturer:%d ID:%d Part:%s Size:%dK\n" % (
                 flash_mfg, flash_id, flash_part_num, flash_size
@@ -893,7 +900,7 @@ class UpdateFirmwarePanel(ProgramRemotePanelBase):
             program_callback,
             self,
             0,
-            c_int(is_direct and 1 or 0)
+            ctypes.c_int(is_direct and 1 or 0)
         )
 
         if not self.resources.no_web:
@@ -938,17 +945,17 @@ class LearnIrPrepPanel(WizardPanelBase):
         self.sel = 0
 
     def DoParsing(self):
-        key_names = POINTER(c_char_p)()
-        key_names_length = c_uint()
+        key_names = ctypes.POINTER(ctypes.c_char_p)()
+        key_names_length = ctypes.c_uint()
         libconcord.get_key_names(
-            byref(key_names),
-            byref(key_names_length)
+            ctypes.byref(key_names),
+            ctypes.byref(key_names_length)
         )
         try:
             self.resources.key_names = []
             self.resources.key_names_index = -1
             for i in range(key_names_length.value):
-                self.resources.key_names.append(key_names[i] + '')
+                self.resources.key_names.append(key_names[i].decode('utf-8') + '')
         finally:
             libconcord.delete_key_names(key_names, key_names_length)
 
@@ -1163,15 +1170,15 @@ class LearnIrLearnPanel(WizardPanelBase, DecoratedContainerThreadMixin):
             self._DgStart(self.dg_learn)
 
             self.resources.cur_ir_allocated_by_libconcord = True
-            self.resources.cur_ir_carrier_clock = c_uint()
-            self.resources.cur_ir_signal = POINTER(c_uint)()
-            self.resources.cur_ir_signal_length = c_uint()
+            self.resources.cur_ir_carrier_clock = ctypes.c_uint()
+            self.resources.cur_ir_signal = ctypes.POINTER(ctypes.c_uint)()
+            self.resources.cur_ir_signal_length = ctypes.c_uint()
             libconcord.learn_from_remote(
-                byref(self.resources.cur_ir_carrier_clock),
-                byref(self.resources.cur_ir_signal),
-                byref(self.resources.cur_ir_signal_length),
+                ctypes.byref(self.resources.cur_ir_carrier_clock),
+                ctypes.byref(self.resources.cur_ir_signal),
+                ctypes.byref(self.resources.cur_ir_signal_length),
                 program_callback,
-                py_object((self._DgUpdate, self.dg_learn))
+                ctypes.py_object((self._DgUpdate, self.dg_learn))
             )
             if self.resources.cur_ir_carrier_clock.value < 1000:
                 raise Exception('Carrier frequency too low')
@@ -1320,10 +1327,10 @@ class LearnIrEnterProntoHexPanel(WizardPanelBase):
             count = count_1 + (repeats * count_2)
 
             self.resources.cur_ir_allocated_by_libconcord = False
-            self.resources.cur_ir_carrier_clock = c_uint(frequency)
-            cur_ir_signal_type = c_uint * count
+            self.resources.cur_ir_carrier_clock = ctypes.c_uint(frequency)
+            cur_ir_signal_type = ctypes.c_uint * count
             self.resources.cur_ir_signal = cur_ir_signal_type()
-            self.resources.cur_ir_signal_length = c_uint(count)
+            self.resources.cur_ir_signal_length = ctypes.c_uint(count)
 
             idx = 0
 
@@ -1415,7 +1422,7 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
             self._DgStart(self.dg_upload)
 
-            post_string = c_char_p()
+            post_string = ctypes.c_char_p()
             libconcord.encode_for_posting(
                 self.resources.cur_ir_carrier_clock,
                 self.resources.cur_ir_signal,
@@ -1434,7 +1441,7 @@ class LearnIrUploadPanel(WizardPanelBase, DecoratedContainerThreadMixin):
 
                 if not self.resources.no_web:
                     libconcord.post_new_code(
-                        self.resources.key_names[self.resources.key_names_index],
+                        self.resources.key_names[self.resources.key_names_index].encode('utf-8'),
                         post_string,
                         program_callback,
                         None

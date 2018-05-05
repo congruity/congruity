@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright 2012-2013 Scott Talbert
 #
 # This file is part of congruity.
@@ -19,10 +17,8 @@
 
 from __future__ import print_function
 import logging
-import httplib
-import urlparse
-import urllib
-import urllib2
+import six.moves.http_client as http_client
+import six.moves.urllib as urllib
 import uuid
 import re
 import time
@@ -31,7 +27,7 @@ import sys
 import random
 import datetime
 import json
-from HTMLParser import HTMLParser
+from six.moves.html_parser import HTMLParser
 from suds.cache import ObjectCache
 from suds.client import Client
 from suds.plugin import MessagePlugin
@@ -181,12 +177,12 @@ class MHManager():
     def Login(self, email, password):
         baseUrl = "https://setup.myharmony.com"
         url = baseUrl + "/MartiniWeb/Account/TestLoginAndMW?provider=hp&&verify=true&toucheck=true"
-        data = json.dumps({'email': email, 'password': password})
+        data = json.dumps({'email': email, 'password': password}).encode('utf-8')
         headers = {'Content-Type': 'application/json'}
-        request = urllib2.Request(url, data, headers)
-        response = urllib2.urlopen(request)
+        request = urllib.request.Request(url, data, headers)
+        response = urllib.request.urlopen(request)
         # For some reason the response to this is double-encoded
-        jsonResponse = json.loads(json.loads(response.read()))
+        jsonResponse = json.loads(json.loads(response.read().decode('utf-8')))
         if "mwResult" in jsonResponse:
             if jsonResponse["mwResult"]: # members.harmonyremote.com acct
                 return None
@@ -195,20 +191,20 @@ class MHManager():
 
         url = baseUrl + "/MartiniWeb/Home/Login?i=" + jsonResponse["id_token"]
         url += "&a=" + jsonResponse["access_token"] + "&cl=en-US"
-        request = urllib2.Request(url)
-        response = urllib2.urlopen(request)
+        request = urllib.request.Request(url)
+        response = urllib.request.urlopen(request)
         parser = LoginResponseHTMLParser()
-        parser.feed(response.read())
+        parser.feed(response.read().decode('utf-8'))
         initparams = dict(u.split("=", 1) for u in parser.initparams.split(","))
         self.contentServiceAuthKey = initparams['ContentServiceAuthKey']
 
         url = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json2/signin"
         data = json.dumps({'id_token': jsonResponse['id_token'],
-                           'access_token': jsonResponse['access_token']})
+                           'access_token': jsonResponse['access_token']}).encode('utf-8')
         headers = {'Content-Type': 'application/json'}
-        request = urllib2.Request(url, data, headers)
-        response = urllib2.urlopen(request)
-        jsonResponse = json.loads(response.read())
+        request = urllib.request.Request(url, data, headers)
+        response = urllib.request.urlopen(request)
+        jsonResponse = json.loads(response.read().decode('utf-8'))
         self.client.options.transport.cookiejar.extract_cookies(response,
                                                                 request)
 
@@ -390,19 +386,19 @@ class MHManager():
 
         compile = self.client.service['CompileManager'].StartCompileWithLocale(
             remoteId, "Not Implemented")
-        url = urlparse.urlparse(compile.DownloadUrl)
+        url = urllib.parse.urlparse(compile.DownloadUrl)
         match = re.search('CompilationId=(.+)', compile.DownloadUrl)
         compilationId = match.group(1)
-        compilationIdString = '<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">' + compilationId + '</string>'
+        compilationIdString = ('<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">' + compilationId + '</string>').encode('utf-8')
         maxAttempts = 15
         count = 0
         while (count < maxAttempts):
             newUrl = "http://" + url.netloc + url.path + "?" + str(uuid.uuid4())
-            httpRequest = urllib2.Request(newUrl, compilationIdString,
-                                          {"Content-Type": "text/xml"})
+            httpRequest = urllib.request.Request(newUrl, compilationIdString,
+                                                 {"Content-Type": "text/xml"})
             self.client.options.transport.cookiejar.add_cookie_header(
                 httpRequest)
-            fp = urllib2.urlopen(httpRequest)
+            fp = urllib.request.urlopen(httpRequest)
             rawfile = fp.read()
             response = rawfile.decode('ascii', 'ignore')
             status = re.search(
@@ -506,7 +502,7 @@ class MHManager():
     def CreateAccount(self, details):
         host = "setup.myharmony.com"
         url = "https://setup.myharmony.com/MartiniWeb/Account/Register"
-        params = urllib.urlencode(
+        params = urllib.parse.urlencode(
             {'FirstName': details.firstName, 'LastName': details.lastName,
              'ctl00$MainContent$selectCountry': '- Select Country -',
              'region': details.country, 'Emailaddress': details.email,
@@ -514,10 +510,10 @@ class MHManager():
              'IsPolicyAccepted': 'true',
              'Keepmeinformed': details.keepMeInformed})
         headers = {"Content-type": "application/x-www-form-urlencoded"}
-        conn = httplib.HTTPSConnection(host)
+        conn = http_client.HTTPSConnection(host)
         conn.request("POST", url, params, headers)
         response = conn.getresponse()
-        data = response.read()
+        data = response.read().decode('utf-8')
         conn.close()
         # We get a redirect response (code 302) on success.  Return.
         if response.status == 302:
@@ -583,11 +579,11 @@ class MHManager():
         return True
 
     def GetCountryLists(self):
-        conn = httplib.HTTPSConnection("setup.myharmony.com")
+        conn = http_client.HTTPSConnection("setup.myharmony.com")
         conn.request("GET",
                      "https://setup.myharmony.com/MartiniWeb/Account/Register")
         response = conn.getresponse()
-        data = unicode(response.read(), 'utf-8')
+        data = response.read().decode('utf-8')
         parser = CountryListHTMLParser()
         parser.feed(parser.unescape(data))
         return [parser.country_codes, parser.countries]

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2012-2014 Scott Talbert
 #
@@ -17,14 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with congruity.  If not, see <http://www.gnu.org/licenses/>.
 
-from ctypes import *
+import ctypes
 import os
 import os.path
 import sys
 import threading
 import time
 import traceback
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 
 import wx
 try: # Phoenix
@@ -450,9 +450,9 @@ class RemoteSelectPanel(WizardPanelBase):
             libconcord.init_concord()
         except:
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
             wx.MessageBox('Could not detect remote: ' + msg, 'Error',
                           wx.OK | wx.ICON_WARNING)
@@ -463,9 +463,9 @@ class RemoteSelectPanel(WizardPanelBase):
             libconcord.get_identity(cb, None)
         except:
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
             wx.MessageBox('Could not identify remote: ' + msg, 'Error',
                           wx.OK | wx.ICON_WARNING)
@@ -475,15 +475,17 @@ class RemoteSelectPanel(WizardPanelBase):
         ser_1 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_1)
         ser_2 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_2)
         ser_3 = libconcord.get_serial(libconcord.SERIAL_COMPONENT_3)
-        serialNumber = ser_1 + ser_2 + ser_3
+        serialNumber = (ser_1 + ser_2 + ser_3).decode('utf-8')
         skinId = libconcord.get_skin()
         usbPid = hex(libconcord.get_usb_pid())
         usbVid = hex(libconcord.get_usb_vid())
-        model = libconcord.get_mfg() + ' ' + libconcord.get_model()
+        mfg = libconcord.get_mfg().decode('utf-8')
+        model = libconcord.get_model().decode('utf-8')
+        mfg_model = mfg + ' ' + model
         libconcord.deinit_concord()
         # Check whether this is a supported remote.
         if skinId not in self.supportedSkins:
-            wx.MessageBox('Sorry, this remote model (' + model + ') is '
+            wx.MessageBox('Sorry, this remote model (' + mfg_model + ') is '
                           + 'not supported by this software.  Please '
                           + 'use members.harmonyremote.com.',
                           'Unsupported Remote', wx.OK | wx.ICON_WARNING)
@@ -1499,9 +1501,9 @@ class ConfigureDevicePanel(WizardPanelBase):
             libconcord.init_concord()
         except:
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
             wx.MessageBox('Could not detect remote: ' + msg, 'Error',
                           wx.OK | wx.ICON_WARNING)
@@ -1512,9 +1514,9 @@ class ConfigureDevicePanel(WizardPanelBase):
             + 'you wish to be learned.'
         wx.MessageBox(msg, 'Position Remotes', wx.OK)
         self.commandName = commandName
-        self.carrierClock = c_uint()
-        self.signal = POINTER(c_uint)()
-        self.signalLength = c_uint()
+        self.carrierClock = ctypes.c_uint()
+        self.signal = ctypes.POINTER(ctypes.c_uint)()
+        self.signalLength = ctypes.c_uint()
         BackgroundTask((self.DoLearnIR,), (self.FinishLearnIR,), 
                        throbberTitle=ThrobberDialog.TITLE_REMOTE)
 
@@ -1522,17 +1524,17 @@ class ConfigureDevicePanel(WizardPanelBase):
         msg = None
         try:
             libconcord.learn_from_remote(
-                byref(self.carrierClock),
-                byref(self.signal),
-                byref(self.signalLength),
+                ctypes.byref(self.carrierClock),
+                ctypes.byref(self.signal),
+                ctypes.byref(self.signalLength),
                 libconcord.callback_type(dummy_callback_imp),
                 None
             )
         except:
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
             libconcord.deinit_concord()
 
@@ -1543,13 +1545,14 @@ class ConfigureDevicePanel(WizardPanelBase):
                           wx.OK | wx.ICON_WARNING)
             return
 
-        self.rawSequence = c_char_p()
+        self.rawSequence = ctypes.c_char_p()
         libconcord.encode_for_posting(self.carrierClock, self.signal,
                                       self.signalLength, self.rawSequence)
         BackgroundTask((self.DoUpdateIR,), (self.FinishUpdateIR,))
 
     def DoUpdateIR(self):
-        result = mhMgr.UpdateIRCommand(self.commandName, self.rawSequence.value,
+        result = mhMgr.UpdateIRCommand(self.commandName,
+                                       self.rawSequence.value.decode('utf-8'),
                                        self.deviceId)
         self.LoadData()
         return result
@@ -2015,9 +2018,9 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
             libconcord.init_concord()
         except:
             msg = '%s\n    (libconcord function %s error %d)\n\n' % (
-                sys.exc_value.result_str,
-                sys.exc_value.func,
-                sys.exc_value.result
+                sys.exc_info()[1].result_str,
+                sys.exc_info()[1].func,
+                sys.exc_info()[1].result
             )
             return msg
 
@@ -2049,8 +2052,9 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
 
     def LoadConfigProperties(self):
         self.remoteName = mhMgr.GetRemoteName(self.remote.Id)
-        self.cfg_prop = libconcord.mh_cfg_properties()
-        libconcord.mh_get_cfg_properties(byref(self.cfg_prop))
+        cfg_prop = libconcord.mh_cfg_properties()
+        libconcord.mh_get_cfg_properties(ctypes.byref(cfg_prop))
+        self.cfg_prop = self.DecodeMHStruct(cfg_prop)
 
     def LoadConfigPropertiesUI(self, result):
         if self.remoteName is None:
@@ -2063,8 +2067,9 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
             self.roomNameChoice.SetSelection(0)
 
     def LoadWifiConfig(self):
-        self.wifi_cfg = libconcord.mh_wifi_config()
-        libconcord.mh_get_wifi_config(byref(self.wifi_cfg))
+        wifi_cfg = libconcord.mh_wifi_config()
+        libconcord.mh_get_wifi_config(ctypes.byref(wifi_cfg))
+        self.wifi_cfg = self.DecodeMHStruct(wifi_cfg)
 
     def LoadWifiConfigUI(self, result):
         self.ssidCtrl.SetValue(self.wifi_cfg.ssid)
@@ -2082,12 +2087,13 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
 
     def LoadWifiNetworks(self):
         self.wifi_networks = libconcord.mh_wifi_networks()
-        libconcord.mh_get_wifi_networks(byref(self.wifi_networks))
+        libconcord.mh_get_wifi_networks(ctypes.byref(self.wifi_networks))
 
     def LoadWifiNetworksUI(self, result):
         self.wifiNetworksListBox.DeselectAll()
         self.wifiNetworksListBox.Clear()
         for network in self.wifi_networks.network:
+            network = self.DecodeMHStruct(network)
             if network.ssid == "":
                 break
             self.wifiNetworksListBox.Append(network.ssid, network.encryption)
@@ -2145,11 +2151,15 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
 
     def DoSaveChanges(self):
         if self.saveWifi:
-            libconcord.mh_set_wifi_config(byref(self.wifi_cfg))
+            wifi_cfg = self.EncodeMHStruct(self.wifi_cfg,
+                                           libconcord.mh_wifi_config())
+            libconcord.mh_set_wifi_config(ctypes.byref(wifi_cfg))
             self.LoadWifiConfig()
         if self.saveCfgProp:
             mhMgr.SetRemoteName(self.remote.Id, self.cfg_prop.host_name)
-            libconcord.mh_set_cfg_properties(byref(self.cfg_prop))
+            cfg_prop = self.EncodeMHStruct(self.cfg_prop,
+                                           libconcord.mh_cfg_properties())
+            libconcord.mh_set_cfg_properties(ctypes.byref(cfg_prop))
             time.sleep(10)
             # Do not self.LoadConfigProperties() here.  The Link doesn't
             # respond very well if you do.  Just assume everything worked.
@@ -2157,6 +2167,19 @@ class ConfigureHarmonyLinkSettingsPanel(WizardPanelBase):
     def FinishSaveChanges(self, result):
         if self.saveWifi:
             self.LoadWifiConfigUI(None)
+
+    def DecodeMHStruct(self, encoded):
+        class Object: pass
+        decoded = Object()
+        for field in encoded._fields_:
+            setattr(decoded, field[0],
+                    getattr(encoded, field[0]).decode('utf-8'))
+        return decoded
+
+    def EncodeMHStruct(self, decoded, encoded):
+        for prop, val in vars(decoded).items():
+            setattr(encoded, prop, val.encode('utf-8'))
+        return encoded
 
     def GetTitle(self):
         return "Configure Harmony Link Settings"
