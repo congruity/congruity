@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-# Copyright 2012-2014 Scott Talbert
+# Copyright 2012-2018 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -39,11 +37,16 @@ except: # Classic
     HyperlinkCtrl = wx.HyperlinkCtrl
 import wx.grid
 from tempfile import NamedTemporaryFile
-sys.path.append('/usr/share/congruity')
-from mhmanager import MHManager
-from mhmanager import MHAccountDetails
-from mhmanager import SaveActivityTemplate
-from mhmanager import Secrets
+try:
+    from .mhmanager import MHManager
+    from .mhmanager import MHAccountDetails
+    from .mhmanager import SaveActivityTemplate
+    from .mhmanager import Secrets
+except ModuleNotFoundError:
+    from mhmanager import MHManager
+    from mhmanager import MHAccountDetails
+    from mhmanager import SaveActivityTemplate
+    from mhmanager import Secrets
 
 version = "18"
 
@@ -119,14 +122,7 @@ class ThrobberDialog(wx.Dialog):
         self.sizer.Add(self.gif, 1, wx.EXPAND|wx.ALL, 64)
         self.SetSizer(self.sizer)
     def FindGif(self, filename):
-        appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
-        dirs = ['/usr/share/congruity', appdir, '.']
-        for dir in dirs:
-            fpath = os.path.join(dir, filename)
-            if not os.path.isfile(fpath):
-                continue
-            return fpath
-        raise Exception("Can't load " + filename)
+        return os.path.join(os.path.dirname(__file__), filename)
 
 class BackgroundTask:
     def __init__(self, backgroundFunctionSpec, onDoneFunctionSpec,
@@ -809,9 +805,8 @@ class RemoteConfigurationPanel(WizardPanelBase):
                        (self.FinishCongruity,), None)
 
     def DoCongruity(self, tempFileName):
-        myDir = os.path.abspath(self.resources.appdir)
-        congruityPath = os.path.join(myDir, "congruity")
-        os.system(congruityPath + " --no-web " + tempFileName)
+        congruityPath = os.path.join(os.path.dirname(__file__), "congruity.py")
+        os.system(sys.executable + " " + congruityPath + " --no-web " + tempFileName)
         os.unlink(tempFileName)
 
     def FinishCongruity(self, result):
@@ -2988,19 +2983,10 @@ class Wizard(wx.Dialog):
             (page, data) = self.cur_page.OnActivated(prev_page, data)
 
 class Resources(object):
-    def __init__(self, appdir, no_web):
-        self.appdir = appdir
-        self.no_web = no_web
-
     def LoadImages(self):
-        def load(filename, appdir = self.appdir):
-            dirs = ['/usr/share/congruity', appdir, '.']
-            for dir in dirs:
-                fpath = os.path.join(dir, filename)
-                if not os.path.isfile(fpath):
-                    continue
-                return wx.Image(fpath, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-            raise Exception("Can't load " + filename)
+        def load(filename):
+            fpath = os.path.join(os.path.dirname(__file__), filename)
+            return wx.Image(fpath, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 
         self.img_remote       = load("remote.png")
 
@@ -3042,12 +3028,10 @@ class Finalizer(object):
         pass
 
 
-def main(argv):
-    appdir = os.path.dirname(argv[0])
-
+def main():
     app = wx.App(False)
 
-    resources = Resources(appdir, True)
+    resources = Resources()
     resources.LoadImages()
 
     wizard = Wizard(resources, Finalizer(resources))
@@ -3061,4 +3045,4 @@ def main(argv):
     app.MainLoop()
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-
 # Copyright 2008-2010 Stephen Warren
-# Copyright 2012-2014 Scott Talbert
+# Copyright 2012-2018 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -1748,8 +1746,7 @@ class Wizard(wx.Dialog):
             (page, data) = self.cur_page.OnActivated(prev_page, data)
 
 class Resources(object):
-    def __init__(self, appdir, no_web):
-        self.appdir = appdir
+    def __init__(self, no_web):
         self.no_web = no_web
 
         self.ezhex_filename = None
@@ -1760,14 +1757,9 @@ class Resources(object):
         self.connected = False
 
     def LoadImages(self):
-        def load(filename, appdir = self.appdir):
-            dirs = ['/usr/share/congruity', appdir, '.']
-            for dir in dirs:
-                fpath = os.path.join(dir, filename)
-                if not os.path.isfile(fpath):
-                    continue
-                return wx.Image(fpath, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-            raise Exception("Can't load " + filename)
+        def load(filename):
+            fpath = os.path.join(os.path.dirname(__file__), filename)
+            return wx.Image(fpath, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
 
         self.img_remote       = load("remote.png")
         self.icon_unstarted   = load("icon-unstarted.png")
@@ -1852,7 +1844,8 @@ class Finalizer(object):
         except:
             pass
 
-def main(argv):
+def main():
+    argv = sys.argv
     app = wx.App(False)
 
     appdir = os.path.dirname(argv.pop(0))
@@ -1876,7 +1869,7 @@ def main(argv):
         ezhex_filename = None
         initial_exception = ("Command-line error", exception_message())
 
-    resources = Resources(appdir, no_web)
+    resources = Resources(no_web)
     resources.LoadImages()
     resources.SetEzHexFilename(ezhex_filename)
 
@@ -1893,4 +1886,4 @@ def main(argv):
     app.MainLoop()
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

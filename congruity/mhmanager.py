@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Scott Talbert
+# Copyright 2012-2018 Scott Talbert
 #
 # This file is part of congruity.
 #
@@ -152,16 +152,8 @@ class MHPlugin(MessagePlugin):
 class MHManager():
     def __init__(self, use_local_wsdl=False, suds_debug=False):
         if use_local_wsdl:
-            # Find the harmony.wsdl file.
-            appdir = os.path.abspath(os.path.dirname(sys.argv[0]))
-            dirs = ['/usr/share/congruity', appdir, '.']
-            for dir in dirs:
-                fpath = os.path.join(dir, "harmony.wsdl")
-                if os.path.isfile(fpath):
-                    self.wsdl_path = fpath
-                    break
-
-            url = 'file://' + self.wsdl_path
+            wsdl = os.path.join(os.path.dirname(__file__), 'harmony.wsdl')
+            url = 'file://' + wsdl
             cache = None
         else:
             url = 'http://congruity.sourceforge.net/congruity/harmony.wsdl'
