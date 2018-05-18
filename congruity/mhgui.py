@@ -48,7 +48,7 @@ except ModuleNotFoundError:
     from mhmanager import SaveActivityTemplate
     from mhmanager import Secrets
 
-version = "18"
+version = "19"
 
 HARMONY_350_SKIN_ID = "104"
 HARMONY_LINK_SKIN_ID = 82

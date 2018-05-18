@@ -38,7 +38,7 @@ class install(setuptools.command.install.install):
 
 setup(
     name='congruity',
-    version='18',
+    version='19',
     description='Applications for programming Logitech Harmony remote controls',
     url='https://sourceforge.net/projects/congruity/',
     packages=['congruity'],

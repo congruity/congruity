@@ -29,7 +29,7 @@ import traceback
 import wx
 import wx.lib.dialogs
 
-version = "18"
+version = "19"
 
 try:
     import libconcord

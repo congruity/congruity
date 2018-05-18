@@ -1,3 +1,28 @@
+* 2018-05-?? Scott Talbert <swt@techie.net>
+- congruity-19 is released
+- mhgui: Numerous updates to WSDL/XSD to match Logitech changes
+- mhgui: Allow setting input to 'None' in Setup Watch TV and Setup Activities
+- mhgui: Numerous fixes to the login process
+- mhgui: Provide a different error message if a members.harmonyremote.com
+  account is used
+- congruity/mhgui: Add support for wxPython 3.0
+- mhgui: Add the ability to adjust device delays
+- mhgui: Add support for Harmony 350
+- mhgui: Add --help argument
+- mhgui: Align controls in Welcome and AddDevice
+- mhgui: Add device names to AdjustDeviceDelays and AdjustPowerSettings
+- mhgui: Catch URLErrors during login
+- congruity: Allow GNOME to label congruity in ALT-TAB switcher
+- mhgui: Fix Configure Device for Harmony 600/650/700
+- mhgui: Add support for saving username/password via Secret service
+- mhgui: Only attempt login if details are entered
+- mhgui: Fix creating activities for Harmony 650
+- mhgui: Fix saving Watch TV for Harmony 200/300/350
+- mhgui: Fix exception when deleting a remote
+- congruity/mhgui: Add support for wxPython 4 (Phoenix)
+- congruity/mhgui: Add support for Python 3
+- congruity/mhgui: Modernize Python installation (Makefile -> setup.py)
+
 * 2014-03-29 Scott Talbert <swt@techie.net>
 - congruity-18 is released
 - mhgui: Added support for Harmony 650

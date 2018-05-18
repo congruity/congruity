@@ -1,21 +1,21 @@
 Requirements
 ==============================================================================
 
-Python (tested with 2.7.5 on Fedora 20)
-  See http://www.python.org/
+Python (tested with 2.7.15 and 3.6.5 on Fedora 28)
+  See https://www.python.org/
 
-Python ctypes library (included with Python 2.5, separate earlier)
-  See http://sourceforge.net/projects/ctypes/
+wxPython (tested with wxPython-3.0.2.0 and wxPython-4.0.1 on Fedora 28)
+  See https://www.wxpython.org/
 
-wxPython (tested with wxPython-2.8.12.0 on Fedora 20)
-  See http://www.wxpython.org/
-
-libconcord (version 1.1 is *required*; tested on Fedora 20)
-  See http://www.phildev.net/concordance/
+libconcord (version 1.1 is *required*; tested on Fedora 28)
+  See https://www.phildev.net/concordance/
   Note that the python bindings are also required; see
   libconcord/bindings/python
 
-python-suds (tested with 0.4.1 on Fedora 20)
+python-six
+  Six is used for enabling Python 3 support.
+
+python-suds (tested with 0.7 [jurko fork 94664ddd46a6] on Fedora 28)
   Suds is required for mhgui.
 
 libsecret and PyGObject (optional for mhgui)
@@ -24,7 +24,7 @@ libsecret and PyGObject (optional for mhgui)
   See https://wiki.gnome.org/Projects/Libsecret
   And https://wiki.gnome.org/Projects/PyGObject
 
-Python, ctypes, wxPython, and Suds are typically installed using your
+Python, wxPython, Six, and Suds are typically installed using your
 distribution's package management system. If this is not the case, installation
 instructions should be located in the documentation accompanying those packages.
 
@@ -51,15 +51,17 @@ Installation
 
 congruity may be installed by running the following command:
 
-    make install
+    python setup.py install
 
 This command typically requires root access, since the default installation
 location is /usr/local.
 
-Please read Makefile for details of variables that may be set to configure the
-installation process, e.g.:
+The setup.py uses Setuptools, so please see the Setuptools documentation for
+additional information on available options:
+https://setuptools.readthedocs.io/en/latest/index.html
 
-    make install DESTDIR=/tmp/pkgtmp PREFIX=/usr
+The only non-standard option supported is --skip-update-desktop-db which will
+skip running the 'update-desktop-database' command after installation.
 
 Device Node Access Setup
 ==============================================================================
@@ -98,7 +100,7 @@ open-source and more cross-platform than the official software.
 Harmony remotes are configured using the Logitech website, based at the
 following URL:
 
-    http://members.harmonyremote.com/
+    http://members.harmonyremote.com/EasyZapper/
 
 Note that other URLs may be used for remotes that are not branded as
 "Harmony". However, the overall process is identical.
