@@ -156,7 +156,7 @@ class MHManager():
             url = 'file://' + wsdl
             cache = None
         else:
-            url = 'http://congruity.sourceforge.net/congruity/harmony.wsdl'
+            url = 'https://congruity.sourceforge.io/congruity/harmony.wsdl'
             cache = ObjectCache(hours=4)
         if suds_debug:
             logging.basicConfig(level=logging.INFO)
@@ -385,7 +385,7 @@ class MHManager():
         maxAttempts = 15
         count = 0
         while (count < maxAttempts):
-            newUrl = "http://" + url.netloc + url.path + "?" + str(uuid.uuid4())
+            newUrl = "https://" + url.netloc + url.path + "?" + str(uuid.uuid4())
             httpRequest = urllib.request.Request(newUrl, compilationIdString,
                                                  {"Content-Type": "text/xml"})
             self.client.options.transport.cookiejar.add_cookie_header(

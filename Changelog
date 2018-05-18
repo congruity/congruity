@@ -22,6 +22,7 @@
 - congruity/mhgui: Add support for wxPython 4 (Phoenix)
 - congruity/mhgui: Add support for Python 3
 - congruity/mhgui: Modernize Python installation (Makefile -> setup.py)
+- mhgui: Switch to use https when talking to SourceForge / config download
 
 * 2014-03-29 Scott Talbert <swt@techie.net>
 - congruity-18 is released
