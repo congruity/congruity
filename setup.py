@@ -28,11 +28,11 @@ class install(setuptools.command.install.install):
     ]
 
     def initialize_options(self):
-        super().initialize_options()
+        setuptools.command.install.install.initialize_options(self)
         self.skip_update_desktop_db = None
 
     def run(self):
-        super().run()
+        setuptools.command.install.install.run(self)
         if not self.skip_update_desktop_db:
             os.system('update-desktop-database >/dev/null 2>&1')
 
