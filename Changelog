@@ -1,3 +1,7 @@
+* 2018-06-14 Scott Talbert <swt@techie.net>
+- congruity-20 is released
+- congruity/mhgui: fix installation with Python 2 (thanks Chris Mayo)
+
 * 2018-06-09 Scott Talbert <swt@techie.net>
 - congruity-19 is released
 - mhgui: Numerous updates to WSDL/XSD to match Logitech changes
