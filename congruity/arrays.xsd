@@ -9,10 +9,10 @@
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
-  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
-  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" location="activity.xsd"/>
-  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" location="user_feature.xsd"/>
-  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" location="serialization.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" schemaLocation="data.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.Activity" schemaLocation="activity.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" schemaLocation="user_feature.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" schemaLocation="serialization.xsd"/>
 
   <complexType name="taughtCommandIds">
     <sequence>

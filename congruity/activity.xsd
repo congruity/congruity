@@ -7,8 +7,8 @@
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
-  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" location="data.xsd"/>
-  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" location="arrays.xsd"/>
+  <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" schemaLocation="data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" schemaLocation="arrays.xsd"/>
 
   <complexType name="DeviceWithCapabilities">
     <sequence>
