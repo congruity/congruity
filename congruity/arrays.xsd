@@ -14,6 +14,12 @@
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature" schemaLocation="user_feature.xsd"/>
   <import namespace="http://schemas.microsoft.com/2003/10/Serialization/" schemaLocation="serialization.xsd"/>
 
+  <complexType name="Attributes">
+     <sequence>
+        <element name="int" type="xsd:int"/>
+    </sequence>
+  </complexType>
+
   <complexType name="taughtCommandIds">
     <sequence>
       <element name="long" type="xsd:string"/>

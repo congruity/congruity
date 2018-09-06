@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema targetNamespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns9="http://schemas.microsoft.com/2003/10/Serialization/Arrays"
   xmlns:ns1="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data"
   xmlns:ns12="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.DataContract.UserFeature"
   xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="qualified">
   <import namespace="http://schemas.datacontract.org/2004/07/Logitech.Harmony.Services.Common.Contracts.Data" schemaLocation="data.xsd"/>
+  <import namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" schemaLocation="arrays.xsd"/>
 
   <complexType name="AbstractIRAction" abstract="true">
     <sequence>
@@ -54,6 +56,19 @@
     </sequence>
   </complexType>
 
+  <complexType name="PortType">
+     <sequence>
+        <element name="Attributes" type="ns9:Attributes"/>
+        <element name="Name" type="xsd:string"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="PortTypes">
+     <sequence>
+        <element name="PortTypes" type="ns12:PortType"/>
+    </sequence>
+  </complexType>
+
   <complexType name="Input">
     <sequence>
       <element name="ActionId" type="xsd:string"/>
@@ -69,6 +84,7 @@
       <element name="IsActiveInput" type="xsd:string"/>
       <element name="IsAutoSwitch" type="xsd:string" nillable="true"/>
       <element name="IsOnline" type="xsd:string"/>
+      <element name="PortTypes" type="ns12:PortTypes"/>
       <element name="PressDuration" type="xsd:string"/>
       <element name="StateName" type="xsd:string" nillable="true"/>
       <element name="StateValue" type="xsd:string" nillable="true"/>
@@ -87,6 +103,8 @@
       <element name="IsActiveOutput" type="xsd:boolean"/>
       <element name="NoOfPorts" type="xsd:string"/>
       <element name="OutputName" type="xsd:string"/>
+      <element name="OutputOrder" type="xsd:string"/>
+      <element name="PortTypes" type="ns12:PortTypes"/>
     </sequence>
   </complexType>
 
