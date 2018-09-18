@@ -28,6 +28,7 @@
       <element name="PictureId" type="xsd:string"/>
       <element name="PressMinRepeats" type="xsd:string"/>
       <element name="ActivityIds" type="xsd:string"/>
+      <element name="AppLaunchConfigs" type="xsd:string"/>
       <element name="AutoDetectedDevice" type="ns1:AutoDetectedDevice"/>
       <element name="BTAddress" type="xsd:string" nillable="true"/>
       <element name="Characterization" type="xsd:string"/>
