@@ -63,6 +63,7 @@
       <element name="DateCreated" type="xsd:string"/>
       <element name="Dongles" type="xsd:string"/>
       <element name="FirstConnectDate" type="xsd:string"/>
+      <element name="FirstProvisionedDate" type="xsd:string"/>
       <element name="FirstSyncDate" type="xsd:string"/>
       <element name="GlobalRemoteId" type="xsd:string"/>
       <element name="GlobalRemoteRefurbishedDate" type="xsd:string" nillable="true"/>
@@ -80,6 +81,7 @@
       <element name="KeyboardLayout" type="xsd:string"/>
       <element name="KeyboardLocale" type="xsd:string" nillable="true"/>
       <element name="LastProductIdentifier" type="xsd:string"/>
+      <element name="LastProvisionedDate" type="xsd:string"/>
       <element name="LastSyncDate" type="xsd:string"/>
       <element name="LogitechProductId" type="xsd:string"/>
       <element name="LogitechSerial" type="xsd:string"/>
