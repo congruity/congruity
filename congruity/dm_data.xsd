@@ -43,6 +43,7 @@
       <element name="DeviceTypeDisplayName" type="xsd:string"/>
       <element name="DongleIndex" type="xsd:string"/>
       <element name="DongleRFID" type="xsd:string"/>
+      <element name="FriendlyName" type="xsd:string"/>
       <element name="GlobalDeviceVersionId" type="ns1:GlobalDeviceVersionId"/>
       <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
       <element name="GroupName" type="xsd:string" nillable="true"/>
