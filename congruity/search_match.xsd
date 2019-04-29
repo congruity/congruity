@@ -22,6 +22,7 @@
       <element name="GlobalLanguageVersionId" type="ns1:GlobalLanguageVersionId"/>
       <element name="Id" type="ns1:Id"/>
       <element name="IsMultiCode" type="xsd:string"/>
+      <element name="PrioritizedDeviceCapabilityList" type="ns1:DeviceCapabilitiesWithPriority"/>
     </sequence>
   </complexType>
 
