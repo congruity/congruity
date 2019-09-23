@@ -140,6 +140,7 @@
       <element name="Longitude" type="xsd:string" nillable="true"/>
       <element name="Password" type="xsd:string" nillable="true"/>
       <element name="RemoteLanguage" type="xsd:string" nillable="true"/>
+      <element name="Sub" type="xsd:string" nillable="true"/>
       <element name="TimeZone" type="xsd:string" nillable="true"/>
       <element name="UserKey" type="xsd:string"/>
       <element name="UserTimeZone" type="xsd:string" nillable="true"/>
