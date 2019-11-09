@@ -27,6 +27,16 @@
     </complexContent>
   </complexType>
 
+  <complexType name="ButtonClientAction">
+    <complexContent>
+      <extension base="ns15:AbstractButtonAction">
+	<sequence>
+          <element name="ActionName" type="xsd:string"/>
+	</sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
   <complexType name="ButtonCommandAction">
     <complexContent>
       <extension base="ns15:AbstractButtonAction">
