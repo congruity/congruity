@@ -27,6 +27,7 @@ import sys
 import random
 import datetime
 import json
+import html
 from six.moves.html_parser import HTMLParser
 from suds.cache import ObjectCache
 from suds.client import Client
@@ -577,7 +578,7 @@ class MHManager():
         response = conn.getresponse()
         data = response.read().decode('utf-8')
         parser = CountryListHTMLParser()
-        parser.feed(parser.unescape(data))
+        parser.feed(html.unescape(data))
         return [parser.country_codes, parser.countries]
 
     def AddRemote(self, serialNumber, skinId, usbPid, usbVid):
