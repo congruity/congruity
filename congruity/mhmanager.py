@@ -169,7 +169,7 @@ class MHManager():
     # account.
     def Login(self, email, password):
         baseUrl = "https://setup.myharmony.com"
-        url = baseUrl + "/MartiniWeb/Account/TestLoginAndMW?provider=hp&&verify=true&toucheck=true"
+        url = baseUrl + "/martiniweb/account/ProceedWithLIPLogin?provider=hp&state=&toucheck=True"
         data = json.dumps({'email': email, 'password': password}).encode('utf-8')
         headers = {'Content-Type': 'application/json'}
         request = urllib.request.Request(url, data, headers)
@@ -181,15 +181,6 @@ class MHManager():
                 return None
             else:
                 return False
-
-        url = baseUrl + "/MartiniWeb/Home/Login?i=" + jsonResponse["id_token"]
-        url += "&a=" + jsonResponse["access_token"] + "&cl=en-US"
-        request = urllib.request.Request(url)
-        response = urllib.request.urlopen(request)
-        parser = LoginResponseHTMLParser()
-        parser.feed(response.read().decode('utf-8'))
-        initparams = dict(u.split("=", 1) for u in parser.initparams.split(","))
-        self.contentServiceAuthKey = initparams['ContentServiceAuthKey']
 
         url = "https://svcs.myharmony.com/CompositeSecurityServices/Security.svc/json2/signin"
         data = json.dumps({'id_token': jsonResponse['id_token'],
@@ -1071,13 +1062,6 @@ class MHAccountDetails:
         email = ""
         password = ""
         keepMeInformed = ""
-
-class LoginResponseHTMLParser(HTMLParser):
-    def handle_starttag(self, tag, attrs):
-        if tag == 'param' and ('name', 'initparams') in attrs:
-            for key, value in attrs:
-                if key == 'value':
-                    self.initparams = value
 
 class CreateAccountResponseHTMLParser(HTMLParser):
     def __init__(self):
