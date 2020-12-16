@@ -176,8 +176,12 @@ class MHManager():
         response = urllib.request.urlopen(request)
         # For some reason the response to this is double-encoded
         jsonResponse = json.loads(json.loads(response.read().decode('utf-8')))
-        if "mwResult" in jsonResponse:
-            if jsonResponse["mwResult"]: # members.harmonyremote.com acct
+        if jsonResponse == 401:
+            url = baseUrl + '/martiniweb/Home/TestMWLoginUser'
+            request = urllib.request.Request(url, data, headers)
+            response = urllib.request.urlopen(request)
+            jsonResponse = json.loads(response.read().decode('utf-8'))
+            if jsonResponse["Result"]: # members.harmonyremote.com acct
                 return None
             else:
                 return False
