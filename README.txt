@@ -1,13 +1,13 @@
 Requirements
 ==============================================================================
 
-Python (tested with 2.7.15 and 3.6.5 on Fedora 28)
+Python (tested with 3.10.6 on Fedora 36)
   See https://www.python.org/
 
-wxPython (tested with wxPython-3.0.2.0 and wxPython-4.0.1 on Fedora 28)
+wxPython (tested with wxPython-4.0.7 and wxPython-4.2.0 on Fedora 36)
   See https://www.wxpython.org/
 
-libconcord (version 1.1 is *required*; tested on Fedora 28)
+libconcord (version 1.1 or newer is *required*; tested on Fedora 36)
   See https://www.phildev.net/concordance/
   Note that the python bindings are also required; see
   libconcord/bindings/python
@@ -15,7 +15,7 @@ libconcord (version 1.1 is *required*; tested on Fedora 28)
 python-six
   Six is used for enabling Python 3 support.
 
-python-suds (tested with 0.7 [jurko fork 94664ddd46a6] on Fedora 28)
+python-suds (tested with 1.1.2 on Fedora 36)
   Suds is required for mhgui.
 
 libsecret and PyGObject (optional for mhgui)
