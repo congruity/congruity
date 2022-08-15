@@ -203,7 +203,8 @@ def show_modal_scrolled_msgbox(parent, title, text):
 ALIGN_LTA = wx.ALIGN_LEFT  | wx.ALIGN_TOP             | wx.ALL
 ALIGN_XTA = wx.EXPAND      | wx.ALIGN_TOP             | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT  | wx.ALIGN_CENTER_VERTICAL | wx.ALL
-ALIGN_RCA = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
+ALIGN_RA = wx.ALIGN_RIGHT | wx.ALL
+ALIGN_CA = wx.ALIGN_CENTER_VERTICAL | wx.ALL
 ALIGN_XCA = wx.EXPAND      | wx.ALIGN_CENTER_VERTICAL | wx.ALL
 ALIGN_LBA = wx.ALIGN_LEFT  | wx.ALIGN_BOTTOM          | wx.ALL
 ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
@@ -1112,14 +1113,14 @@ class IRSignalPanel(wx.Panel):
         sizer_buttons = wx.BoxSizer(wx.VERTICAL)
 
         btn_zi = wx.Button(self, -1, "+")
-        sizer_buttons.Add(btn_zi, 0, ALIGN_RCA, 5)
+        sizer_buttons.Add(btn_zi, 0, ALIGN_RA, 5)
         self.Bind(wx.EVT_BUTTON, self.OnZoomIn, btn_zi)
 
         btn_zo = wx.Button(self, -1, "-")
-        sizer_buttons.Add(btn_zo, 0, ALIGN_RCA, 5)
+        sizer_buttons.Add(btn_zo, 0, ALIGN_RA, 5)
         self.Bind(wx.EVT_BUTTON, self.OnZoomOut, btn_zo)
 
-        sizer.Add(sizer_buttons, 0, ALIGN_RCA, 0)
+        sizer.Add(sizer_buttons, 0, ALIGN_CA, 0)
 
         self.SetSizer(sizer)
 

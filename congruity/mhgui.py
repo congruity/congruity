@@ -42,7 +42,7 @@ try:
     from .mhmanager import MHAccountDetails
     from .mhmanager import SaveActivityTemplate
     from .mhmanager import Secrets
-except ModuleNotFoundError:
+except (ImportError, ModuleNotFoundError):
     from mhmanager import MHManager
     from mhmanager import MHAccountDetails
     from mhmanager import SaveActivityTemplate
@@ -94,8 +94,8 @@ except:
 ALIGN_LTA = wx.ALIGN_LEFT  | wx.ALIGN_TOP             | wx.ALL
 ALIGN_XTA = wx.EXPAND      | wx.ALIGN_TOP             | wx.ALL
 ALIGN_LCA = wx.ALIGN_LEFT  | wx.ALIGN_CENTER_VERTICAL | wx.ALL
-ALIGN_RCA = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL | wx.ALL
-ALIGN_XCA = wx.EXPAND      | wx.ALIGN_CENTER_VERTICAL | wx.ALL
+ALIGN_CA = wx.ALIGN_CENTER_VERTICAL | wx.ALL
+ALIGN_XA = wx.EXPAND       | wx.ALL
 ALIGN_LBA = wx.ALIGN_LEFT  | wx.ALIGN_BOTTOM          | wx.ALL
 ALIGN_XBA = wx.EXPAND      | wx.ALIGN_BOTTOM          | wx.ALL
 
@@ -218,7 +218,7 @@ class DevicePanelTemplate(WizardPanelBase):
         self.deviceTitle = wx.StaticText(self)
         font = wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD)
         self.deviceTitle.SetFont(font)
-        self.sizer.Add(self.deviceTitle, 0, ALIGN_XCA, 5)
+        self.sizer.Add(self.deviceTitle, 0, ALIGN_XA, 5)
         self.textMessage = WrappedStaticText(self)
         self.sizer.Add(self.textMessage, 0, ALIGN_XTA, 5)
 
@@ -243,7 +243,7 @@ class WelcomePanel(WizardPanelBase):
         self.usernameSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.usernameSizer.Add(self.usernameLabel, 0, ALIGN_LCA, 0)
         self.usernameSizer.AddStretchSpacer()
-        self.usernameSizer.Add(self.usernameCtrl, 0, ALIGN_RCA, 0)
+        self.usernameSizer.Add(self.usernameCtrl, 0, ALIGN_CA, 0)
         self.userSizer.Add(self.usernameSizer, 0, wx.EXPAND, 0)
         self.passwordText = wx.StaticText(self, -1, "Password:")
         self.passwordCtrl = wx.TextCtrl(self, -1, "", style=wx.TE_PASSWORD)
@@ -251,7 +251,7 @@ class WelcomePanel(WizardPanelBase):
         self.passwordSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.passwordSizer.Add(self.passwordText, 0, ALIGN_LCA, 0)
         self.passwordSizer.AddStretchSpacer()
-        self.passwordSizer.Add(self.passwordCtrl, 0, ALIGN_RCA, 0)
+        self.passwordSizer.Add(self.passwordCtrl, 0, ALIGN_CA, 0)
         self.userSizer.Add(self.passwordSizer, 0, wx.EXPAND, 0)
         self.sizer.Add(self.userSizer)
         self.sizer.AddSpacer(25)
@@ -908,7 +908,7 @@ class AddDevicePanel(WizardPanelBase):
         self.manufacturerSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.manufacturerSizer.Add(self.manufacturerLabel, 0, ALIGN_LCA, 0)
         self.manufacturerSizer.AddStretchSpacer()
-        self.manufacturerSizer.Add(self.manufacturerCtrl, 0, ALIGN_RCA, 0)
+        self.manufacturerSizer.Add(self.manufacturerCtrl, 0, ALIGN_CA, 0)
         self.typeSizer.Add(self.manufacturerSizer, 0, wx.EXPAND, 0)
         self.modelNumberText = wx.StaticText(self, -1, "Model Number:")
         self.modelNumberCtrl = wx.TextCtrl(self, -1, "")
@@ -916,7 +916,7 @@ class AddDevicePanel(WizardPanelBase):
         self.modelNumberSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.modelNumberSizer.Add(self.modelNumberText, 0, ALIGN_LCA, 0)
         self.modelNumberSizer.AddStretchSpacer()
-        self.modelNumberSizer.Add(self.modelNumberCtrl, 0, ALIGN_RCA, 0)
+        self.modelNumberSizer.Add(self.modelNumberCtrl, 0, ALIGN_CA, 0)
         self.typeSizer.Add(self.modelNumberSizer, 0, wx.EXPAND, 0)
         self.sizer.Add(self.typeSizer)
         self.searchButton = wx.Button(self, label="Search")
@@ -2507,7 +2507,7 @@ class AdjustPowerSettingsPanel(DevicePanelTemplate):
         self.commandGrid.EnableEditing(False)
         self.commandGrid.SetColLabelValue(0, "Command")
         self.commandGrid.SetColLabelValue(1, "Duration")
-        self.commandGrid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
+        self.commandGrid.SetSelectionMode(wx.grid.Grid.SelectRows)
         self.commandGrid.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.OnSelectCell)
         self.sizer.Add(self.commandGrid)
 
