@@ -1,3 +1,12 @@
+* 2022-08-14 Scott Talbert <swt@techie.net>
+- congruity-21 is released
+- congruity/mhgui: Fix compatibility with wxPython 4.1.0+
+- mhgui: Fix account creation with Python 3.9+
+- mhgui: Update login process to match latest official software
+- mhgui: Handle invalid credentials and members.harmonyremote.com accounts
+- mhgui: Numerous updates to WSDL/XSD to match Logitech changes (thanks Chris
+  Mayo)
+
 * 2018-06-14 Scott Talbert <swt@techie.net>
 - congruity-20 is released
 - congruity/mhgui: fix installation with Python 2 (thanks Chris Mayo)
