@@ -1593,6 +1593,10 @@ class ConfigureDevicePanel(WizardPanelBase):
             if bin[0] != 0:
                 raise Exception('Not RAW')
 
+            # If we choose to override the carrier frequency, we do not want to
+            # change the mark/space duration from the Pronto code. So we will
+            # use the embedded frequency always to calculate carrier_cycle_us.
+            # We can override the frequency later.
             pronto_clock = 4145146
             # IR carrier frequency is given as number of Pronto clock cycles
             frequency = int(pronto_clock / bin[1])
@@ -1611,6 +1615,8 @@ class ConfigureDevicePanel(WizardPanelBase):
 
             repeats = self.resources.prontoRepeats
             count = count_1 + (repeats * count_2)
+            # Now we can override the frequency given that we have the correct
+            # carrier_cycle_us value.
             if self.resources.prontoFrequencyOverride > 0 :
                 frequency = int(self.resources.prontoFrequencyOverride);
             self.commandName = commandName
