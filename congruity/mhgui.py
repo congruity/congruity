@@ -346,7 +346,7 @@ class WelcomePanel(WizardPanelBase):
 class RemoteSelectPanel(WizardPanelBase):
     _msg_welcome = (
         "Please select a remote control below.\n\n" +
-        "Remotes (maximum of 6 per account):"
+        "Remotes (maximum of 15 per account):"
     )
 
     def __init__(self, parent, resources):
@@ -431,8 +431,8 @@ class RemoteSelectPanel(WizardPanelBase):
         BackgroundTask((self.LoadAddRemoteData,), (self.DoAddRemote,))
 
     def DoAddRemote(self, loadResult):
-        if len(self.remotes) >= 6:
-            wx.MessageBox('Each account can support up to 6 remotes.',
+        if len(self.remotes) >= 15:
+            wx.MessageBox('Each account can support up to 15 remotes.',
                           'Maximum Number of Remotes Reached',
                           wx.OK | wx.ICON_WARNING)
             return            
