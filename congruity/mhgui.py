@@ -1287,6 +1287,7 @@ class ConfigureDevicePanel(WizardPanelBase):
         self.sizer.Add(self.hSizer, 0, 0, 0)
         self.sizer.AddSpacer(10)
 
+        # Button Row 1
         self.bottomSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.updateButton = wx.Button(self, label="Update Button")
         self.updateButton.Bind(wx.EVT_BUTTON, self.OnUpdate)
@@ -1294,18 +1295,6 @@ class ConfigureDevicePanel(WizardPanelBase):
                 "Update selected button with the selected device command"
         ))
         self.bottomSizer.Add(self.updateButton, 0, 0, 0)
-        self.overrideButton = wx.Button(self, label="Override Command")
-        self.overrideButton.Bind(wx.EVT_BUTTON, self.OnOverride)
-        self.overrideButton.SetToolTip(wx.ToolTip(
-                "Learn IR command from existing remote to replace a command"
-        ))
-        self.bottomSizer.Add(self.overrideButton, 0, 0, 0)
-        self.addButton = wx.Button(self, label="Add Command")
-        self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
-        self.addButton.SetToolTip(wx.ToolTip(
-                "Learn IR command from existing remote as a new command"
-        ))
-        self.bottomSizer.Add(self.addButton, 0, 0, 0)
         self.restoreButton = wx.Button(self, label="Restore Command")
         self.restoreButton.Bind(wx.EVT_BUTTON, self.OnRestore)
         self.restoreButton.SetToolTip(wx.ToolTip(
@@ -1313,6 +1302,48 @@ class ConfigureDevicePanel(WizardPanelBase):
         ))
         self.bottomSizer.Add(self.restoreButton, 0, 0, 0)
         self.sizer.Add(self.bottomSizer, 0, 0, 0)
+        
+        # Button Row 2
+        self.bottomRow2Sizer = wx.BoxSizer(wx.HORIZONTAL)   
+        self.learnLabel = wx.StaticText(self, -1, "Learn from Remote:       ")
+        self.bottomRow2Sizer.Add(self.learnLabel, 0, 0, 0)
+        self.overrideButton = wx.Button(self, label="Override Command")
+        self.overrideButton.Bind(wx.EVT_BUTTON, self.OnOverride)
+        self.overrideButton.SetToolTip(wx.ToolTip(
+                "Learn IR command from existing remote to replace a command"
+        ))
+        self.bottomRow2Sizer.Add(self.overrideButton, 0, 0, 0)
+        self.addButton = wx.Button(self, label="Add Command")
+        self.addButton.Bind(wx.EVT_BUTTON, self.OnAdd)
+        self.addButton.SetToolTip(wx.ToolTip(
+                "Learn IR command from existing remote as a new command"
+        ))
+        self.bottomRow2Sizer.Add(self.addButton, 0, 0, 0)
+        self.sizer.Add(self.bottomRow2Sizer, 0, 0, 0)
+        
+        # Button Row 3:
+        self.bottomRow3Sizer = wx.BoxSizer(wx.HORIZONTAL)     
+        self.prontoLabel = wx.StaticText(self, -1, "Import Pronto Hex:        ")
+        self.bottomRow3Sizer.Add(self.prontoLabel, 0, 0, 0)
+        self.overrideProntoButton = wx.Button(self, label="Override Command")
+        self.overrideProntoButton.Bind(wx.EVT_BUTTON, self.OnOverridePronto)
+        self.overrideProntoButton.SetToolTip(wx.ToolTip(
+                "Load IR command from Pronto Hex to replace a command"
+        ))
+        self.bottomRow3Sizer.Add(self.overrideProntoButton, 0, 0, 0)
+        self.addProntoButton = wx.Button(self, label="Add Command")
+        self.addProntoButton.Bind(wx.EVT_BUTTON, self.OnAddPronto)
+        self.addProntoButton.SetToolTip(wx.ToolTip(
+                "Load IR command from Pronto Hex as a new command"
+        ))        
+        self.bottomRow3Sizer.Add(self.addProntoButton, 0, 0, 0)
+        self.optionsProntoButton = wx.Button(self, label="Pronto Options")
+        self.optionsProntoButton.Bind(wx.EVT_BUTTON, self.OnProntoOptions)
+        self.optionsProntoButton.SetToolTip(wx.ToolTip(
+                "Set parsing parameters for Pronto Hex Codes"
+        ))        
+        self.bottomRow3Sizer.Add(self.optionsProntoButton, 0, 0, 0)        
+        self.sizer.Add(self.bottomRow3Sizer, 0, 0, 0)
 
         self.SetSizerAndFit(self.sizer)
 
@@ -1466,6 +1497,47 @@ class ConfigureDevicePanel(WizardPanelBase):
             return
         command = dlg.GetValue()
         self.UpdateIR(command)
+        
+    def OnOverridePronto(self, event):
+        commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
+        if commandSelection == -1:
+            wx.MessageBox('Please select a command to override.',
+                          'No command selected.', wx.OK | wx.ICON_WARNING)
+            return
+        command = self.deviceCommands[commandSelection].Name
+        self.UpdateIRPronto(command)
+
+    def OnAddPronto(self, event):
+        dlg = wx.TextEntryDialog(None, "Enter the name of the new command:",
+                                 "Add Command")
+        if dlg.ShowModal() != wx.ID_OK:
+            return
+        command = dlg.GetValue()
+        self.UpdateIRPronto(command)
+        
+    def OnProntoOptions(self, event):
+        dlg = wx.TextEntryDialog(None, 
+                                 "Enter the number of times the repeating " + \
+                                 "portion of the Pronto code should be played back:",
+                                 "Pronto Repeats", str(self.resources.prontoRepeats))
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                self.resources.prontoRepeats = int(dlg.GetValue())
+            except ValueError:
+                wx.MessageBox('Value provided is not an integer.',
+                              'Error', wx.OK | wx.ICON_WARNING)                
+        dlg = wx.TextEntryDialog(None, 
+                                 "Enter a frequency in Hz to use for the " + \
+                                 "IR carrier, or 0 to use the frequency " + \
+                                 "from the Pronto code:",
+                                 "Pronto Frequency Override", 
+                                 str(self.resources.prontoFrequencyOverride))
+        if dlg.ShowModal() == wx.ID_OK:
+            try:
+                self.resources.prontoFrequencyOverride = int(dlg.GetValue())
+            except ValueError:
+                wx.MessageBox('Value provided is not an integer.',
+                              'Error', wx.OK | wx.ICON_WARNING)                 
 
     def OnRestore(self, event):
         commandSelection = self.deviceCommandsListCtrl.GetFirstSelected()
@@ -1490,6 +1562,83 @@ class ConfigureDevicePanel(WizardPanelBase):
             wx.MessageBox('IR command deletion failed: ' + result, 'Error',
                           wx.OK | wx.ICON_WARNING)
         self.LoadDataUI(None)
+        
+    def UpdateIRPronto(self, commandName):
+        # Based on LearnIrEnterProntoHexPanel._OnValidate(self, event) in
+        # congruity.py
+        # Because we are not learning IR and we are allocating the structures 
+        # for the IR signals (and Python should garbage collect them), we do not 
+        # init or deinit libconcord, nor do we call the libconcord functions to  
+        # allocate or free these structures. We only call into libconcord to
+        # encode the signal for posting.
+        #
+        dlg = wx.TextEntryDialog(None, "Enter the Pronto Hex code for the command:",
+                                 "Pronto Hex")
+        if dlg.ShowModal() != wx.ID_OK:
+            return
+        command = dlg.GetValue()
+        try:
+            bin = []
+            str = ""
+            str_idx = 0
+
+            hex = command.strip().split(' ')
+            for h in hex:
+                b = int(h, 16)
+                bin.append(b)
+
+            if len(bin) < 4:
+                raise Exception('Pronto code too short (missing header)')
+
+            if bin[0] != 0:
+                raise Exception('Not RAW')
+
+            pronto_clock = 4145146
+            # IR carrier frequency is given as number of Pronto clock cycles
+            frequency = int(pronto_clock / bin[1])
+            # Mark/space durations are given as a count of IR carrier cycles,
+            # but we need them in microseconds
+            carrier_cycle_us = 1000000.0 / frequency
+
+            count_1 = 2 * bin[2]
+            count_2 = 2 * bin[3]
+
+            if len(bin) < 4 + count_1 + count_2:
+                raise Exception('Pronto code too short (missing pulsetrain)')
+
+            start_1 = 4
+            start_2 = 4 + count_1
+
+            repeats = self.resources.prontoRepeats
+            count = count_1 + (repeats * count_2)
+            if self.resources.prontoFrequencyOverride > 0 :
+                frequency = int(self.resources.prontoFrequencyOverride);
+            self.commandName = commandName
+            self.carrierClock = ctypes.c_uint(frequency)
+            cur_ir_signal_type = ctypes.c_uint * count
+            self.signal = cur_ir_signal_type()
+            self.signalLength = ctypes.c_uint(count)
+
+            idx = 0
+
+            for i in range(count_1):
+                self.signal[idx] = int(bin[start_1 + i] * carrier_cycle_us)
+                idx += 1
+
+            for j in range(repeats):
+                for i in range(count_2):
+                    self.signal[idx] = int(bin[start_2 + i] * carrier_cycle_us)
+                    idx += 1
+
+            self.rawSequence = ctypes.c_char_p()
+            libconcord.encode_for_posting(self.carrierClock, self.signal,
+                                          self.signalLength, self.rawSequence)
+            BackgroundTask((self.DoUpdateIR,), (self.FinishUpdateIRPronto,))
+
+            return
+        except:
+            wx.MessageBox('Could not process Pronto: ' + exception_message(), 
+                          'Error', wx.OK | wx.ICON_WARNING)                    
 
     def UpdateIR(self, commandName):
         msg = 'Please ensure your remote control is connected.'
@@ -1562,6 +1711,12 @@ class ConfigureDevicePanel(WizardPanelBase):
         libconcord.delete_ir_signal(self.signal)
         libconcord.delete_encoded_signal(self.rawSequence)
         libconcord.deinit_concord()
+        
+    def FinishUpdateIRPronto(self, result):
+        if result is not None:
+            wx.MessageBox('IR learning update failed: ' + result, 'Error',
+                          wx.OK | wx.ICON_WARNING)
+        self.LoadDataUI(None)    
 
     def GetTitle(self):
         return "Device Configuration"
@@ -2985,6 +3140,8 @@ class Wizard(wx.Dialog):
             (page, data) = self.cur_page.OnActivated(prev_page, data)
 
 class Resources(object):
+    prontoRepeats = 4
+    prontoFrequencyOverride = 0
     def LoadImages(self):
         def load(filename):
             fpath = os.path.join(os.path.dirname(__file__), filename)
