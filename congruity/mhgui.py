@@ -386,9 +386,11 @@ class RemoteSelectPanel(WizardPanelBase):
     def LoadData(self):
         self.remotes = mhMgr.GetRemotes()
         self.remoteDisplayNames = []
+        index = 1
         for remote in self.remotes:
             product = mhMgr.GetProduct(remote.SkinId)
-            self.remoteDisplayNames.append(product.DisplayName)
+            self.remoteDisplayNames.append(f"{index}: {product.DisplayName}")
+            index += 1
 
     def AddRemote(self, serialNumber, skinId, usbPid, usbVid):
         result = mhMgr.AddRemote(serialNumber, skinId, usbPid, usbVid)
