@@ -28,6 +28,7 @@ import random
 import datetime
 import json
 import html
+from pathlib import Path
 from six.moves.html_parser import HTMLParser
 from suds.cache import ObjectCache
 from suds.client import Client
@@ -154,7 +155,9 @@ class MHManager():
     def __init__(self, use_local_wsdl=False, suds_debug=False):
         if use_local_wsdl:
             wsdl = os.path.join(os.path.dirname(__file__), 'harmony.wsdl')
-            url = 'file://' + wsdl
+            # pathlib automatically takes care of the differences when 
+            # constructing a file URI on Windows vs. Linux/Mac
+            url = Path(wsdl).as_uri()
             cache = None
         else:
             url = 'https://congruity.sourceforge.io/congruity/harmony.wsdl'
