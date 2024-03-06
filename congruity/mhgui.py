@@ -2965,7 +2965,7 @@ class Wizard(wx.Dialog):
         resources,
         app_finalizer,
         min_page_width = 658,
-        min_page_height = None
+        min_page_height = 600
     ):
         self.app_finalizer = app_finalizer
 
