@@ -1863,8 +1863,14 @@ def main():
             else:
                 raise CmdLineException("ERROR: Option '%s' not recognized" % arg)
         if len(argv) != 1:
-            raise CmdLineException("ERROR: Precisely one filename argument is required")
-        ezhex_filename = argv.pop(0)
+            # We did not get a file name on the command line, prompt the user for one.
+            with wx.FileDialog(None, "Congruity - Open a file", wildcard="EZHex files (*.ez*)|*.ez*",
+                               style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+                if fileDialog.ShowModal() == wx.ID_CANCEL:
+                    os._exit(1)
+                ezhex_filename = fileDialog.GetPath()
+        else:
+            ezhex_filename = argv.pop(0)
         initial_exception = None
     except:
         ezhex_filename = None
