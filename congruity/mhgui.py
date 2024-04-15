@@ -72,7 +72,8 @@ else:
     args = parser.parse_args()
     suds_debug = args.suds_debug
     use_local_wsdl = args.use_local_wsdl
-mhMgr = MHManager(use_local_wsdl, suds_debug)
+# This is initialized by initializeMHmgr(), called via BackgroundTask() by main()
+mhMgr = None
 
 secrets = Secrets()
 
@@ -85,7 +86,7 @@ except:
         None,
         "Could not load libconcord; please ensure it, and the Python "
         "bindings, are installed and in the relevant search paths.\n\n" + str,
-        "congruity: Dependency Error",
+        "mhgui: Dependency Error",
         wx.OK | wx.ICON_ERROR
     )
     dlg.ShowModal()
@@ -3192,10 +3193,55 @@ class Finalizer(object):
     def __call__(self):
         pass
 
+def initializeMHmgr():
+    global mhMgr, use_local_wsdl, suds_debug
+
+    # If the user did not specify to use the local WSDL, we'll try the internet one first
+    # We'll fallback to local if it did not succeed.
+    # If the user did specify to use the local WSDL, we'll fallback to local
+    if not use_local_wsdl:
+        try:
+            mhMgr = MHManager(False, suds_debug)
+            return True
+        except:        
+            # We tried the Internet WSDL and failed
+            str = traceback.format_exc()
+            dlg = wx.MessageDialog(
+                None,
+                "Unable to load WSDL from SourceForge. We'll attempt to use the "
+                "local WSDL.\n\n" + str,
+                "mhgui: Dependency Error",
+                wx.OK | wx.ICON_ERROR
+            )
+            dlg.ShowModal()
+            # fallback to local
+            use_local_wsdl = True
+    if use_local_wsdl:
+        try:
+            mhMgr = MHManager(True, suds_debug)
+            return True
+        except:        
+            # We tried the Local WSDL and failed, show exception and exit.     
+            str = traceback.format_exc()
+            dlg = wx.MessageDialog(
+                None,
+                "Unable to load the local WSDL. \n\n" + str,
+                "mhgui: Dependency Error",
+                wx.OK | wx.ICON_ERROR
+            )
+            dlg.ShowModal()       
+    return False
+    
+def postinitializeMHmgr(result):
+    if not result:
+        os._exit(1)
+    return
 
 def main():
     app = wx.App(False)
-
+    BackgroundTask((initializeMHmgr,),(postinitializeMHmgr,),True,
+                   "Loading WSDL...")
+    
     resources = Resources()
     resources.LoadImages()
 
