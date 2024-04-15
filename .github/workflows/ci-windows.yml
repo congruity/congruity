@@ -7,3 +7,14 @@ jobs:
     container: fedora:latest
     steps:
     - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        dnf install -y mingw32-nsis python3-pip
+        pip install pynsist
+    - name: Build installer
+      run: |
+        pynsist win32-installer.cfg
+    - uses: actions/upload-artifact@v3
+      with:
+        name: win32-installer
+        path: build/nsis/*.exe
