@@ -13,7 +13,7 @@ jobs:
         pip install pynsist
     - name: Build installer
       run: |
-        pynsist win32-installer.cfg
+        ./make-win32-installer.sh
     - uses: actions/upload-artifact@v3
       with:
         name: win32-installer
