@@ -34,6 +34,32 @@ from suds.cache import ObjectCache
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
+# Fix SUDS SSL Errors on Windows when loading WSDL from Sourceforge
+# Don't change behavior on Mac or Linux
+import platform
+AlternateTransport = None
+
+if platform.system() == 'Windows':
+    try:
+        from suds.transport.https import HttpAuthenticated
+        from urllib.request import HTTPSHandler
+        import ssl
+        import certifi
+
+        # Add an HTTPSHandler to the transport's handler list
+        # Initialize SSL Context with certificate bundle from Certifi
+        class HTTPSTransport(HttpAuthenticated):
+            def u2handlers(self):
+                # Create SSL context with certificate bundle specified
+                sslcontext = ssl.create_default_context(cafile=certifi.where())
+                # Add HTTPS handler using this context to the handler list
+                return HttpAuthenticated.u2handlers(self) + [HTTPSHandler(context=sslcontext)]
+    except:
+        pass
+    else:
+        # Only switch transport if all of the above succeeds
+        AlternateTransport = HTTPSTransport()
+
 try:
     import gi
     gi.require_version("Secret", "1")
@@ -165,7 +191,10 @@ class MHManager():
         if suds_debug:
             logging.basicConfig(level=logging.INFO)
             logging.getLogger('suds.transport').setLevel(logging.DEBUG)
-        self.client = Client(url, cache=cache, plugins=[MHPlugin()])
+        if AlternateTransport is not None:
+            self.client = Client(url, cache=cache, plugins=[MHPlugin()], transport=AlternateTransport)
+        else:
+            self.client = Client(url, cache=cache, plugins=[MHPlugin()])
 
     # Log in to web service - returns True if login succeeded, False if login
     # failed, and None if the account appears to be a members.harmonyremote.com
