@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
+<!--This file is in the Girr (General IR Remote) format, see http://www.harctoolbox.org/Girr.html--><remotes xmlns="http://www.harctoolbox.org/Girr" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" girrVersion="1.2" title="IrScrutinizer parametric export" xsi:schemaLocation="http://www.harctoolbox.org/Girr http://www.harctoolbox.org/schemas/girr_ns-1.2.xsd">
+    <adminData>
+        <creationData creatingUser="user" creationDate="2024-04-20_21:39:10" tool="IrScrutinizer" tool2="IrpTransmogrifier" tool2Version="1.2.11" toolVersion="2.4.0"/>
+    </adminData>
+    <remote comment="Export from IrScrutinizer" deviceClass="Cable" displayName="" manufacturer="" model="" name="remote" remoteName="XR100">
+        <commandSet name="commandSet">
+            <parameters protocol="XMP-1">
+                <parameter name="S" value="1"/>
+                <parameter name="D" value="62"/>
+            </parameters>
+            <command F="15" master="parameters" name="">
+                <ccf>0000 006D 0012 0012 0008 001D 0008 0041 0008 0022 0008 006A 0008 0032 0008 0032 0008 002C 0008 0065 0008 020C 0008 001D 0008 001D 0008 001D 0008 0022 0008 001D 0008 006A 0008 001D 0008 001D 0008 0BEF 0008 001D 0008 0041 0008 0022 0008 006A 0008 0032 0008 0032 0008 002C 0008 0065 0008 020C 0008 001D 0008 0046 0008 0046 0008 0022 0008 001D 0008 006A 0008 001D 0008 001D 0008 0BEF</ccf>
+            </command>
+        </commandSet>
+    </remote>
+</remotes>
