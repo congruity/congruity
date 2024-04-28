@@ -36,6 +36,7 @@ except: # Classic
     ANIMATION_TYPE_GIF = wx.animate.ANIMATION_TYPE_GIF
     HyperlinkCtrl = wx.HyperlinkCtrl
 import wx.grid
+from wx.lib.dialogs import MultiMessageDialog
 from tempfile import NamedTemporaryFile
 try:
     from .mhmanager import MHManager
@@ -47,6 +48,8 @@ except (ImportError, ModuleNotFoundError):
     from mhmanager import MHAccountDetails
     from mhmanager import SaveActivityTemplate
     from mhmanager import Secrets
+
+import xml.dom.minidom
 
 version = "21"
 
@@ -1301,6 +1304,13 @@ class ConfigureDevicePanel(WizardPanelBase):
                 "Remove overriden IR command/restore to official command"
         ))
         self.bottomSizer.Add(self.restoreButton, 0, 0, 0)
+        self.girrButton = wx.Button(self, label="Import GIRR")
+        self.girrButton.Bind(wx.EVT_BUTTON, self.OnGIRR)
+        self.girrButton.SetToolTip(wx.ToolTip(
+                "Import Pronto codes from a GIRR file"
+        ))
+        self.bottomSizer.Add(self.girrButton, 0, 0, 0)
+
         self.sizer.Add(self.bottomSizer, 0, 0, 0)
         
         # Button Row 2
@@ -1562,8 +1572,129 @@ class ConfigureDevicePanel(WizardPanelBase):
             wx.MessageBox('IR command deletion failed: ' + result, 'Error',
                           wx.OK | wx.ICON_WARNING)
         self.LoadDataUI(None)
+
+    # Validate the Pronto CCF string passed as command
+    # Throw an exception if the CCF fails validation, otherwise return
+    def ValidatePronto(self, command):
+    
+            bin = []
+            str = ""
+            str_idx = 0
+
+            hex = command.strip().split(' ')
+            for h in hex:
+                try:
+                    b = int(h, 16)
+                    bin.append(b)
+                except:
+                    raise Exception('The Pronto Code is not in a valid format. ' +
+                                    'Provide groups of 4 hex digits separated by spaces.')
+
+            if len(bin) < 4:
+                raise Exception('Pronto code too short (missing header)')
+
+            if bin[0] != 0:
+                raise Exception('Not RAW')
+
+            count_1 = 2 * bin[2]
+            count_2 = 2 * bin[3]
+
+            if len(bin) < 4 + count_1 + count_2:
+                raise Exception('Pronto code too short (missing pulsetrain)')
+
+            if len(bin) > 4 + count_1 + count_2:
+                raise Exception('Pronto code longer than header indicates')
+
+    def OnGIRR(self, event):
+        with wx.FileDialog(None, "Select a GIRR file to import", wildcard="GIRR files (*.girr)|*.girr",
+                               style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            girr_filename = fileDialog.GetPath()
+        try:
+            xml_doc = xml.dom.minidom.parse(girr_filename)
+            root = xml_doc.documentElement
+
+            # Show the user what the changes would be when the GIRR is applied
+            # i.e. which commands will be OVERRIDDEN, ADDED, UNCHANGED
+            # Applying the commands is actually simpler.
+
+            # All commands start in the unmatched state
+            # First, populate the commands from the XML file
+            # As we add each command we'll validate that all the correct attributes are present
+            addcmdlist = []
+            xmlcommands = root.getElementsByTagName('command')
+            commandcount = len(xmlcommands)
+
+            if commandcount == 0:
+                raise ValueError("No commands are present in the GIRR file")
+            for x in xmlcommands:
+                xmlname = x.getAttribute('name')
+                if not xmlname.strip():
+                    raise ValueError("Name attribute for command missing, empty, or whitespace.")
+                if xmlname in addcmdlist:
+                    raise ValueError("Duplicate command names are not permitted. " + xmlname)
+                xmlccf = x.getElementsByTagName('ccf')
+                if len(xmlccf) == 0 or len(xmlccf[0].childNodes) == 0:
+                    raise ValueError("There is no Pronto CCF Code for command " + xmlname + ". Use "
+                                     + "IrScrutinizer or a similar tool to render the Pronto Code." )
+                if len(xmlccf) != 1 or len(xmlccf[0].childNodes) != 1:
+                    raise ValueError("There needs to be one and only one Pronto CCF Code for command "
+                                     + xmlname)
+                self.ValidatePronto(xmlccf[0].childNodes[0].data)
+                addcmdlist.append(xmlname)
+
+            # Populate the list from the Harmony Commands
+            leftovercmdlist = []
+            for x in self.deviceCommands:
+                leftovercmdlist.append(x.Name)
+
+            # Match up the commands from the GIRR to the Harmony DB
+            overridecmdlist = []
+            for x in addcmdlist:
+                if x in leftovercmdlist:
+                    overridecmdlist.append(x)
+
+            # Remove matched commands from the unmatched lists
+            for x in overridecmdlist:
+                addcmdlist.remove(x)
+                leftovercmdlist.remove(x)
+
+            # Compose the message for the user
+            msg = "The following commands will be OVERRIDEN by the GIRR file: \n"
+            for x in overridecmdlist:
+                msg = msg + x + "\n"
+            msg += "\nThe following commands will be ADDED from the GIRR file: \n"
+            for x in addcmdlist:
+                msg = msg + x + "\n"
+            msg += "\nThe following commands will be UNCHANGED: \n"
+            for x in leftovercmdlist:
+                msg = msg + x + "\n"
+
+            with MultiMessageDialog(None, "Proceed and import these commands from the GIRR file? " +
+                               "(names are case-sensitive)", 
+                               "GIRR Import", msg,
+                               wx.YES_NO | wx.ICON_QUESTION) as msgDialog:
+                if msgDialog.ShowModal() == wx.ID_YES:
+                    i = 1
+                    for x in root.getElementsByTagName('command'):
+                        self.UpdateIRPronto(x.getAttribute('name'),
+                                       x.getElementsByTagName('ccf')[0].childNodes[0].data,
+                                       "Uploading %d of %d" % (i, commandcount))
+                        i += 1
+                    return
+        except:
+            str = traceback.format_exc()
+            dlg = wx.MessageDialog(
+                None,
+                "Could not import the GIRR file. Is it valid?\n\n" + str,
+                "Import Error",
+                wx.OK | wx.ICON_ERROR
+            )
+            dlg.ShowModal()
         
-    def UpdateIRPronto(self, commandName):
+    def UpdateIRPronto(self, commandName, command=None,
+                       throbberTitle="Uploading IR Code..."):
         # Based on LearnIrEnterProntoHexPanel._OnValidate(self, event) in
         # congruity.py
         # Because we are not learning IR and we are allocating the structures 
@@ -1572,11 +1703,12 @@ class ConfigureDevicePanel(WizardPanelBase):
         # allocate or free these structures. We only call into libconcord to
         # encode the signal for posting.
         #
-        dlg = wx.TextEntryDialog(None, "Enter the Pronto Hex code for the command:",
-                                 "Pronto Hex")
-        if dlg.ShowModal() != wx.ID_OK:
-            return
-        command = dlg.GetValue()
+        if command is None:
+            dlg = wx.TextEntryDialog(None, "Enter the Pronto Hex code for the command:",
+                                     "Pronto Hex")
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            command = dlg.GetValue()
         try:
             bin = []
             str = ""
@@ -1584,9 +1716,12 @@ class ConfigureDevicePanel(WizardPanelBase):
 
             hex = command.strip().split(' ')
             for h in hex:
-                b = int(h, 16)
-                bin.append(b)
-
+                try:
+                    b = int(h, 16)
+                    bin.append(b)
+                except:
+                    raise Exception('The Pronto Code is not in a valid format. ' +
+                                    'Provide groups of 4 hex digits separated by spaces.')
             if len(bin) < 4:
                 raise Exception('Pronto code too short (missing header)')
 
@@ -1609,6 +1744,9 @@ class ConfigureDevicePanel(WizardPanelBase):
 
             if len(bin) < 4 + count_1 + count_2:
                 raise Exception('Pronto code too short (missing pulsetrain)')
+
+            if len(bin) > 4 + count_1 + count_2:
+                raise Exception('Pronto code longer than header indicates')
 
             start_1 = 4
             start_2 = 4 + count_1
@@ -1639,7 +1777,8 @@ class ConfigureDevicePanel(WizardPanelBase):
             self.rawSequence = ctypes.c_char_p()
             libconcord.encode_for_posting(self.carrierClock, self.signal,
                                           self.signalLength, self.rawSequence)
-            BackgroundTask((self.DoUpdateIR,), (self.FinishUpdateIRPronto,))
+            BackgroundTask((self.DoUpdateIR,), (self.FinishUpdateIRPronto,), True,
+                   throbberTitle)
 
             return
         except:
