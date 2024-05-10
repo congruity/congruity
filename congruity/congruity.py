@@ -1864,7 +1864,8 @@ def main():
                 raise CmdLineException("ERROR: Option '%s' not recognized" % arg)
         if len(argv) != 1:
             # We did not get a file name on the command line, prompt the user for one.
-            with wx.FileDialog(None, "Congruity - Open a file", wildcard="EZHex files (*.ez*)|*.ez*",
+            with wx.FileDialog(None, "Congruity - Open a file", 
+                               wildcard="EZHex files (*.EZHex;*.EZUp;*.EZTut)|*.EZHex;*.EZUp;*.EZTut",
                                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
                 if fileDialog.ShowModal() == wx.ID_CANCEL:
                     os._exit(1)
