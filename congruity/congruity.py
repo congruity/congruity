@@ -254,7 +254,7 @@ class DecoratedContainer(wx.Panel):
         else:
             new_bitmap = self.resources.icon_in_progress
         dg.SetBitmap(new_bitmap)
-        dg.gauge.SetValue(percent)
+        dg.gauge.SetValue(int(percent))
         self.last_updated_dg = dg
 
 class DecoratedContainerThreadMixin(object):
