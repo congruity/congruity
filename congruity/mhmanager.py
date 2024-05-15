@@ -34,6 +34,38 @@ from suds.cache import ObjectCache
 from suds.client import Client
 from suds.plugin import MessagePlugin
 
+# Fix SUDS SSL Errors on Windows when loading WSDL from Sourceforge
+# Don't change behavior on Mac or Linux
+import platform
+AlternateTransport = None
+SSLContext = None
+CAFilePath = None
+
+if platform.system() == 'Windows':
+    try:
+        from suds.transport.https import HttpAuthenticated
+        from urllib.request import HTTPSHandler
+        import ssl
+        import certifi
+
+        # Create SSL context with certificate bundle specified
+        cafilepathtry = certifi.where()
+        sslcontexttry = ssl.create_default_context(cafile=cafilepathtry)
+
+        # Add an HTTPSHandler to the transport's handler list
+        # Initialize SSL Context with certificate bundle from Certifi
+        class HTTPSTransport(HttpAuthenticated):
+            def u2handlers(self):
+                # Add HTTPS handler using this context to the handler list
+                return HttpAuthenticated.u2handlers(self) + [HTTPSHandler(context=sslcontexttry)]
+    except:
+        pass
+    else:
+        # Only switch transport if all of the above succeeds
+        AlternateTransport = HTTPSTransport()
+        CAFilePath = cafilepathtry
+        SSLContext = sslcontexttry
+
 try:
     import gi
     gi.require_version("Secret", "1")
@@ -165,7 +197,7 @@ class MHManager():
         if suds_debug:
             logging.basicConfig(level=logging.INFO)
             logging.getLogger('suds.transport').setLevel(logging.DEBUG)
-        self.client = Client(url, cache=cache, plugins=[MHPlugin()])
+        self.client = Client(url, cache=cache, plugins=[MHPlugin()], transport=AlternateTransport)
 
     # Log in to web service - returns True if login succeeded, False if login
     # failed, and None if the account appears to be a members.harmonyremote.com
@@ -176,13 +208,13 @@ class MHManager():
         data = json.dumps({'email': email, 'password': password}).encode('utf-8')
         headers = {'Content-Type': 'application/json'}
         request = urllib.request.Request(url, data, headers)
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request,context=SSLContext)
         # For some reason the response to this is double-encoded
         jsonResponse = json.loads(json.loads(response.read().decode('utf-8')))
         if jsonResponse == 401:
             url = baseUrl + '/martiniweb/Home/TestMWLoginUser'
             request = urllib.request.Request(url, data, headers)
-            response = urllib.request.urlopen(request)
+            response = urllib.request.urlopen(request,context=SSLContext)
             jsonResponse = json.loads(response.read().decode('utf-8'))
             if jsonResponse["Result"]: # members.harmonyremote.com acct
                 return None
@@ -194,7 +226,7 @@ class MHManager():
                            'access_token': jsonResponse['access_token']}).encode('utf-8')
         headers = {'Content-Type': 'application/json'}
         request = urllib.request.Request(url, data, headers)
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request,context=SSLContext)
         jsonResponse = json.loads(response.read().decode('utf-8'))
         self.client.options.transport.cookiejar.extract_cookies(response,
                                                                 request)
@@ -389,7 +421,7 @@ class MHManager():
                                                  {"Content-Type": "text/xml"})
             self.client.options.transport.cookiejar.add_cookie_header(
                 httpRequest)
-            fp = urllib.request.urlopen(httpRequest)
+            fp = urllib.request.urlopen(httpRequest,context=SSLContext)
             rawfile = fp.read()
             response = rawfile.decode('ascii', 'ignore')
             status = re.search(
@@ -501,7 +533,7 @@ class MHManager():
              'IsPolicyAccepted': 'true',
              'Keepmeinformed': details.keepMeInformed})
         headers = {"Content-type": "application/x-www-form-urlencoded"}
-        conn = http_client.HTTPSConnection(host)
+        conn = http_client.HTTPSConnection(host,context=SSLContext)
         conn.request("POST", url, params, headers)
         response = conn.getresponse()
         data = response.read().decode('utf-8')
@@ -570,7 +602,7 @@ class MHManager():
         return True
 
     def GetCountryLists(self):
-        conn = http_client.HTTPSConnection("setup.myharmony.com")
+        conn = http_client.HTTPSConnection("setup.myharmony.com",context=SSLContext)
         conn.request("GET",
                      "https://setup.myharmony.com/MartiniWeb/Account/Register")
         response = conn.getresponse()
