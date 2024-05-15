@@ -49,20 +49,22 @@ if platform.system() == 'Windows':
         import certifi
 
         # Create SSL context with certificate bundle specified
-        CAFilePath = certifi.where()
-        SSLContext = ssl.create_default_context(cafile=CAFilePath)
+        cafilepathtry = certifi.where()
+        sslcontexttry = ssl.create_default_context(cafile=cafilepathtry)
 
         # Add an HTTPSHandler to the transport's handler list
         # Initialize SSL Context with certificate bundle from Certifi
         class HTTPSTransport(HttpAuthenticated):
             def u2handlers(self):
                 # Add HTTPS handler using this context to the handler list
-                return HttpAuthenticated.u2handlers(self) + [HTTPSHandler(context=SSLContext)]
+                return HttpAuthenticated.u2handlers(self) + [HTTPSHandler(context=sslcontexttry)]
     except:
         pass
     else:
         # Only switch transport if all of the above succeeds
         AlternateTransport = HTTPSTransport()
+        CAFilePath = cafilepathtry
+        SSLContext = sslcontexttry
 
 try:
     import gi
