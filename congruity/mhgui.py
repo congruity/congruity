@@ -3112,7 +3112,10 @@ class Wizard(wx.Dialog):
         self.min_page_width = min_page_width
         self.min_page_height = min_page_height
 
-        wx.Dialog.__init__(self, None, -1, 'MHGUI version ' + version)
+        dialog_style = wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | \
+                       wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX
+        wx.Dialog.__init__(self, None, -1, 'MHGUI version ' + version,
+                           style=dialog_style)
 
         sizer_main = wx.BoxSizer(wx.VERTICAL)
 
